@@ -7,11 +7,9 @@ import camelot
 import pandas
 import re
 import json
-import os
-
 
 PATH = Path(__file__).parent.absolute()
-URL = os.environ.get('tt_website')
+URL = ""
 
 
 def get_schedule_links(url: str = URL) -> list:
@@ -52,18 +50,19 @@ def parse_pdf(file_path: Union[Path, str]) -> pandas.DataFrame:
     if isinstance(file_path, str): file_path = Path(file_path)
 
     if file_path.exists():
-        return camelot.read_pdf(str(file_path), pages="all")[0].df
+        return camelot.read_pdf(str(file_path), pages="1-end")[0].df
 
 
-def parse_schedule(tables: pandas.DataFrame) -> dict:
-    groups = {}
+def parse_schedule(tables: pandas.DataFrame) -> list:
+    groups = []
     for column in tables:
         for cell in tables[column]:
             if cell.strip() != "ГРУППА":
                 template = {
-                    "Changes_lessons": {},
-                    "Default_lessons": [],
-                    "Skip_lessons": []
+                    "Group": "",
+                    "ChangeLessons": {},
+                    "DefaultLessons": [],
+                    "SkipLessons": []
                 }
 
                 data = cell.split("\n")
@@ -71,23 +70,23 @@ def parse_schedule(tables: pandas.DataFrame) -> dict:
                     nums = set([int(num) for num in re.search("(\d,?)*п.", lesson).group(0) if num.isdigit()])
 
                     if "расписанию" in lesson:
-                        template["Default_lessons"] = nums
+                        template["DefaultLessons"] = nums
 
                     elif "НЕТ" in lesson:
-                        template["Skip_lessons"] = nums
+                        template["SkipLessons"] = nums
 
                     else:
                         try:
                             lesson = " ".join(filter(lambda text: text != '',
                                                 lesson.split("п.", 1)[1].split(" ")))  # Удаление всех ''
                             for num in nums:
-                                template["Changes_lessons"][num] = lesson
+                                template["ChangeLessons"][num] = lesson
 
                         except IndexError:
                             pass
 
-                group = data[0].replace(" ", "").replace("ГРУППА", "")
-                groups[group] = template
+                template["Group"] = data[0].replace(" ", "").replace("ГРУППА", "")
+                groups.append(template)
 
     return groups
 
@@ -96,7 +95,6 @@ class DateTime:
     def __init__(self):
         self.today = datetime.now().strftime("%d.%m.%Y")
         self.tomorrow = (datetime.now() + timedelta(days=1)).strftime("%d.%m.%Y")
-
 
 class SetEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -111,8 +109,7 @@ if __name__ == '__main__':
 
     for i, pdf in enumerate(Path(PATH, "schedule").glob("*.pdf")):
         data_frame = parse_pdf(pdf)
-
-        with open(f"change{i}.json", "w", encoding="utf-8") as file:
+        with open(f"change_{pdf.name.split('-')[2]}.json", "w", encoding="utf-8") as file:
             file.write(json.dumps(parse_schedule(data_frame), cls=SetEncoder, indent=4, ensure_ascii=False))
 
     clear_schedule_dir()
