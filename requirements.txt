@@ -1,0 +1,10 @@
+camelot-py[cv]
+pymongo==3.12.0
+requests==2.25.1
+pydantic==1.8.2
+motor==2.5.1
+pandas==1.3.0
+starlette==0.14.2
+fastapi==0.68.1
+xlrd==2.0.1
+uvicorn==0.15.0

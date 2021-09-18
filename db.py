@@ -1,14 +1,27 @@
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorClient, AsyncIOMotorCursor
-from pydantic import BaseModel
-from typing import Union
+from pydantic import BaseModel, validator, Field
+from typing import Union, Dict
+from datetime import datetime
 from pathlib import Path
 import asyncio
 import pymongo
 
 
-class DLCOutput(BaseModel):
-    group: str
-    days: dict
+class ChangeList(BaseModel):
+    change_lessons: dict = Field(alias="ChangeLessons")
+    default_lessons: list = Field(alias="DefaultLessons")
+    skip_lessons: list = Field(alias="SkipLessons")
+
+
+class ChangeModel(BaseModel):
+    date: datetime = Field(alias="Date")
+    groups: Dict[str, ChangeList] = Field(alias="Groups")
+
+    @validator('date', pre=True)
+    def parse_date(cls, v):
+        if isinstance(v, str):
+            return datetime.strptime(v, "%d.%m.%Y")
+        return v
 
 
 class TimeTableDB:
@@ -18,7 +31,8 @@ class TimeTableDB:
         "WED": "$Days.WED",
         "THU": "$Days.THU",
         "FRI": "$Days.FRI",
-        "SAT": "$Days.SAT"
+        "SAT": "$Days.SAT",
+        "SUN": ""
     }
     ENGINE = pymongo.MongoClient
     ASYNC_ENGINE = AsyncIOMotorClient
@@ -71,5 +85,3 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     result = loop.run_until_complete(cursor)
     print(*result)
-
-

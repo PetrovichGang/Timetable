@@ -1,15 +1,15 @@
 from datetime import datetime, timedelta
-from pprint import pprint
 from typing import Union
 from requests import get
 from pathlib import Path
+import requests
 import camelot
 import pandas
-import re
 import json
+import re
 
 PATH = Path(__file__).parent.absolute()
-URL = ""
+URL = "http://www.aptangarsk.ru/расписание-занятий-2/"
 
 
 def get_schedule_links(url: str = URL) -> list:
@@ -53,13 +53,12 @@ def parse_pdf(file_path: Union[Path, str]) -> pandas.DataFrame:
         return camelot.read_pdf(str(file_path), pages="1-end")[0].df
 
 
-def parse_schedule(tables: pandas.DataFrame) -> list:
-    groups = []
+def parse_schedule(tables: pandas.DataFrame) -> dict:
+    groups = {}
     for column in tables:
         for cell in tables[column]:
             if cell.strip() != "ГРУППА":
                 template = {
-                    "Group": "",
                     "ChangeLessons": {},
                     "DefaultLessons": [],
                     "SkipLessons": []
@@ -70,10 +69,10 @@ def parse_schedule(tables: pandas.DataFrame) -> list:
                     nums = set([int(num) for num in re.search("(\d,?)*п.", lesson).group(0) if num.isdigit()])
 
                     if "расписанию" in lesson:
-                        template["DefaultLessons"] = nums
+                        template["DefaultLessons"] = list(nums)
 
                     elif "НЕТ" in lesson:
-                        template["SkipLessons"] = nums
+                        template["SkipLessons"] = list(nums)
 
                     else:
                         try:
@@ -85,8 +84,8 @@ def parse_schedule(tables: pandas.DataFrame) -> list:
                         except IndexError:
                             pass
 
-                template["Group"] = data[0].replace(" ", "").replace("ГРУППА", "")
-                groups.append(template)
+                group = data[0].replace(" ", "").replace("ГРУППА", "")
+                groups[group] = template
 
     return groups
 
@@ -95,6 +94,7 @@ class DateTime:
     def __init__(self):
         self.today = datetime.now().strftime("%d.%m.%Y")
         self.tomorrow = (datetime.now() + timedelta(days=1)).strftime("%d.%m.%Y")
+
 
 class SetEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -109,7 +109,8 @@ if __name__ == '__main__':
 
     for i, pdf in enumerate(Path(PATH, "schedule").glob("*.pdf")):
         data_frame = parse_pdf(pdf)
-        with open(f"change_{pdf.name.split('-')[2]}.json", "w", encoding="utf-8") as file:
-            file.write(json.dumps(parse_schedule(data_frame), cls=SetEncoder, indent=4, ensure_ascii=False))
+        data = json.dumps({"Date": pdf.name.split('-')[2], "Groups": parse_schedule(data_frame)}, ensure_ascii=False)
+        res = requests.post("http://127.0.0.1:8000/api/changes", json=data)
+        print(res.status_code, res.content)
 
     clear_schedule_dir()
