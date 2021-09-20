@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from typing import Union
 from pathlib import Path
 import pandas as pd
@@ -62,8 +61,8 @@ def replace_trash(str: str) -> str:
     return BIG_SPACE_REGEX.sub(",", str.replace("\n", ",").replace("  ", " "))
 
 
-def finalize_dict(groups: dict) -> dict:
-    final = {}
+def finalize_dict(groups: dict) -> list:
+    final = []
     for group, data in groups.items():  # 'и-19-1: {...}'
         days = {}
         for day_of_week, strings in data.items():  # '0': [None,...]
@@ -98,14 +97,16 @@ def finalize_dict(groups: dict) -> dict:
             else:
                 days[day] = {"a": a, "b": b}
 
-        final[group] = days
+        final.append({"Group": group, "Days": days})
     return final
 
 
 if __name__ == '__main__':
+    import requests
     print("Создание расписания...")
     groups = parse_excel_main_scheduler("rasp.xls")
-
     final_dict = finalize_dict(groups)
-    with open("timetable.json", "w", encoding="utf-8") as file:
-        file.write(json.dumps(final_dict, ensure_ascii=False, separators=(',', ':'), indent=4))
+
+    data = json.dumps(final_dict, ensure_ascii=False, separators=(',', ':'), indent=4)
+    res = requests.post("http://127.0.0.1:8000/api/timetable", json=data)
+    print(res.status_code, res.content)

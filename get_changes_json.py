@@ -1,17 +1,15 @@
 from datetime import datetime, timedelta
-from pprint import pprint
 from typing import Union
 from requests import get
 from pathlib import Path
+import requests
 import camelot
 import pandas
-import re
 import json
-import os
-
+import re
 
 PATH = Path(__file__).parent.absolute()
-URL = os.environ.get('tt_website')
+URL = "http://www.aptangarsk.ru/расписание-занятий-2/"
 
 
 def get_schedule_links(url: str = URL) -> list:
@@ -52,7 +50,7 @@ def parse_pdf(file_path: Union[Path, str]) -> pandas.DataFrame:
     if isinstance(file_path, str): file_path = Path(file_path)
 
     if file_path.exists():
-        return camelot.read_pdf(str(file_path), pages="all")[0].df
+        return camelot.read_pdf(str(file_path), pages="1-end")[0].df
 
 
 def parse_schedule(tables: pandas.DataFrame) -> dict:
@@ -61,9 +59,9 @@ def parse_schedule(tables: pandas.DataFrame) -> dict:
         for cell in tables[column]:
             if cell.strip() != "ГРУППА":
                 template = {
-                    "Changes_lessons": {},
-                    "Default_lessons": [],
-                    "Skip_lessons": []
+                    "ChangeLessons": {},
+                    "DefaultLessons": [],
+                    "SkipLessons": []
                 }
 
                 data = cell.split("\n")
@@ -71,17 +69,17 @@ def parse_schedule(tables: pandas.DataFrame) -> dict:
                     nums = set([int(num) for num in re.search("(\d,?)*п.", lesson).group(0) if num.isdigit()])
 
                     if "расписанию" in lesson:
-                        template["Default_lessons"] = nums
+                        template["DefaultLessons"] = list(nums)
 
                     elif "НЕТ" in lesson:
-                        template["Skip_lessons"] = nums
+                        template["SkipLessons"] = list(nums)
 
                     else:
                         try:
                             lesson = " ".join(filter(lambda text: text != '',
                                                 lesson.split("п.", 1)[1].split(" ")))  # Удаление всех ''
                             for num in nums:
-                                template["Changes_lessons"][num] = lesson
+                                template["ChangeLessons"][num] = lesson
 
                         except IndexError:
                             pass
@@ -111,8 +109,8 @@ if __name__ == '__main__':
 
     for i, pdf in enumerate(Path(PATH, "schedule").glob("*.pdf")):
         data_frame = parse_pdf(pdf)
-
-        with open(f"change{i}.json", "w", encoding="utf-8") as file:
-            file.write(json.dumps(parse_schedule(data_frame), cls=SetEncoder, indent=4, ensure_ascii=False))
+        data = json.dumps({"Date": pdf.name.split('-')[2], "Groups": parse_schedule(data_frame)}, ensure_ascii=False)
+        res = requests.post("http://127.0.0.1:8000/api/changes", json=data)
+        print(res.status_code, res.content)
 
     clear_schedule_dir()
