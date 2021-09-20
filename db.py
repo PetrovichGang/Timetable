@@ -7,6 +7,20 @@ import asyncio
 import pymongo
 
 
+class DefaultDaysList(BaseModel):
+    mon: dict = Field(alias="MON")
+    tue: dict = Field(alias="TUE")
+    wed: dict = Field(alias="WED")
+    thu: dict = Field(alias="THU")
+    fri: dict = Field(alias="FRI")
+    sat: dict = Field(alias="SAT")
+
+
+class DefaultModel(BaseModel):
+    group: str = Field(alias="Group")
+    days: DefaultDaysList = Field(alias="Days")
+
+
 class ChangeList(BaseModel):
     change_lessons: dict = Field(alias="ChangeLessons")
     default_lessons: list = Field(alias="DefaultLessons")
@@ -78,9 +92,8 @@ class TimeTableDB:
 
 if __name__ == '__main__':
     uri = "mongodb://192.168.1.159:27017"
-
     db = TimeTableDB(uri, engine=TimeTableDB.ASYNC_ENGINE)
-    cursor = TimeTableDB.async_find(db.DLCollection)
+    cursor = TimeTableDB.async_find(db.DLCollection, {})
 
     loop = asyncio.get_event_loop()
     result = loop.run_until_complete(cursor)

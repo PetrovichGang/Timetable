@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from typing import Union
 from pathlib import Path
 import pandas as pd
@@ -103,9 +102,11 @@ def finalize_dict(groups: dict) -> list:
 
 
 if __name__ == '__main__':
+    import requests
     print("Создание расписания...")
     groups = parse_excel_main_scheduler("rasp.xls")
-
     final_dict = finalize_dict(groups)
-    with open("timetable.json", "w", encoding="utf-8") as file:
-        file.write(json.dumps(final_dict, ensure_ascii=False, separators=(',', ':'), indent=4))
+
+    data = json.dumps(final_dict, ensure_ascii=False, separators=(',', ':'), indent=4)
+    res = requests.post("http://127.0.0.1:8000/api/timetable", json=data)
+    print(res.status_code, res.content)
