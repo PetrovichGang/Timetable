@@ -91,7 +91,7 @@ class TimeTableDB:
 
 
 if __name__ == '__main__':
-    uri = "mongodb://192.168.1.159:27017"
+    uri = "mongodb://localhost:27017"
     db = TimeTableDB(uri, engine=TimeTableDB.ASYNC_ENGINE)
     cursor = TimeTableDB.async_find(db.DLCollection, {})
 

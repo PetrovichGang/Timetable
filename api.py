@@ -1,6 +1,7 @@
 from db import TimeTableDB, ChangeModel, DefaultModel
 from starlette.responses import JSONResponse, Response
 from fastapi import Request, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 from starlette import status
 import json
@@ -18,7 +19,18 @@ tags_metadata = [
 ]
 
 app = FastAPI()
-db = TimeTableDB("mongodb://192.168.1.159:27017", engine=TimeTableDB.ASYNC_ENGINE)
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+db = TimeTableDB("mongodb://localhost:27017", engine=TimeTableDB.ASYNC_ENGINE)
 
 
 @app.get("/api/timetable",
