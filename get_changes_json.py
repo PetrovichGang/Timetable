@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from config import API_URL, Schedule_URL
 from typing import Union
 from requests import get
 from pathlib import Path
@@ -9,7 +10,7 @@ import json
 import re
 
 PATH = Path(__file__).parent.absolute()
-URL = "http://www.aptangarsk.ru/расписание-занятий-2/"
+URL = Schedule_URL
 
 
 def get_schedule_links(url: str = URL) -> list:
@@ -65,8 +66,17 @@ def parse_schedule(tables: pandas.DataFrame) -> dict:
                 }
 
                 data = cell.split("\n")
+                last_num = None
                 for lesson in data[1:]:
-                    nums = set([int(num) for num in re.search("(\d,?)*п.", lesson).group(0) if num.isdigit()])
+                    nums = re.search("(\d,?)*п.", lesson)
+
+                    if nums is None:
+                        if last_num:
+                            template["ChangeLessons"][last_num] = f"{template['ChangeLessons'][last_num]} {lesson.strip()}"
+                        continue
+
+                    nums = set([int(num) for num in nums.group(0) if num.isdigit()])
+                    last_num = next(iter(nums)) if len(nums) == 1 else last_num
 
                     if "расписанию" in lesson:
                         template["DefaultLessons"] = list(nums)
@@ -110,7 +120,7 @@ if __name__ == '__main__':
     for i, pdf in enumerate(Path(PATH, "schedule").glob("*.pdf")):
         data_frame = parse_pdf(pdf)
         data = json.dumps({"Date": pdf.name.split('-')[2], "Groups": parse_schedule(data_frame)}, ensure_ascii=False)
-        res = requests.post("http://127.0.0.1:8000/api/changes", json=data)
+        res = requests.post(f"{API_URL}/changes", json=data)
         print(res.status_code, res.content)
 
     clear_schedule_dir()

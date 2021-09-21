@@ -91,8 +91,9 @@ class TimeTableDB:
 
 
 if __name__ == '__main__':
-    uri = "mongodb://localhost:27017"
-    db = TimeTableDB(uri, engine=TimeTableDB.ASYNC_ENGINE)
+    from config import DB_URL
+
+    db = TimeTableDB(DB_URL, engine=TimeTableDB.ASYNC_ENGINE)
     cursor = TimeTableDB.async_find(db.DLCollection, {})
 
     loop = asyncio.get_event_loop()

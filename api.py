@@ -1,9 +1,10 @@
 from db import TimeTableDB, ChangeModel, DefaultModel
 from starlette.responses import JSONResponse, Response
-from fastapi import Request, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request, FastAPI
 from pydantic import ValidationError
 from starlette import status
+from config import DB_URL
 import json
 
 
@@ -30,7 +31,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-db = TimeTableDB("mongodb://localhost:27017", engine=TimeTableDB.ASYNC_ENGINE)
+db = TimeTableDB(DB_URL, engine=TimeTableDB.ASYNC_ENGINE)
 
 
 @app.get("/api/timetable",
