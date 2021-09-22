@@ -102,11 +102,12 @@ def finalize_dict(groups: dict) -> list:
 
 
 if __name__ == '__main__':
+    from config import API_URL
     import requests
     print("Создание расписания...")
     groups = parse_excel_main_scheduler("rasp.xls")
     final_dict = finalize_dict(groups)
 
     data = json.dumps(final_dict, ensure_ascii=False, separators=(',', ':'), indent=4)
-    res = requests.post("http://127.0.0.1:8000/api/timetable", json=data)
+    res = requests.post(f"{API_URL}/timetable", json=data)
     print(res.status_code, res.content)
