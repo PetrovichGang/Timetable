@@ -1,7 +1,6 @@
 from db import TimeTableDB, ChangeModel, DefaultModel
 from starlette.responses import JSONResponse, Response
 from fastapi import Request, FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 from starlette import status
 import json
@@ -19,17 +18,6 @@ tags_metadata = [
 ]
 
 app = FastAPI()
-
-origins = ["*"]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 db = TimeTableDB("mongodb://localhost:27017", engine=TimeTableDB.ASYNC_ENGINE)
 
 
@@ -67,7 +55,7 @@ async def get_timetable(group: str = None, day: str = None):
 
 @app.get("/api/groups",
             summary="Получение всех имеющихся учебных групп из базы данных",
-            tags=["Основное расписание"])
+            tags=["Группы"])
 async def groups():
     content = await TimeTableDB.async_find(db.DLCollection, {}, {"_id": 0, "Group": 1})
     content = {"Groups": [group.get("Group") for group in content]}
@@ -95,6 +83,24 @@ async def upload_new_timetable(request: Request):
                 result.append(temp)
             await db.DLCollection.delete_many({})
             await db.DLCollection.insert_many(data)
+
+            return Response(f"Новое расписание загруженно", status_code=status.HTTP_200_OK)
+        except ValidationError as e:
+            return Response(e.json(), status_code=status.HTTP_400_BAD_REQUEST)
+
+    return Response(status_code=status.HTTP_400_BAD_REQUEST)
+    
+@app.post("/api/groups",
+             summary="Загрузка в базу данных расписания для группы",
+             tags=["Группы"])
+async def replace_group_timetable(request: Request):
+    data = await request.json()
+
+    if data:
+        print(data)
+
+        try:
+            await db.DLCollection.replace_one({'Group': data["Group"]}, data)
 
             return Response(f"Новое расписание загруженно", status_code=status.HTTP_200_OK)
         except ValidationError as e:
