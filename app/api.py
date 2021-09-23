@@ -27,7 +27,7 @@ db = TimeTableDB(DB_URL, engine=TimeTableDB.ASYNC_ENGINE)
 
 @router.on_event("startup")
 async def startup():
-    FastAPICache.init(MemcachedBackend(Client("127.0.0.1")), prefix="fastapi-cache")
+    # FastAPICache.init(MemcachedBackend(Client("127.0.0.1")), prefix="fastapi-cache")
 
     content = await TimeTableDB.async_find(db.DLCollection, {}, {"_id": 0, "Group": 1})
     db.groups = [group.get("Group") for group in content]
@@ -166,7 +166,7 @@ async def change_groups():
 @router.get("/api/changes/{group}",
             summary="Получение изменения в расписании у указанной группы",
             tags=["Изменения в расписание"])
-@cache(300)
+# @cache(300)
 async def change_group(group: str):
 
     if group in db.groups:
