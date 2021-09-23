@@ -1,1 +1,1 @@
-uvicorn api:app --reload --header Access-Control-Allow-Origin:*
+uvicorn app.app:app --reload --header Access-Control-Allow-Origin:*
