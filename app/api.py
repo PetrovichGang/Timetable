@@ -241,13 +241,16 @@ async def get_finalize_schedule(group: str):
             lessons = default_lessons[0]["Lessons"]["a"]
             if num_weekday % 2 == 1 and len(default_lessons[0]) > 2:
                 lessons.update(default_lessons[0]["Lessons"]["b"])
-                lessons.update(data.get("Lessons")) if len(data) > 1 else None
-                result.append(temp)
 
-            else:
-                temp["Lessons"].update(lessons)
-                lessons.update(data.get("Lessons")) if len(data) > 1 else None
-                result.append(temp)
+            if len(data) > 1:
+                changes = data.get("Lessons")
+
+                lessons.update(changes["ChangeLessons"])
+                lessons.update({str(num): "Нет" for num in changes["SkipLessons"]}) if changes["SkipLessons"] else None
+
+            temp["Lessons"].update(lessons)
+
+            result.append(temp)
 
         return JSONResponse(result, status_code=status.HTTP_200_OK)
     else:
