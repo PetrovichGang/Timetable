@@ -117,10 +117,12 @@ if __name__ == '__main__':
     for link in get_schedule_links():
         download_schedule(link)
 
+    res = requests.delete(f"{API_URL}/changes")
+    print("Delete status", res.status_code)
     for i, pdf in enumerate(Path(PATH, "schedule").glob("*.pdf")):
         data_frame = parse_pdf(pdf)
         data = json.dumps({"Date": pdf.name.split('-')[2], "Groups": parse_schedule(data_frame)}, ensure_ascii=False)
         res = requests.post(f"{API_URL}/changes", json=data)
-        print(res.status_code, res.content)
+        print("Upload status", res.status_code)
 
     clear_schedule_dir()

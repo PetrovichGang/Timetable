@@ -1,10 +1,8 @@
-from fastapi_cache.backends.memcached import MemcachedBackend, Client
-from db import TimeTableDB, ChangeModel, DefaultModel, Days
+from db import TimeTableDB, ChangeModel, DefaultModel, EnumDays, DAYS
 from starlette.responses import JSONResponse, Response
-from fastapi_cache.decorator import cache
 from fastapi import Request, APIRouter
-from fastapi_cache import FastAPICache
 from pydantic import ValidationError
+from datetime import datetime
 from starlette import status
 from config import DB_URL
 import json
@@ -27,8 +25,6 @@ db = TimeTableDB(DB_URL, engine=TimeTableDB.ASYNC_ENGINE)
 
 @router.on_event("startup")
 async def startup():
-    # FastAPICache.init(MemcachedBackend(Client("127.0.0.1")), prefix="fastapi-cache")
-
     content = await TimeTableDB.async_find(db.DLCollection, {}, {"_id": 0, "Group": 1})
     db.groups = [group.get("Group") for group in content]
 
@@ -36,7 +32,7 @@ async def startup():
 @router.get("/api/timetable",
             summary="Получение основного расписания",
             tags=["Основное расписание"])
-async def get_timetable(group: str = None, day: Days = None):
+async def get_timetable(group: str = None, day: EnumDays = None):
     """
         Аргументы:
 
@@ -47,15 +43,15 @@ async def get_timetable(group: str = None, day: Days = None):
     if group is None and day is None:
         content = await TimeTableDB.async_find(db.DLCollection, {}, {"_id": 0})
 
-    elif group is None and day in db.DAYS.keys():
-        content = await TimeTableDB.async_find(db.DLCollection, {}, {"_id": 0, "Group": 1, day: TimeTableDB.DAYS[day]})
+    elif group is None and day in DAYS.keys():
+        content = await TimeTableDB.async_find(db.DLCollection, {}, {"_id": 0, "Group": 1, day: DAYS[day]})
 
     elif group in db.groups and day is None:
         content = await TimeTableDB.async_find(db.DLCollection, {"Group": group}, {"_id": 0})
 
-    elif group in db.groups and day in db.DAYS.keys():
+    elif group in db.groups and day in DAYS.keys():
         content = await TimeTableDB.async_find(db.DLCollection, {"Group": group},
-                                               {"_id": 0, day: TimeTableDB.DAYS[day]})
+                                               {"_id": 0, day: DAYS[day]})
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
@@ -93,7 +89,7 @@ async def upload_new_timetable(request: Request):
 @router.delete("/api/timetable",
                summary="Удаление основного расписания",
                tags=["Основное расписание"])
-async def delete_timetable(token: str):
+async def delete_timetable(token: str = None):
     content = await db.DLCollection.delete_many({})
 
     if content.deleted_count > 0:
@@ -166,13 +162,16 @@ async def change_groups():
 @router.get("/api/changes/{group}",
             summary="Получение изменения в расписании у указанной группы",
             tags=["Изменения в расписание"])
-# @cache(300)
 async def change_group(group: str):
-
     if group in db.groups:
-        content = await TimeTableDB.async_find(db.CLCollection, {}, {"_id": 0, "Date": 1, "lessons": f"$Groups.{group}"})
+        content = await TimeTableDB.async_find(db.CLCollection, {}, {"_id": 0, "Date": 1, "Lessons": f"$Groups.{group}"})
+        result = []
 
-        return JSONResponse(content, status_code=status.HTTP_200_OK)
+        for data in content:
+            template = {"Date": data.get("Date"), "Lessons": data.get("Lessons") if len(data) > 1 else ""}
+            result.append(template)
+
+        return JSONResponse(result, status_code=status.HTTP_200_OK)
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
@@ -202,7 +201,7 @@ async def upload_new_changes(request: Request):
 @router.delete("/api/changes",
                summary="Удаление всех или определенного изменения в расписании",
                tags=["Изменения в расписание"])
-async def delete_changes(token: str, date: str = None):
+async def delete_changes(token: str = None, date: str = None):
     """
         Аргументы:
 
@@ -217,3 +216,39 @@ async def delete_changes(token: str, date: str = None):
         return Response(f"Удаленно записей: {content.deleted_count}", status_code=status.HTTP_200_OK)
     else:
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
+
+
+@router.get("/api/finalize_schedule/{group}",
+             summary="Получение расписания с изменениями для группы",
+             tags=["Изменения в расписание"])
+async def get_finalize_schedule(group: str):
+    result = []
+    template = lambda: {
+        "Date": "",
+        "Lessons": {day: "Нет" for day in range(1, 4)}
+    }
+    if group in db.groups:
+        content = await TimeTableDB.async_find(db.CLCollection, {}, {"_id": 0, "Date": 1, "Lessons": f"$Groups.{group}"})
+
+        for data in content:
+            day = datetime.strptime(data.get("Date"), "%d.%m.%Y")
+            num_weekday = day.isocalendar()[1]
+            default_lessons = await TimeTableDB.async_find(db.DLCollection, {"Group": group},
+                                                           {"_id": 0, "Lessons": DAYS[list(DAYS.keys())[day.weekday()]]})
+            temp = template()
+            temp["Date"] = data.get("Date")
+
+            lessons = default_lessons[0]["Lessons"]["a"]
+            if num_weekday % 2 == 1 and len(default_lessons[0]) > 2:
+                lessons.update(default_lessons[0]["Lessons"]["b"])
+                lessons.update(data.get("Lessons")) if len(data) > 1 else None
+                result.append(temp)
+
+            else:
+                temp["Lessons"].update(lessons)
+                lessons.update(data.get("Lessons")) if len(data) > 1 else None
+                result.append(temp)
+
+        return JSONResponse(result, status_code=status.HTTP_200_OK)
+    else:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)

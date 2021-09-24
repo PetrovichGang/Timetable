@@ -8,6 +8,17 @@ import asyncio
 import pymongo
 
 
+DAYS = {
+        "MON": "$Days.MON",
+        "TUE": "$Days.TUE",
+        "WED": "$Days.WED",
+        "THU": "$Days.THU",
+        "FRI": "$Days.FRI",
+        "SAT": "$Days.SAT",
+        "SUN": ""
+    }
+
+
 class DefaultDaysList(BaseModel):
     mon: dict = Field(alias="MON")
     tue: dict = Field(alias="TUE")
@@ -39,7 +50,7 @@ class ChangeModel(BaseModel):
         return v
 
 
-class Days(str, Enum):
+class EnumDays(str, Enum):
     mon = "MON"
     tue = "TUE"
     wed = "WED"
@@ -49,14 +60,6 @@ class Days(str, Enum):
 
 
 class TimeTableDB:
-    DAYS = {
-        "MON": "$Days.MON",
-        "TUE": "$Days.TUE",
-        "WED": "$Days.WED",
-        "THU": "$Days.THU",
-        "FRI": "$Days.FRI",
-        "SAT": "$Days.SAT"
-    }
     ENGINE = pymongo.MongoClient
     ASYNC_ENGINE = AsyncIOMotorClient
 

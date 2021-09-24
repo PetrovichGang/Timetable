@@ -109,5 +109,7 @@ if __name__ == '__main__':
     final_dict = finalize_dict(groups)
 
     data = json.dumps(final_dict, ensure_ascii=False, separators=(',', ':'), indent=4)
+
+    requests.delete(f"{API_URL}/timetable")
     res = requests.post(f"{API_URL}/timetable", json=data)
     print(res.status_code, res.content)
