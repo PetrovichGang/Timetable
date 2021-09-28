@@ -1,4 +1,4 @@
-camelot-py[cv]
+camelot-py[cv]=0.10.1
 xlrd==2.0.1
 environs==9.3.3
 requests==2.25.1
@@ -11,3 +11,4 @@ uvicorn==0.15.0
 fastapi==0.68.1
 fastapi-cache2[memcache]==0.1.6
 loguru~=0.5.3
+vkbottle~=3.0.2

@@ -1,11 +1,15 @@
-from db import TimeTableDB, ChangeModel, DefaultModel, EnumDays, DAYS
+from db.models import ChangeModel, DefaultModel, EnumDays, DAYS, VKUserModel, VKGroupModel, GroupNames
 from starlette.responses import JSONResponse, Response
 from fastapi import Request, APIRouter
 from pydantic import ValidationError
+from typing import List, Union
 from datetime import datetime
 from starlette import status
+from db import TimeTableDB
 from config import DB_URL
 import json
+
+import pprint
 
 
 tags_metadata = [
@@ -16,6 +20,10 @@ tags_metadata = [
     {
         "name": "Изменения в расписание",
         "description": "Методы работы с коллекцией: Изменения в расписание."
+    },
+    {
+        "name": "VK",
+        "description": "Методы работы с коллекциями: VKGroups и VKUsers."
     }
 ]
 
@@ -128,6 +136,20 @@ async def replace_group_timetable(request: Request):
             return Response(e.json(), status_code=status.HTTP_400_BAD_REQUEST)
 
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
+
+
+@router.get("/api/groups/{spec}",
+            summary="Получение всех учебных групп указанной специальности",
+            tags=["Группы"])
+async def groups(spec: GroupNames):
+    print(spec[0])
+    content = await TimeTableDB.async_find(db.DLCollection, {"Group": {"$regex": f"{spec[0]}.*"}}, {"_id": 0, "Group": 1})
+    content = {"Groups": [group.get("Group") for group in content]}
+
+    if content:
+        return JSONResponse(content, status_code=status.HTTP_200_OK)
+    else:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.get("/api/changes",
@@ -255,3 +277,26 @@ async def get_finalize_schedule(group: str):
         return JSONResponse(result, status_code=status.HTTP_200_OK)
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@router.post("/api/vk/users",
+             summary="Загрузка в базу данных новых пользователей",
+             tags=["VK"])
+async def load_new_users(users: Union[VKUserModel, List[VKUserModel]]):
+    if users:
+        pprint.pprint(users)
+        await db.VKUsersCollection.insert_many(users)
+
+        return Response("Пользователи добавлены", status_code=status.HTTP_200_OK)
+    return Response(status_code=status.HTTP_400_BAD_REQUEST)
+
+
+@router.post("/api/vk/groups",
+             summary="Загрузка в базу данных новой группы",
+             tags=["VK"])
+async def load_new_group(group: VKGroupModel):
+    if group:
+        await db.VKGroupsCollection.insert_one(group)
+
+        return Response("Группа добавлена", status_code=status.HTTP_200_OK)
+    return Response(status_code=status.HTTP_400_BAD_REQUEST)

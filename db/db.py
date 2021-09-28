@@ -1,62 +1,8 @@
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorClient, AsyncIOMotorCursor
-from pydantic import BaseModel, validator, Field
 from typing import Union, Dict
-from datetime import datetime
 from pathlib import Path
-from enum import Enum
 import asyncio
 import pymongo
-
-
-DAYS = {
-        "MON": "$Days.MON",
-        "TUE": "$Days.TUE",
-        "WED": "$Days.WED",
-        "THU": "$Days.THU",
-        "FRI": "$Days.FRI",
-        "SAT": "$Days.SAT",
-        "SUN": ""
-    }
-
-
-class DefaultDaysList(BaseModel):
-    mon: dict = Field(alias="MON")
-    tue: dict = Field(alias="TUE")
-    wed: dict = Field(alias="WED")
-    thu: dict = Field(alias="THU")
-    fri: dict = Field(alias="FRI")
-    sat: dict = Field(alias="SAT")
-
-
-class DefaultModel(BaseModel):
-    group: str = Field(alias="Group")
-    days: DefaultDaysList = Field(alias="Days")
-
-
-class ChangeList(BaseModel):
-    change_lessons: dict = Field(alias="ChangeLessons")
-    default_lessons: list = Field(alias="DefaultLessons")
-    skip_lessons: list = Field(alias="SkipLessons")
-
-
-class ChangeModel(BaseModel):
-    date: datetime = Field(alias="Date")
-    groups: Dict[str, ChangeList] = Field(alias="Groups")
-
-    @validator('date', pre=True)
-    def parse_date(cls, v):
-        if isinstance(v, str):
-            return datetime.strptime(v, "%d.%m.%Y")
-        return v
-
-
-class EnumDays(str, Enum):
-    mon = "MON"
-    tue = "TUE"
-    wed = "WED"
-    thu = "THU"
-    fri = "FRI"
-    sat = "SAT"
 
 
 class TimeTableDB:
@@ -82,9 +28,14 @@ class TimeTableDB:
             print(err)
             raise
 
-        self.db = self._connection["TimeTable"]
-        self.DLCollection = self.db["DefaultLessons"]  # Collection DefaultLessons
-        self.CLCollection = self.db["ChangeLessons"]  # Collection ChangeLessons
+        self.LessonsDB = self._connection["TimeTable"]
+        self.DLCollection = self.LessonsDB["DefaultLessons"]  # Collection DefaultLessons
+        self.CLCollection = self.LessonsDB["ChangeLessons"]  # Collection ChangeLessons
+
+        self.SocialDB = self._connection["Social"]
+        self.VKGroupsCollection = self.SocialDB["VKGroups"]
+        self.VKUsersCollection = self.SocialDB["VKUsers"]
+
         self.groups = []
 
     @staticmethod
