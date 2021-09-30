@@ -12,6 +12,7 @@ DB_URL = f"mongodb://{DB_IP}:{DB_PORT}"
 API_IP = env.str('TimeTable_API_IP')
 API_PORT = env.int('TimeTable_API_PORT')
 API_URL = f"http://{API_IP}:{API_PORT}/api"
+API_TOKEN = env.str('TimeTable_API_TOKEN')
 
 Schedule_URL = env.str("Schedule_URL")
 

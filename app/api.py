@@ -27,17 +27,18 @@ tags_metadata = [
     }
 ]
 
-router = APIRouter()
+routerPublic = APIRouter()
+routerPrivate = APIRouter()
 db = TimeTableDB(DB_URL, engine=TimeTableDB.ASYNC_ENGINE)
 
 
-@router.on_event("startup")
+@routerPublic.on_event("startup")
 async def startup():
     content = await TimeTableDB.async_find(db.DLCollection, {}, {"_id": 0, "Group": 1})
     db.groups = [group.get("Group") for group in content]
 
 
-@router.get("/api/timetable",
+@routerPublic.get("/api/timetable",
             summary="Получение основного расписания",
             tags=["Основное расписание"])
 async def get_timetable(group: str = None, day: EnumDays = None):
@@ -69,7 +70,7 @@ async def get_timetable(group: str = None, day: EnumDays = None):
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.post("/api/timetable",
+@routerPrivate.post("/api/timetable",
              summary="Загрузка в базу данных основного расписания",
              tags=["Основное расписание"])
 async def upload_new_timetable(request: Request):
@@ -94,7 +95,7 @@ async def upload_new_timetable(request: Request):
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@router.delete("/api/timetable",
+@routerPrivate.delete("/api/timetable",
                summary="Удаление основного расписания",
                tags=["Основное расписание"])
 async def delete_timetable(token: str = None):
@@ -106,7 +107,7 @@ async def delete_timetable(token: str = None):
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@router.get("/api/groups",
+@routerPublic.get("/api/groups",
             summary="Получение всех имеющихся учебных групп",
             tags=["Группы"])
 async def groups():
@@ -119,7 +120,7 @@ async def groups():
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.post("/api/groups",
+@routerPrivate.post("/api/groups",
              summary="Загрузка в базу данных расписания для группы",
              tags=["Группы"])
 async def replace_group_timetable(request: Request):
@@ -138,7 +139,7 @@ async def replace_group_timetable(request: Request):
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@router.get("/api/groups/{spec}",
+@routerPublic.get("/api/groups/{spec}",
             summary="Получение всех учебных групп указанной специальности",
             tags=["Группы"])
 async def groups(spec: GroupNames):
@@ -152,7 +153,7 @@ async def groups(spec: GroupNames):
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.get("/api/changes",
+@routerPublic.get("/api/changes",
             summary="Получение всех изменений в расписании",
             tags=["Изменения в расписание"])
 async def get_changes():
@@ -164,7 +165,7 @@ async def get_changes():
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.get("/api/changes/groups",
+@routerPublic.get("/api/changes/groups",
             summary="Получение всех учебных групп у которых есть изменения в расписании",
             tags=["Изменения в расписание"])
 async def change_groups():
@@ -181,7 +182,7 @@ async def change_groups():
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.get("/api/changes/{group}",
+@routerPublic.get("/api/changes/{group}",
             summary="Получение изменения в расписании у указанной группы",
             tags=["Изменения в расписание"])
 async def change_group(group: str):
@@ -198,7 +199,7 @@ async def change_group(group: str):
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.post("/api/changes",
+@routerPrivate.post("/api/changes",
              summary="Загрузка в базу данных новых изменений в расписании",
              tags=["Изменения в расписание"])
 async def upload_new_changes(request: Request):
@@ -220,7 +221,7 @@ async def upload_new_changes(request: Request):
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@router.delete("/api/changes",
+@routerPrivate.delete("/api/changes",
                summary="Удаление всех или определенного изменения в расписании",
                tags=["Изменения в расписание"])
 async def delete_changes(token: str = None, date: str = None):
@@ -240,7 +241,7 @@ async def delete_changes(token: str = None, date: str = None):
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@router.get("/api/finalize_schedule/{group}",
+@routerPrivate.get("/api/finalize_schedule/{group}",
              summary="Получение расписания с изменениями для группы",
              tags=["Изменения в расписание"])
 async def get_finalize_schedule(group: str):
@@ -279,7 +280,7 @@ async def get_finalize_schedule(group: str):
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@router.post("/api/vk/users",
+@routerPrivate.post("/api/vk/users",
              summary="Загрузка в базу данных новых пользователей",
              tags=["VK"])
 async def load_new_users(users: List[VKUserModel]):
@@ -291,7 +292,7 @@ async def load_new_users(users: List[VKUserModel]):
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@router.get("/api/vk/users",
+@routerPrivate.get("/api/vk/users",
              summary="Получение всех пользователей VK из базы данных",
              tags=["VK"])
 async def get_groups():
@@ -302,7 +303,7 @@ async def get_groups():
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@router.post("/api/vk/groups",
+@routerPrivate.post("/api/vk/groups",
              summary="Загрузка в базу данных новой группы",
              tags=["VK"])
 async def load_new_group(group: VKGroupModel):
@@ -313,7 +314,7 @@ async def load_new_group(group: VKGroupModel):
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@router.get("/api/vk/groups",
+@routerPrivate.get("/api/vk/groups",
              summary="Получение всех бесед VK из базы данных",
              tags=["VK"])
 async def get_groups():
