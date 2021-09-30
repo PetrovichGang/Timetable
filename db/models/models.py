@@ -68,17 +68,11 @@ class VKUserModel(BaseModel):
     peer_id: Optional[int] = Field(alias="peer_id")
     lesson_group: str = Field(alias="lesson_group")
     join: Optional[int] = Field(alias="join")
-    member_in: Optional[List] = Field(alias="member_in")
     first_name: Optional[str] = Field(alias="first_name")
     last_name: Optional[str] = Field(alias="last_name")
     is_closed: Optional[bool] = Field(alias="is_closed")
     photo: Optional[str] = Field(alias="photo")
     sex: Optional[int] = Field(alias="sex")
-
-    @validator("join", pre=True, always=True)
-    def set_join(cls, join):
-        return join or int(time())
-
 
 class VKGroupModel(BaseModel):
     peer_id: int = Field(alias="peer_id")

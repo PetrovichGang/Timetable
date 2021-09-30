@@ -1,7 +1,7 @@
 from db.models import ChangeModel, DefaultModel, EnumDays, DAYS, VKUserModel, VKGroupModel, GroupNames
 from starlette.responses import JSONResponse, Response
+from pydantic import ValidationError, parse_obj_as
 from fastapi import Request, APIRouter
-from pydantic import ValidationError
 from typing import List, Union
 from datetime import datetime
 from starlette import status
@@ -282,12 +282,23 @@ async def get_finalize_schedule(group: str):
 @router.post("/api/vk/users",
              summary="Загрузка в базу данных новых пользователей",
              tags=["VK"])
-async def load_new_users(users: Union[VKUserModel, List[VKUserModel]]):
+async def load_new_users(users: List[VKUserModel]):
     if users:
-        pprint.pprint(users)
-        await db.VKUsersCollection.insert_many(users)
+        data = [group.dict() for group in parse_obj_as(List[VKUserModel], users)]
+        await db.VKUsersCollection.insert_many(data)
 
         return Response("Пользователи добавлены", status_code=status.HTTP_200_OK)
+    return Response(status_code=status.HTTP_400_BAD_REQUEST)
+
+
+@router.get("/api/vk/users",
+             summary="Получение всех пользователей VK из базы данных",
+             tags=["VK"])
+async def get_groups():
+    users = await db.async_find(db.VKUsersCollection, {}, {"_id": 0})
+    if groups:
+        return JSONResponse(users, status_code=status.HTTP_200_OK)
+
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
@@ -296,7 +307,18 @@ async def load_new_users(users: Union[VKUserModel, List[VKUserModel]]):
              tags=["VK"])
 async def load_new_group(group: VKGroupModel):
     if group:
-        await db.VKGroupsCollection.insert_one(group)
+        await db.VKGroupsCollection.insert_one(group.dict())
 
         return Response("Группа добавлена", status_code=status.HTTP_200_OK)
+    return Response(status_code=status.HTTP_400_BAD_REQUEST)
+
+
+@router.get("/api/vk/groups",
+             summary="Получение всех бесед VK из базы данных",
+             tags=["VK"])
+async def get_groups():
+    groups = await db.async_find(db.VKGroupsCollection, {}, {"_id": 0})
+    if groups:
+        return JSONResponse(groups, status_code=status.HTTP_200_OK)
+
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
