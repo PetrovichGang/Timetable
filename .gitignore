@@ -8,3 +8,4 @@ app/__pycache__/*
 __pycache__/*
 .idea/*
 .env
+db/models/__pycache__/*
