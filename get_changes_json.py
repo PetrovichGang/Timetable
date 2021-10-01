@@ -9,6 +9,7 @@ import pandas
 import json
 import re
 
+headers={'Authorization': f'Bearer {API_TOKEN}'}
 PATH = Path(__file__).parent.absolute()
 URL = Schedule_URL
 
@@ -117,12 +118,12 @@ if __name__ == '__main__':
     for link in get_schedule_links():
         download_schedule(link)
 
-    res = httpx.delete(f"{API_URL}/changes")
+    res = httpx.delete(f"{API_URL}/changes", headers=headers)
     print("Delete status", res.status_code)
     for i, pdf in enumerate(Path(PATH, "schedule").glob("*.pdf")):
         data_frame = parse_pdf(pdf)
         data = json.dumps({"Date": pdf.name.split('-')[2], "Groups": parse_schedule(data_frame)}, ensure_ascii=False)
-        res = httpx.post(f"{API_URL}/changes", json=data)
+        res = httpx.post(f"{API_URL}/changes", json=data, headers=headers)
         print("Upload status", res.status_code)
 
     clear_schedule_dir()

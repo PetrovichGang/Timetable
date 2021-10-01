@@ -1,8 +1,11 @@
+from config import API_TOKEN
 from typing import Union
 from pathlib import Path
 import pandas as pd
 import json
 import re
+
+headers={'Authorization': f'Bearer {API_TOKEN}'}
 
 
 BIG_SPACE_REGEX = re.compile(r"( ){5,}", re.IGNORECASE)
@@ -83,10 +86,10 @@ def finalize_dict(groups: dict) -> list:
 
                     if prev is None or prev == "start" or added_b:
                         pair += 1
-                        a[pair] = replace_trash(val)
+                        a[f"p{pair}"] = replace_trash(val)
                         added_b = False
                     else:
-                        b[pair] = replace_trash(val)
+                        b[f"p{pair}"] = replace_trash(val)
                         added_b = True
 
                 prev = val
@@ -110,6 +113,6 @@ if __name__ == '__main__':
 
     data = json.dumps(final_dict, ensure_ascii=False, separators=(',', ':'), indent=4)
 
-    httpx.delete(f"{API_URL}/timetable")
-    res = httpx.post(f"{API_URL}/timetable", json=data)
+    httpx.delete(f"{API_URL}/timetable", headers=headers)
+    res = httpx.post(f"{API_URL}/timetable", json=data, headers=headers)
     print(res.status_code, res.content)
