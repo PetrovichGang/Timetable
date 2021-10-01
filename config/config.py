@@ -18,5 +18,3 @@ Schedule_URL = env.str("Schedule_URL")
 
 VK_TOKEN = env.str("VK_TOKEN")
 TG_TOKEN = env.str("TG_TOKEN")
-
-print(DB_URL)
