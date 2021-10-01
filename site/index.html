@@ -4,249 +4,37 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta charset="UTF-8">
     <title>Расписание</title>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            margin: 0;
-            font-family: "Segoe UI", sans-serif
-        }
-        
-        #loading {
-            pointer-events: none;
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: #eee;
-            font-size: 24px;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 16px;
-        }
-        
-        #loading>div {
-            background: #0002;
-            overflow: hidden;
-            width: 144px;
-            height: 3px;
-            border-radius: 8px;
-        }
-        
-        #loading>div>div {
-            animation: progress cubic-bezier(0.42, 0, 0.32, 0.99) 1.6s infinite;
-            width: 50%;
-            height: 100%;
-            background: #000;
-            transform: scaleX(0);
-            transform-origin: 0 0;
-        }
-        
-        a {
-            text-decoration: none;
-            color: #000;
-            border-bottom: 1px dashed #000;
-        }
-        
-        wrap {
-            height: 100vh;
-            overflow: scroll;
-        }
-        
-        table {
-            text-align: center;
-            border-collapse: collapse;
-            white-space: nowrap;
-        }
-        
-        td {
-            border: 1px solid #bbb;
-            padding: 8px;
-            font-size: 15px;
-        }
-        
-        td[rowspan] p {
-            writing-mode: vertical-rl;
-            transform: rotate(180deg)
-        }
-        
-        .group>tbody>tr>td {
-            height: 0
-        }
-        
-        b {
-            font-size: 24px
-        }
-        
-        td[s] {
-            font-size: 14px !important;
-            transform: none !important;
-        }
-        
-        .sticky-header {
-            position: sticky;
-            top: 0;
-            transform: translateY(-1px);
-            z-index: 10;
-            background: #f7f7f7;
-            box-shadow: 0px 0.1px 8px 0px #bbb;
-        }
-        
-        #settings {
-            padding: 24px;
-            /*backdrop-filter: blur(4px);*/
-            background: #fffe;
-            border-radius: 60px;
-            box-shadow: 0px 1px 8px 0px #bbb, 0px 0 0 100vmax #0000;
-            position: fixed;
-            bottom: 16px;
-            left: 16px;
-            z-index: 1;
-            user-select: none;
-            font-family: sans-serif;
-            margin: 16px;
-            font-size: 14px;
-            transition: all 0.4s cubic-bezier(0.83, 0, 0.17, 1), left 0.6s cubic-bezier(0.68, -0.6, 0.32, 1.6), bottom 1.2s cubic-bezier(0.68, -0.6, 0.32, 1.6);
-            width: 96px;
-            height: 10px;
-            overflow: hidden;
-            z-index: 20;
-        }
-        
-        #settings:hover {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0px 4px 8px 0px #999, 0px 0 0 100vmax #0004;
-            width: 440px;
-            height: 160px;
-            left: 4px;
-            bottom: 4px
-        }
-        
-        #settings>div {
-            transition: all 0.8s cubic-bezier(0.83, 0, 0.17, 1);
-            margin-left: 14px;
-        }
-        
-        #settings:hover>div {
-            margin-left: 0;
-        }
-        
-        #settings:hover>div>.settings-title {
-            font-size: 20px;
-        }
-        
-        .settings-title>span {
-            transition: all 0.4s cubic-bezier(0.83, 0, 0.17, 1);
-        }
-        
-        #settings:hover>div>.settings-title>span {
-            margin-left: -16px !important;
-        }
-        
-        .settings-title>svg {
-            transition: transform 0.8s cubic-bezier(0, 0, 0, 1.64), opacity .6s ease;
-        }
-        
-        #settings:hover>div>.settings-title>svg {
-            transition: all 0.4s cubic-bezier(0.83, 0, 0.17, 1);
-            transform: translateY(-48px);
-            opacity: 0;
-        }
-        
-        .settings-title {
-            font-weight: 500;
-            font-family: 'Segoe UI';
-            margin: -6px 0 2px;
-            font-size: 16px;
-        }
-        
-        tr>td:nth-child(1),
-        tr:nth-of-type(4n-2)>td:nth-child(2),
-        tr:nth-of-type(1)>td:nth-child(2) {
-            font-weight: 600;
-            font-size: 20px;
-            position: sticky;
-            left: 66px;
-            background: linear-gradient( 90deg, #eee 99%, #bbb 99%);
-            border-right: none;
-            border: 0px;
-            transform: translateY(-1px);
-            box-shadow: inset 1px 1px 0px #0003;
-        }
-        
-        tr>td:nth-child(2),
-        tr:nth-of-type(4n-2)>td:nth-child(3),
-        tr:nth-of-type(1)>td:nth-child(3) {
-            border-left: 0;
-        }
-        
-        td[rowspan] {
-            padding: 0
-        }
-        
-        td[rowspan],
-        td[days] {
-            left: 0 !important;
-            background: #eee !important;
-        }
-        
-        i {
-            color: #d22;
-            font-weight: 500;
-        }
-        
-        hr {
-            border: none;
-            border-top: 1px solid #0006;
-            margin: 8px 8px
-        }
-        /*td {
-            animation: appear 1.5s cubic-bezier(0, 0.44, 0, 1.51) backwards;
-            animation-delay: var(--a) !important;
-        }*/
-        
-        @keyframes progress {
-            0% {
-                transform: scaleX(0);
-            }
-            100% {
-                transform: scaleX(2) translateX(100%);
-            }
-        }
-        
-        @keyframes appear {
-            0% {
-                transform: scale(0.2) translate(-160px, -80px);
-                opacity: 0;
-            }
-            100% {}
-        }
-    </style>
+    <link rel="stylesheet" href="/static/viewer_style.css">
 </head>
 
 <body>
-    <div id="settings">
-        <div style="width:max-content">
+    <div id="settings" onclick="className='open'" tabindex="-1" role="button">
+        <button id="close">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+                <path d="M18.3 5.71c-.39-.39-1.02-.39-1.41 0L12 10.59 7.11 5.7c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41L10.59 12 5.7 16.89c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0L12 13.41l4.89 4.89c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"></path>
+            </svg>
+        </button>
+        <div style="width:100%">
             <p class="settings-title" style="display: flex;gap: 10px;margin-left: -18px;">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
 					<path d="M4.25,5.61C6.57,8.59,10,13,10,13v5c0,1.1,0.9,2,2,2h0c1.1,0,2-0.9,2-2v-5c0,0,3.43-4.41,5.75-7.39 C20.26,4.95,19.79,4,18.95,4H5.04C4.21,4,3.74,4.95,4.25,5.61z"></path>
 				</svg><span>Фильтры</span>
-            </p><br> Группа:
-            <input id="group"><br>
+            </p>
+            <div style="position:relative">
+                <input id="group" type="text" list="groups">
+                <label for="group">Группа</label>
+            </div>
             <input type="checkbox" id="currentWeek">
-            <label for="currentWeek">Текущая неделя (или не текущая, я хз)</label><br>
+            <label for="currentWeek">Текущая неделя</label><br>
             <input type="checkbox" id="currentDay">
             <label for="currentDay">Текущий день</label><br>
             <input type="checkbox" id="withChanges">
-            <label for="withChanges">С изменениями (применяются на текущий день или на ПН)</label><br><br>
-            <button onclick="update()">Показать</button>
+            <label for="withChanges">С изменениями</label><br><br>
+            <button primary onclick="update()">Показать</button>
             <button onclick="reset()">Сброс</button>
         </div>
     </div>
-    <wrap>
+    <wrap onclick="previousElementSibling.className=''">
         <table id="base">
             <tbody></tbody>
         </table>
@@ -259,9 +47,14 @@
         </div>
     </div>
 
+    <datalist id="groups"></datalist>
+
     <script>
         const $ = id => document.getElementById(id)
-        let local_days = ["MON", "TUE", "WED", "THU", "FRI", "SAT"]
+        $('close').onclick = e => {
+            e.stopPropagation();
+            $('settings').className = ''
+        }
 
         Date.prototype.getISODay = function() {
             return (this.getDay() + 6) % 7 + 1
@@ -281,11 +74,14 @@
 
         let table = $("base").tBodies[0]
         let days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
+        let jsonDays = ["MON", "TUE", "WED", "THU", "FRI", "SAT"]
 
         const parseTTWithChanges = (timetable, changes) => {
+            console.log(timetable)
+            console.log(changes)
             for (const [changeGroup, changePairs] of Object.entries(changes)) {
                 if (timetable.hasOwnProperty(changeGroup)) {
-                    let day = timetable[changeGroup][local_days[currentDay === 6 ? 0 : currentDay]]
+                    let day = timetable[changeGroup][jsonDays[currentDay === 6 ? 0 : currentDay]]
                     day.b = {}
 
                     for (const [num, to] of Object.entries(changePairs.Changes_lessons))
@@ -299,19 +95,19 @@
         }
 
         const parseTimeTable = timetable => {
-            for (const [tgroup, days] of Object.entries(timetable)) {
-                if (group === null || tgroup === group) {
+            for ({ Group, Days } of timetable) {
+                if (group === '' || Group === group) {
                     let ri = 1
-                    table.rows[0].insertCell(-1).innerHTML = `<b><a href='?g=${tgroup}'>${tgroup}</a></b>`
+                    table.rows[0].insertCell(-1).innerHTML = `<b><a href='?g=${Group}'>${Group}</a></b>`
                     table.rows[0].className = "sticky-header"
                     if (dayParam && currentDay !== 6)
-                        processDay(days[local_days[currentDay]], 1)
+                        processDay(Days[jsonDays[currentDay]], 1)
                     else
-                        for (const [key, day] of Object.entries(days)) {
+                        for (const [key, day] of Object.entries(Days)) {
                             processDay(day, ri)
                             ri += 4
                         }
-                    if (group !== null) break
+                    if (group !== '') break
                 }
             }
             $("loading").style.display = "none"
@@ -319,15 +115,15 @@
 
         const processDay = (day, ri) => {
             for (let i = 1; i <= 4; i++) {
-                let addB = day.b !== undefined && day.b.hasOwnProperty(i)
+                let addB = day.b !== undefined && day.b.hasOwnProperty('p'+i)
                 let cell = table.rows[ri++].insertCell(-1)
                     //cell.style.setProperty('--a', (anim++).toString().padStart(4, "0") * 0.003 + "s")
                 if (!weekParam)
-                    cell.innerHTML = (day.a.hasOwnProperty(i) ? day.a[i].replaceAll(',', '<br>') : "") + (addB ? "<hr>" + day.b[i].replaceAll(',', '<br>') : "")
-                else if (weekParam === 'a' || !day.b.hasOwnProperty(i))
-                    cell.innerHTML = (day.a.hasOwnProperty(i) ? day.a[i].replaceAll(',', '<br>') : "")
+                    cell.innerHTML = (day.a.hasOwnProperty('p'+i) ? day.a['p'+i].replaceAll(',', '<br>') : "") + (addB ? "<hr>" + day.b['p'+i].replaceAll(',', '<br>') : "")
+                else if (weekParam === 'a' || !addB)
+                    cell.innerHTML = (day.a.hasOwnProperty('p'+i) ? day.a['p'+i].replaceAll(',', '<br>') : "")
                 else
-                    cell.innerHTML = (addB ? day.b[i].replaceAll(',', '<br>') : "")
+                    cell.innerHTML = (addB ? day.b['p'+i].replaceAll(',', '<br>') : "")
             }
         }
 
@@ -335,27 +131,34 @@
             params.set("changes", $("withChanges").checked)
             params.set("week", $("currentWeek").checked)
             params.set("day", $("currentDay").checked)
-            if ($("group").value != '')
-                params.set("g", $("group").value)
+            params.set("g", $("group").value)
                 //localStorage.setItem('group', $("group").value)
                 //location.search = params.toString()
             history.replaceState(null, "Viewer", location.pathname + "?" + params.toString())
             init()
         }
+
         const reset = () => {
             params = new URLSearchParams()
             history.replaceState(null, "Viewer", location.pathname)
             init()
         }
 
+        const setTimetable = (jsonTT, jsonTT2) => {
+            timetableJSON = jsonTT
+            timetable2JSON = jsonTT2
+            $('groups').innerHTML = timetableJSON.map(g => `<option value="${g.Group}">`).join("")
+            init()
+        }
+
         const init = () => {
-            group = params.get("g")
+            group = params.get("g") ?? ''
             $("group").value = group
 
             dayParam = params.get("day") === 'true'
             $("currentDay").checked = dayParam
 
-            weekParam = params.get("week") === 'true' ? (new Date().getWeek() % 2 === 0 ? 'a' : 'b') : false
+            weekParam = params.get("week") === 'true' ? (new Date().getWeek() % 2 === 1 ? 'a' : 'b') : false
             $("currentWeek").checked = weekParam
 
             table.innerHTML = `<tr>
@@ -372,20 +175,32 @@
             if (params.get("changes") === 'true') {
                 $("withChanges").checked = true
                 parseTimeTable(timetable2JSON)
-            } else
+            } else {
+                $("withChanges").checked = false
                 parseTimeTable(timetableJSON)
+            }
         }
-        fetch("timetable.json")
-            .then(response => response.text())
-            .then(jsonTT =>
-                fetch("change0.json")
-                .then(response => response.json())
-                .then(jsonChanges => {
-                    timetableJSON = JSON.parse(jsonTT)
-                    timetable2JSON = parseTTWithChanges(JSON.parse(jsonTT), jsonChanges)
-                    init()
-                }))
+        fetch("/api/timetable")
+            .then(response => {
+                if (response.status == 200)
+                    return response.text()
+                else
+                    throw new Error("/api/timetable недоступен")
+            })
+            .then(jsonTT => {
+                fetch("changes.json")
+                    .then(response => response.json())
+                    .then(jsonChanges => 
+                        setTimetable(JSON.parse(jsonTT), parseTTWithChanges(JSON.parse(jsonTT), jsonChanges))
+                    )
+                    .catch(error => {
+                        let tt = JSON.parse(jsonTT)
+                        setTimetable(tt, tt)
+                        $("withChanges").disabled = true
+                    })
+            })
+            .catch(error => $('loading').innerHTML = error)
     </script>
 </body>
 
-</html>
+</html> 
