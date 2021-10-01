@@ -7,7 +7,7 @@ load_dotenv(Path(CWD, ".env"))
 
 DB_IP = env.str("TimeTable_DB_IP")
 DB_PORT = env.int("TimeTable_DB_PORT")
-DB_URL = f"mongodb://{DB_IP}:{DB_PORT}"
+DB_URL = f"mongodb://{DB_IP}:{DB_PORT}" if env.str("TimeTable_DB_URL") == "0" else env.str("TimeTable_DB_URL")
 
 API_IP = env.str('TimeTable_API_IP')
 API_PORT = env.int('TimeTable_API_PORT')
@@ -18,3 +18,5 @@ Schedule_URL = env.str("Schedule_URL")
 
 VK_TOKEN = env.str("VK_TOKEN")
 TG_TOKEN = env.str("TG_TOKEN")
+
+print(DB_URL)
