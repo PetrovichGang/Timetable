@@ -1,11 +1,10 @@
+from config import API_URL, Schedule_URL, API_TOKEN
 from datetime import datetime, timedelta
-from config import API_URL, Schedule_URL
-from typing import Union
-from httpx import get
 from pathlib import Path
-import httpx
+from typing import Union
 import camelot
 import pandas
+import httpx
 import json
 import re
 
@@ -16,7 +15,7 @@ URL = Schedule_URL
 
 def get_schedule_links(url: str = URL) -> list:
     links = []
-    res = get(url)
+    res = httpx.get(url)
 
     if res.status_code == 200:
         data = res.content.decode("utf-8")
@@ -36,10 +35,14 @@ def download_schedule(url: str) -> None:
     path = Path(PATH, "schedule")
     if not path.exists(): path.mkdir()
 
-    res = get(url)
-    if res.status_code == 200:
-        with open(Path(path, file_name), "wb") as file:
-            file.write(res.content)
+    final_file_path = Path(path, file_name)
+
+    if not final_file_path.exists():
+        print(f"Downloading: {url}")
+        res = httpx.get(url)
+        if res.status_code == 200:
+            with open(final_file_path, "wb") as file:
+                file.write(res.content)
 
 
 def clear_schedule_dir():
@@ -63,12 +66,17 @@ def parse_schedule(tables: pandas.DataFrame) -> dict:
                 template = {
                     "ChangeLessons": {},
                     "DefaultLessons": [],
-                    "SkipLessons": []
+                    "SkipLessons": [],
+                    "Comments": []
                 }
 
                 data = cell.split("\n")
                 last_num = None
                 for lesson in data[1:]:
+                    if not re.match("^(\d,?)*п.(.*)$", lesson):
+                        template["Comments"].append(lesson)
+                        continue
+
                     nums = re.search("(\d,?)*п.", lesson)
 
                     if nums is None:
@@ -80,17 +88,17 @@ def parse_schedule(tables: pandas.DataFrame) -> dict:
                     last_num = next(iter(nums)) if len(nums) == 1 else last_num
 
                     if "расписанию" in lesson:
-                        template["DefaultLessons"] = list(nums)
+                        template["DefaultLessons"] = [f"p{num}" for num in list(nums)]
 
                     elif "НЕТ" in lesson:
-                        template["SkipLessons"] = list(nums)
+                        template["SkipLessons"] = [f"p{num}" for num in list(nums)]
 
                     else:
                         try:
                             lesson = " ".join(filter(lambda text: text != '',
                                                 lesson.split("п.", 1)[1].split(" ")))  # Удаление всех ''
                             for num in nums:
-                                template["ChangeLessons"][num] = lesson
+                                template["ChangeLessons"][f"p{num}"] = lesson
 
                         except IndexError:
                             pass
@@ -107,13 +115,6 @@ class DateTime:
         self.tomorrow = (datetime.now() + timedelta(days=1)).strftime("%d.%m.%Y")
 
 
-class SetEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, set):
-            return list(obj)
-        return json.JSONEncoder.default(self, obj)
-
-
 if __name__ == '__main__':
     for link in get_schedule_links():
         download_schedule(link)
@@ -126,4 +127,4 @@ if __name__ == '__main__':
         res = httpx.post(f"{API_URL}/changes", json=data, headers=headers)
         print("Upload status", res.status_code)
 
-    clear_schedule_dir()
+    #clear_schedule_dir()

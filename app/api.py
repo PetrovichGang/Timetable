@@ -85,7 +85,6 @@ async def upload_new_timetable(request: Request):
                 temp = DefaultModel.parse_obj(group)
                 temp = json.loads(temp.json(by_alias=True))
                 result.append(temp)
-            await db.DLCollection.delete_many({})
             await db.DLCollection.insert_many(data)
 
             return Response(f"Новое расписание загруженно", status_code=status.HTTP_200_OK)
@@ -241,14 +240,14 @@ async def delete_changes(token: str = None, date: str = None):
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@routerPrivate.get("/api/finalize_schedule/{group}",
+@routerPublic.get("/api/finalize_schedule/{group}",
              summary="Получение расписания с изменениями для группы",
              tags=["Изменения в расписание"])
 async def get_finalize_schedule(group: str):
     result = []
     template = lambda: {
         "Date": "",
-        "Lessons": {day: "Нет" for day in range(1, 4)}
+        "Lessons": {f"p{num}": "Нет" for num in range(1, 4)}
     }
     if group in db.groups:
         content = await TimeTableDB.async_find(db.CLCollection, {}, {"_id": 0, "Date": 1, "Lessons": f"$Groups.{group}"})

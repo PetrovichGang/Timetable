@@ -42,6 +42,7 @@ class ChangeList(BaseModel):
     change_lessons: dict = Field(alias="ChangeLessons")
     default_lessons: list = Field(alias="DefaultLessons")
     skip_lessons: list = Field(alias="SkipLessons")
+    comments: list = Field(alias="Comments")
 
 
 class ChangeModel(BaseModel):
