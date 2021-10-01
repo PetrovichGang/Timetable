@@ -1,32 +1,20 @@
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorClient, AsyncIOMotorCursor
-from typing import Union, Dict
+from typing import Union
 from pathlib import Path
+import certifi
 import asyncio
 import pymongo
 
 
 class TimeTableDB:
-    ENGINE = pymongo.MongoClient
-    ASYNC_ENGINE = AsyncIOMotorClient
+    def __init__(self, uri: str, certificate: Union[Path, str] = None):
+        self.url = uri
+        self.certificate = certificate
 
-    def __init__(self, uri: str, certificate: Union[Path, str] = None, engine: Union[ENGINE, ASYNC_ENGINE] = ENGINE):
-        try:
-            if certificate:
-                if isinstance(certificate, str): certificate = Path(certificate)
+        self.groups = []
+        self.reconnect_count = 0
 
-                if certificate.exists():
-                    self._connection = engine(uri, serverSelectionTimeoutMS=5000, tls=True,
-                                              tlsCertificateKeyFile='mongo_cert.pem', )
-                else:
-                    raise FileExistsError("Certificate not exists")
-
-            else:
-                self._connection = engine(uri, serverSelectionTimeoutMS=5000)
-
-            self._connection.server_info()
-        except (pymongo.errors.ServerSelectionTimeoutError, pymongo.errors.OperationFailure) as err:
-            print(err)
-            raise
+        self.connect()
 
         self.LessonsDB = self._connection["TimeTable"]
         self.DLCollection = self.LessonsDB["DefaultLessons"]  # Collection DefaultLessons
@@ -36,7 +24,44 @@ class TimeTableDB:
         self.VKGroupsCollection = self.SocialDB["VKGroups"]
         self.VKUsersCollection = self.SocialDB["VKUsers"]
 
-        self.groups = []
+    def connect(self):
+        try:
+            if self.certificate:
+                if isinstance(self.certificate, str): self.certificate = Path(self.certificate)
+
+                if self.certificate.exists():
+                    self._connection = AsyncIOMotorClient(self.url, serverSelectionTimeoutMS=5000, tls=True,
+                                                          tlsCertificateKeyFile=self.certificate,
+                                                          tlsCAFile=certifi.where())
+                else:
+                    raise FileExistsError("Certificate not exists")
+
+            else:
+                self._connection = AsyncIOMotorClient(self.url, serverSelectionTimeoutMS=5000,
+                                                      tlsCAFile=certifi.where())
+
+            self.status = self._connection.admin.command('ping')
+        except (pymongo.errors.ServerSelectionTimeoutError, pymongo.errors.OperationFailure) as err:
+            print(err)
+            self.reconnect()
+
+    def reconnect(self):
+        self.reconnect_count += 1
+        print(f"[ #{self.reconnect_count} ] Trying to reconnect")
+
+        self.connect()
+
+        self.LessonsDB = self._connection["TimeTable"]
+        self.DLCollection = self.LessonsDB["DefaultLessons"]
+        self.CLCollection = self.LessonsDB["ChangeLessons"]
+
+        self.SocialDB = self._connection["Social"]
+        self.VKGroupsCollection = self.SocialDB["VKGroups"]
+        self.VKUsersCollection = self.SocialDB["VKUsers"]
+        
+    def ping(self) -> dict:
+        self.status = self._connection.admin.command("ping")
+        return self.status
 
     @staticmethod
     async def async_iteration(cursor: AsyncIOMotorCursor) -> list:
@@ -57,7 +82,7 @@ class TimeTableDB:
 if __name__ == '__main__':
     from config import DB_URL
 
-    db = TimeTableDB(DB_URL, engine=TimeTableDB.ASYNC_ENGINE)
+    db = TimeTableDB(DB_URL)
     cursor = TimeTableDB.async_find(db.DLCollection, {})
 
     loop = asyncio.get_event_loop()

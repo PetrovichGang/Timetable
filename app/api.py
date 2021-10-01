@@ -29,7 +29,7 @@ tags_metadata = [
 
 routerPublic = APIRouter()
 routerPrivate = APIRouter()
-db = TimeTableDB(DB_URL, engine=TimeTableDB.ASYNC_ENGINE)
+db = TimeTableDB(DB_URL)
 
 
 @routerPublic.on_event("startup")
