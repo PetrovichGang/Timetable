@@ -39,8 +39,7 @@ class TimeTableDB:
                     raise FileExistsError("Certificate not exists")
 
             else:
-                self._connection = AsyncIOMotorClient(self.url, serverSelectionTimeoutMS=5000,
-                                                      tlsCAFile=certifi.where())
+                self._connection = AsyncIOMotorClient(self.url, serverSelectionTimeoutMS=5000)
 
             self.status = self._connection.admin.command('ping')
         except (pymongo.errors.ServerSelectionTimeoutError, pymongo.errors.OperationFailure) as err:

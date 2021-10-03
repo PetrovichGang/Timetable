@@ -344,8 +344,8 @@ async def get_tg_chat(chat_id: int, user_id: int):
             notify_changes=True,
             operation=0
         ).dict()
-        await db.TGChatsCollection.insert_many(new_chat)
-        return JSONResponse(new_chat, status_code=status.HTTP_200_OK)
+        await db.TGChatsCollection.insert_one(new_chat)
+        return JSONResponse(json.dumps(new_chat), status_code=status.HTTP_200_OK)
     except ValidationError as e:
         return Response(e.json(), status_code=status.HTTP_400_BAD_REQUEST)
 

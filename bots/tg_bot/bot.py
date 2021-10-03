@@ -20,17 +20,40 @@ async def start(message: types.Message):
         /test
     """)
     res = httpx.get(f"{API_URL}/tg/chat?chat_id={message.chat.id}&user_id={message.from_user.id}", headers=AUTH_HEADER)
-    if not res.status_code == 200:
+    if res.status_code == 200:
+        await bot.send_message(message.chat.id, f"Группа: {res.json()[0]['group']}")
+    else:
         await bot.send_message(message.chat.id, "Запрос не выполнен")
 
 
 @dp.message_handler(commands=['set_group'])
 async def set_group(message: types.Message):
     res = httpx.post(f"{API_URL}/tg/chat?chat_id={message.chat.id}&group={message.text[11:]}", headers=AUTH_HEADER)
-    if res.status_code == 200:
+    if res.status_code == 200 or res.status_code == 400:
         await bot.send_message(message.chat.id, res.text)
     else:
-        await bot.send_message(message.chat.id, "Запрос не выполнен")
+        await bot.send_message(message.chat.id, "Ошибка в запросе")
+
+
+@dp.message_handler(commands=['test'])
+async def test(message: types.Message):
+    res = httpx.get(f"{API_URL}/tg/chat?chat_id={message.chat.id}&user_id={message.from_user.id}", headers=AUTH_HEADER)
+
+    if res.status_code == 200:
+        group = res.json()[0]["group"]
+        if group == "":
+            await bot.send_message(message.chat.id, "Задайте группу")
+        else:
+            res = httpx.get(f"{API_URL}/timetable?group={group}")
+            if res.status_code == 200:
+                days = res.json()[0]["Days"]
+                await bot.send_message(message.chat.id, json.dumps(days, ensure_ascii=False))
+            else:
+                await bot.send_message(message.chat.id, "Ошибка в запросе")
+    elif res.status_code == 404:
+        await bot.send_message(message.chat.id, "Задайте группу")
+    else:
+        await bot.send_message(message.chat.id, "Ошибка в запросе")
 
 
 async def on_startup(dispatcher):
