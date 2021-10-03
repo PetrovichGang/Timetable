@@ -24,6 +24,8 @@ class TimeTableDB:
         self.VKGroupsCollection = self.SocialDB["VKGroups"]
         self.VKUsersCollection = self.SocialDB["VKUsers"]
 
+        self.TGChatsCollection = self.SocialDB["TGChats"]
+
     def connect(self):
         try:
             if self.certificate:
@@ -58,6 +60,8 @@ class TimeTableDB:
         self.SocialDB = self._connection["Social"]
         self.VKGroupsCollection = self.SocialDB["VKGroups"]
         self.VKUsersCollection = self.SocialDB["VKUsers"]
+
+        self.TGChatsCollection = self.SocialDB["TGChats"]
         
     def ping(self) -> dict:
         self.status = self._connection.admin.command("ping")

@@ -14,8 +14,12 @@ API_IP = env.str('TimeTable_API_IP')
 API_PORT = env.int('TimeTable_API_PORT')
 API_URL = f"http://{API_IP}:{API_PORT}/api"
 API_TOKEN = env.str('TimeTable_API_TOKEN')
+AUTH_HEADER={'Authorization': f'Bearer {API_TOKEN}'}
 
 Schedule_URL = env.str("Schedule_URL")
 
 VK_TOKEN = env.str("VK_TOKEN")
 TG_TOKEN = env.str("TG_TOKEN")
+
+TG_DOMAIN = env.str("TG_DOMAIN")
+TG_PATH = env.str("TG_PATH")

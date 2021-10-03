@@ -4,15 +4,14 @@ from datetime import datetime
 from time import time
 from enum import Enum
 
-
 DAYS = {
-        "MON": "$Days.MON",
-        "TUE": "$Days.TUE",
-        "WED": "$Days.WED",
-        "THU": "$Days.THU",
-        "FRI": "$Days.FRI",
-        "SAT": "$Days.SAT"
-    }
+    "MON": "$Days.MON",
+    "TUE": "$Days.TUE",
+    "WED": "$Days.WED",
+    "THU": "$Days.THU",
+    "FRI": "$Days.FRI",
+    "SAT": "$Days.SAT"
+}
 
 
 class EnumDays(str, Enum):
@@ -75,6 +74,7 @@ class VKUserModel(BaseModel):
     photo: Optional[str] = Field(alias="photo")
     sex: Optional[int] = Field(alias="sex")
 
+
 class VKGroupModel(BaseModel):
     peer_id: int = Field(alias="peer_id")
     owner_id: int = Field(alias="owner_id")
@@ -92,3 +92,20 @@ class VKGroupModel(BaseModel):
     @validator("active_ids", "admin_ids", pre=True, always=True)
     def filter_ids(cls, ids):
         return list(filter(lambda user_id: user_id > 0, ids))
+
+
+class TGChatModel(BaseModel):
+    user_id: int = Field(alias="user_id")
+    chat_id: int = Field(alias="chat_id")
+    group: Optional[str] = Field(alias="group")
+    notify_changes: bool = Field(alias="notify_changes")
+
+    # 0 - Главное меню с настройками (оповещения/группа/будильник)
+    # 1 - Выбор буквы группы
+    # 2 - Выбор группы
+    operation: int = Field(alias="operation")
+
+    # # #
+    chat_title: Optional[str] = Field(alias="group_title")
+    user_username: Optional[str] = Field(alias="user_username")
+    chat_username: Optional[str] = Field(alias="group_username")

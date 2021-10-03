@@ -2,11 +2,8 @@ rasp.xls
 timetable.json
 viewer/timetable.json
 viewer/changes.json
-config/__pycache__/*
-db/__pycache__/*
-app/__pycache__/*
-__pycache__/*
 .idea/*
 .env
-db/models/__pycache__/*
 schedule/*
+__pycache__/*
+*.pyc

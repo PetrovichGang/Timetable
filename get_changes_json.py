@@ -1,4 +1,4 @@
-from config import API_URL, Schedule_URL, API_TOKEN
+from config import API_URL, Schedule_URL, AUTH_HEADER
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Union
@@ -8,7 +8,6 @@ import httpx
 import json
 import re
 
-headers={'Authorization': f'Bearer {API_TOKEN}'}
 PATH = Path(__file__).parent.absolute()
 URL = Schedule_URL
 
@@ -119,12 +118,12 @@ if __name__ == '__main__':
     for link in get_schedule_links():
         download_schedule(link)
 
-    res = httpx.delete(f"{API_URL}/changes", headers=headers)
+    res = httpx.delete(f"{API_URL}/changes", headers=AUTH_HEADER)
     print("Delete status", res.status_code)
     for i, pdf in enumerate(Path(PATH, "schedule").glob("*.pdf")):
         data_frame = parse_pdf(pdf)
         data = json.dumps({"Date": pdf.name.split('-')[2], "Groups": parse_schedule(data_frame)}, ensure_ascii=False)
-        res = httpx.post(f"{API_URL}/changes", json=data, headers=headers)
+        res = httpx.post(f"{API_URL}/changes", json=data, headers=AUTH_HEADER)
         print("Upload status", res.status_code)
 
     #clear_schedule_dir()

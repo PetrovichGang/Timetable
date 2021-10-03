@@ -1,12 +1,9 @@
-from config import API_TOKEN
+from config import AUTH_HEADER
 from typing import Union
 from pathlib import Path
 import pandas as pd
 import json
 import re
-
-headers={'Authorization': f'Bearer {API_TOKEN}'}
-
 
 BIG_SPACE_REGEX = re.compile(r"( ){5,}", re.IGNORECASE)
 DAYS_LIST = {
@@ -113,6 +110,6 @@ if __name__ == '__main__':
 
     data = json.dumps(final_dict, ensure_ascii=False, separators=(',', ':'), indent=4)
 
-    httpx.delete(f"{API_URL}/timetable", headers=headers)
-    res = httpx.post(f"{API_URL}/timetable", json=data, headers=headers)
+    httpx.delete(f"{API_URL}/timetable", headers=AUTH_HEADER)
+    res = httpx.post(f"{API_URL}/timetable", json=data, headers=AUTH_HEADER)
     print(res.status_code, res.content)
