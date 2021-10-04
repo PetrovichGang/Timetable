@@ -290,7 +290,16 @@ async def get_finalize_schedule(group: str):
 async def load_new_users(users: List[VKUserModel]):
     if users:
         data = [group.dict() for group in parse_obj_as(List[VKUserModel], users)]
-        await db.VKUsersCollection.insert_many(data)
+        ids = [user["id"] for user in data]
+
+        ids_exist = await db.async_find(db.VKUsersCollection, {"id": {"$in": ids}}, {"_id": 0, "id": 1})
+        unique_ids = set(ids).difference([user_id["id"] for user_id in ids_exist])
+        users = list(filter(lambda user: user["id"] in unique_ids, data))
+
+        if users:
+            await db.VKUsersCollection.insert_many(users)
+        else:
+            return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
         return Response("Пользователи добавлены", status_code=status.HTTP_200_OK)
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
@@ -299,8 +308,11 @@ async def load_new_users(users: List[VKUserModel]):
 @routerPrivate.get("/api/vk/users",
                    summary="Получение всех пользователей VK из базы данных",
                    tags=["VK"])
-async def get_groups():
-    users = await db.async_find(db.VKUsersCollection, {}, {"_id": 0})
+async def get_users(id: int = None):
+    if id:
+        users = await db.async_find(db.VKUsersCollection, {"id": id}, {"_id": 0})
+    else:
+        users = await db.async_find(db.VKUsersCollection, {}, {"_id": 0})
     if groups:
         return JSONResponse(users, status_code=status.HTTP_200_OK)
 
@@ -311,18 +323,23 @@ async def get_groups():
                     summary="Загрузка в базу данных новой группы",
                     tags=["VK"])
 async def load_new_group(group: VKGroupModel):
-    if group:
+    groups_vk = await db.async_find(db.VKGroupsCollection, {"peer_id": group.peer_id}, {"_id": 0})
+    if group and not groups_vk:
         await db.VKGroupsCollection.insert_one(group.dict())
 
         return Response("Группа добавлена", status_code=status.HTTP_200_OK)
-    return Response(status_code=status.HTTP_400_BAD_REQUEST)
+    return Response("Группа существует", status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @routerPrivate.get("/api/vk/groups",
                    summary="Получение всех бесед VK из базы данных",
                    tags=["VK"])
-async def get_groups():
-    groups_vk = await db.async_find(db.VKGroupsCollection, {}, {"_id": 0})
+async def get_groups(peer_id: int = None):
+    if peer_id:
+        groups_vk = await db.async_find(db.VKGroupsCollection, {"peer_id": peer_id}, {"_id": 0})
+    else:
+        groups_vk = await db.async_find(db.VKGroupsCollection, {}, {"_id": 0})
+
     if groups_vk:
         return JSONResponse(groups_vk, status_code=status.HTTP_200_OK)
 
