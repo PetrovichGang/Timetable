@@ -250,8 +250,10 @@ async def get_finalize_schedule(group: str):
     result = []
     template = lambda: {
         "Date": "",
-        "Lessons": {f"p{num}": "Нет" for num in range(1, 4)}
+        "Lessons": {f"p{num}": "Нет" for num in range(1, 4)},
+        "Comments": []
     }
+
     if group in db.groups:
         content = await TimeTableDB.async_find(db.CLCollection, {},
                                                {"_id": 0, "Date": 1, "Lessons": f"$Groups.{group}"})
@@ -265,15 +267,19 @@ async def get_finalize_schedule(group: str):
             temp = template()
             temp["Date"] = data.get("Date")
 
-            lessons = default_lessons[0]["Lessons"]["a"]
-            if num_weekday % 2 == 1 and len(default_lessons[0]) > 2:
-                lessons.update(default_lessons[0]["Lessons"]["b"])
+            lessons = {}
+            changes = data.get("Lessons")
+
+            if changes["DefaultLessons"]:
+                lessons = default_lessons[0]["Lessons"]["a"]
+                if num_weekday % 2 == 1 and len(default_lessons[0]) > 2:
+                    lessons.update(default_lessons[0]["Lessons"]["b"])
 
             if len(data) > 1:
-                changes = data.get("Lessons")
-
-                lessons.update(changes["ChangeLessons"])
+                lessons.update(changes["ChangeLessons"]) if changes["ChangeLessons"] else None
                 lessons.update({str(num): "Нет" for num in changes["SkipLessons"]}) if changes["SkipLessons"] else None
+
+                temp["Comments"] = changes["Comments"]
 
             temp["Lessons"].update(lessons)
 
