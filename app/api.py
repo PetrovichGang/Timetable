@@ -2,11 +2,12 @@ from db.models import ChangeModel, DefaultModel, EnumDays, DAYS, VKUserModel, VK
 from starlette.responses import JSONResponse, Response
 from pydantic import ValidationError, parse_obj_as
 from fastapi import Request, APIRouter
-from typing import List
+from templates import schedule
 from datetime import datetime
 from starlette import status
 from db import TimeTableDB
 from config import DB_URL
+from typing import List
 import json
 
 tags_metadata = [
@@ -246,8 +247,9 @@ async def delete_changes(date: str = None):
 @routerPublic.get("/api/finalize_schedule/{group}",
                   summary="Получение расписания с изменениями для группы",
                   tags=["Изменения в расписание"])
-async def get_finalize_schedule(group: str):
+async def get_finalize_schedule(group: str, text: bool = False):
     result = []
+    today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
     template = lambda: {
         "Date": "",
         "Lessons": {f"p{num}": "Нет" for num in range(1, 4)},
@@ -258,7 +260,7 @@ async def get_finalize_schedule(group: str):
         content = await TimeTableDB.async_find(db.CLCollection, {},
                                                {"_id": 0, "Date": 1, "Lessons": f"$Groups.{group}"})
 
-        for data in content:
+        for data in filter(lambda data: datetime.strptime(data.get("Date"), "%d.%m.%Y") >= today, content):
             day = datetime.strptime(data.get("Date"), "%d.%m.%Y")
             num_weekday = day.isocalendar()[1]
             default_lessons = await TimeTableDB.async_find(db.DLCollection, {"Group": group},
@@ -283,7 +285,14 @@ async def get_finalize_schedule(group: str):
 
             temp["Lessons"].update(lessons)
 
-            result.append(temp)
+            if text:
+                result.append(schedule.render(
+                    Date=temp["Date"],
+                    Lessons=[f"{index}п. {lesson}" for index, lesson in enumerate(temp["Lessons"].values(), 1)],
+                    Comments=temp["Comments"]
+                ))
+            else:
+                result.append(temp)
 
         return JSONResponse(result, status_code=status.HTTP_200_OK)
     else:

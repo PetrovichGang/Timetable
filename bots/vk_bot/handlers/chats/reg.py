@@ -21,20 +21,6 @@ bp = Blueprint("for chat commands")
 bp.labeler.vbml_ignore_case = True
 
 
-@bp.on.chat_message(ChatInfoRule(), text="где я")
-async def where_am_i(message: Message, chat: MessagesConversation):
-    if chat:
-
-        members = await get_group_members(message.peer_id)
-        pprint(message.dict())
-        pprint(chat.dict())
-        pprint(members)
-        await message.answer(f"ID группы <<{message.peer_id}>>")
-        await message.answer(f"Имя группы <<{chat.chat_settings.title}>>")
-    else:
-        await message.answer(f"ID группы <<{message.peer_id}>>")
-
-
 @bp.on.chat_message(ChatInfoRule(), text=["/set_group", "/set_group <group>"])
 async def set_group(message: Message, chat: MessagesConversation, group: str = None):
     if chat:
@@ -58,8 +44,8 @@ async def set_group(message: Message, chat: MessagesConversation, group: str = N
         await message.answer("Требуются права администратора для установки учебной группы")
 
 
-@bp.on.chat_message(ChatInfoRule(), text=["/get_changes", "/изменения"])
-async def send_changes(message: Message, chat: MessagesConversation):
+@bp.on.chat_message(text=["/get_changes", "/изменения"])
+async def send_changes(message: Message):
     async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
         group = await client.get(f"{API_URL}/vk/groups?peer_id={message.peer_id}")
 
@@ -67,14 +53,14 @@ async def send_changes(message: Message, chat: MessagesConversation):
             group = group.json()[0]
 
             if group["lesson_group"]:
-                changes = await client.get(f"{API_URL}/finalize_schedule/{group['lesson_group']}")
+                changes = await client.get(f"{API_URL}/finalize_schedule/{group['lesson_group']}?text=true")
                 for change in changes.json():
-                    await message.answer(repr(change))
+                    await message.answer(change)
             else:
-                await message.answer("Группа не установлена\nУстановите группу через /set_group группа")
+                await message.answer("Учебная группа не установлена\nУстановите группу через /set_group группа")
 
         else:
-            await message.answer("Группа не установлена\nУстановите группу через /set_group группа")
+            await message.answer("Учебная группа не установлена\nУстановите группу через /set_group группа")
 
 
 async def is_owner(message: Message) -> bool:

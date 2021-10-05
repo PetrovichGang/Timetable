@@ -13,3 +13,5 @@ fastapi-cache2==0.1.6
 loguru~=0.5.3
 aiogram==2.15
 vkbottle==3.0.2
+certifi==2021.5.30
+Jinja2==3.0.1
