@@ -1,0 +1,10 @@
+Расписание на {{ Date }}:
+{%- for lesson in Lessons %}
+    {{ lesson }}
+{%- endfor %}
+{% if Comments %}
+Дополнительная информация:
+{%- for comment in Comments %}
+    {{ comment }}
+{%- endfor -%}
+{% endif %}
