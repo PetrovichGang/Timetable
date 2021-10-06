@@ -1,10 +1,12 @@
 Расписание на {{ Date }}:
-{%- for lesson in Lessons %}
+{% if ClassHour %}Классный час{{ '\n' }}{% endif %}
+{% for lesson in Lessons %}
     {{ lesson }}
-{%- endfor %}
+{% endfor %}
+
 {% if Comments %}
 Дополнительная информация:
-{%- for comment in Comments %}
+{% for comment in Comments %}
     {{ comment }}
-{%- endfor -%}
+{%- endfor %}
 {% endif %}

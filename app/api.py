@@ -262,7 +262,8 @@ async def get_finalize_schedule(group: str, text: bool = False):
 
         for data in filter(lambda data: datetime.strptime(data.get("Date"), "%d.%m.%Y") >= today, content):
             day = datetime.strptime(data.get("Date"), "%d.%m.%Y")
-            num_weekday = day.isocalendar()[1]
+            num_week = day.isocalendar()[1]
+            weekday = day.isocalendar()[2]
             default_lessons = await TimeTableDB.async_find(db.DLCollection, {"Group": group},
                                                            {"_id": 0,
                                                             "Lessons": DAYS[list(DAYS.keys())[day.weekday()]]})
@@ -274,7 +275,7 @@ async def get_finalize_schedule(group: str, text: bool = False):
 
             if changes["DefaultLessons"]:
                 lessons = default_lessons[0]["Lessons"]["a"]
-                if num_weekday % 2 == 1 and len(default_lessons[0]) > 2:
+                if num_week % 2 == 1 and len(default_lessons[0]) > 2:
                     lessons.update(default_lessons[0]["Lessons"]["b"])
 
             if len(data) > 1:
@@ -283,13 +284,15 @@ async def get_finalize_schedule(group: str, text: bool = False):
 
                 temp["Comments"] = changes["Comments"]
 
+
             temp["Lessons"].update(lessons)
 
             if text:
                 result.append(schedule.render(
                     Date=temp["Date"],
                     Lessons=[f"{index}п. {lesson}" for index, lesson in enumerate(temp["Lessons"].values(), 1)],
-                    Comments=temp["Comments"]
+                    Comments=temp["Comments"],
+                    ClassHour=False if weekday != 2 else True
                 ))
             else:
                 result.append(temp)
