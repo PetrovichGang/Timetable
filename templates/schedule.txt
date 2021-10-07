@@ -1,12 +1,13 @@
-Расписание на {{ Date }}:
+🕗 <b>Расписание на</b> <i>{{ Date }}</i>
+
 {% if ClassHour %}Классный час{{ '\n' }}{% endif %}
 {% for lesson in Lessons %}
-    {{ lesson }}
+{{ lesson }}
 {% endfor %}
 
 {% if Comments %}
-Дополнительная информация:
+📰 <b>Дополнительная информация:</b>
 {% for comment in Comments %}
-    {{ comment }}
+  {{ comment }}
 {%- endfor %}
 {% endif %}

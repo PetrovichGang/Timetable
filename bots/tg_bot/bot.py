@@ -47,7 +47,7 @@ async def test(message: types.Message):
             res = httpx.get(f"{API_URL}/finalize_schedule/{group}?text=true")
             if res.status_code == 200:
                 days = res.text[2:-2].replace('\\n', '\n')
-                await bot.send_message(message.chat.id, days)
+                await bot.send_message(message.chat.id, days, parse_mode=types.ParseMode.HTML)
             else:
                 await bot.send_message(message.chat.id, "Ошибка в запросе")
     elif res.status_code == 404:
