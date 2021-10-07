@@ -35,7 +35,7 @@ async def set_group(message: types.Message):
         await bot.send_message(message.chat.id, "Ошибка в запросе")
 
 
-@dp.message_handler(commands=['test'])
+@dp.message_handler(commands=['today'])
 async def test(message: types.Message):
     res = httpx.get(f"{API_URL}/tg/chat?chat_id={message.chat.id}&user_id={message.from_user.id}", headers=AUTH_HEADER)
 
@@ -44,10 +44,10 @@ async def test(message: types.Message):
         if group == "":
             await bot.send_message(message.chat.id, "Задайте группу")
         else:
-            res = httpx.get(f"{API_URL}/timetable?group={group}")
+            res = httpx.get(f"{API_URL}/finalize_schedule/{group}?text=true")
             if res.status_code == 200:
-                days = res.json()[0]["Days"]
-                await bot.send_message(message.chat.id, json.dumps(days, ensure_ascii=False))
+                days = res.text[2:-2].replace('\\n', '\n')
+                await bot.send_message(message.chat.id, days)
             else:
                 await bot.send_message(message.chat.id, "Ошибка в запросе")
     elif res.status_code == 404:
