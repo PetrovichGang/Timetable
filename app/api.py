@@ -273,10 +273,9 @@ async def get_finalize_schedule(group: str, text: bool = False):
             lessons = {}
             changes = data.get("Lessons")
 
-            if changes["DefaultLessons"]:
-                lessons = default_lessons[0]["Lessons"]["a"]
-                if num_week % 2 == 1 and len(default_lessons[0]) > 2:
-                    lessons.update(default_lessons[0]["Lessons"]["b"])
+            lessons = default_lessons[0]["Lessons"]["a"]
+            if num_week % 2 == 1 and len(default_lessons[0]) > 2:
+                lessons.update(default_lessons[0]["Lessons"]["b"])
 
             if len(data) > 1:
                 lessons.update(changes["ChangeLessons"]) if changes["ChangeLessons"] else None
@@ -284,13 +283,12 @@ async def get_finalize_schedule(group: str, text: bool = False):
 
                 temp["Comments"] = changes["Comments"]
 
-
             temp["Lessons"].update(lessons)
 
             if text:
                 result.append(schedule.render(
                     Date=temp["Date"],
-                    Lessons=[f"{index}п. {lesson}" for index, lesson in enumerate(temp["Lessons"].values(), 1)],
+                    Lessons=[f"<code><b>{index})</b></code> {lesson}" for index, lesson in enumerate(temp["Lessons"].values(), 1)],
                     Comments=temp["Comments"],
                     ClassHour=False if weekday != 2 else True
                 ))
