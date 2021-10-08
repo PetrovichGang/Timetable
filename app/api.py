@@ -395,10 +395,10 @@ async def get_tg_chat(chat_id: int, user_id: int):
         return Response(e.json(), status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@routerPrivate.post("/api/tg/chat",
+@routerPrivate.get("/api/tg/set_group",
                     summary="Изменение группы в чате",
                     tags=["TG"])
-async def set_tg_group(chat_id: int, group: str):
+async def set_group(chat_id: int, group: str):
     group_check = await TimeTableDB.async_find(db.DLCollection, {"Group": group}, {"_id": 0})
     if not group_check:
         return Response("Нет такой группы!", status_code=status.HTTP_400_BAD_REQUEST)

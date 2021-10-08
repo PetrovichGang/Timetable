@@ -13,47 +13,48 @@ dp = Dispatcher(bot)
 
 @dp.message_handler(commands=['start', 'help'])
 async def start(message: types.Message):
-    await bot.send_message(message.chat.id, """
-        АПТ бот
-        Команды:
-        /set_group группа
-        /test
-    """)
-    res = httpx.get(f"{API_URL}/tg/chat?chat_id={message.chat.id}&user_id={message.from_user.id}", headers=AUTH_HEADER)
-    if res.status_code == 200:
-        await bot.send_message(message.chat.id, f"Группа: {res.json()[0]['group']}")
-    else:
-        await bot.send_message(message.chat.id, "Запрос не выполнен")
+    async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
+        await bot.send_message(message.chat.id, """
+            АПТ бот
+            Команды:
+            /set_group /группа
+            /get_changes /расписание
+        """)
+        res = client.get(f"{API_URL}/tg/chat?chat_id={message.chat.id}&user_id={message.from_user.id}", headers=AUTH_HEADER)
+        if res.status_code == 200:
+            await bot.send_message(message.chat.id, f"Группа: {res.json()[0]['group']}")
+        else:
+            await bot.send_message(message.chat.id, "Запрос не выполнен")
 
 
 @dp.message_handler(commands=['set_group'])
 async def set_group(message: types.Message):
-    res = httpx.post(f"{API_URL}/tg/chat?chat_id={message.chat.id}&group={message.text[11:]}", headers=AUTH_HEADER)
-    if res.status_code == 200 or res.status_code == 400:
-        await bot.send_message(message.chat.id, res.text)
-    else:
-        await bot.send_message(message.chat.id, "Ошибка в запросе")
+    group = message.get_args()
+    async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
+        res = await client.get(f"{API_URL}/tg/set_group?chat_id={message.chat.id}&group={group}", headers=AUTH_HEADER)
+        reply_response(res, message)
 
 
-@dp.message_handler(commands=['today'])
+@dp.message_handler(commands=['get_changes', 'расписание'])
 async def test(message: types.Message):
-    res = httpx.get(f"{API_URL}/tg/chat?chat_id={message.chat.id}&user_id={message.from_user.id}", headers=AUTH_HEADER)
+    async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
+        res = await client.get(f"{API_URL}/tg/chat?chat_id={message.chat.id}&user_id={message.from_user.id}", headers=AUTH_HEADER)
 
-    if res.status_code == 200:
-        group = res.json()[0]["group"]
-        if group == "":
+        if res.status_code == 200:
+            group = res.json()[0]["group"]
+            if group == "":
+                await bot.send_message(message.chat.id, "Задайте группу")
+            else:
+                res = await client.get(f"{API_URL}/finalize_schedule/{group}?text=true&markdown=true")
+                if res.status_code == 200:
+                    for change in res.json():
+                        await bot.send_message(message.chat.id, change, parse_mode=types.ParseMode.HTML)
+                else:
+                    await bot.send_message(message.chat.id, "Ошибка в запросе")
+        elif res.status_code == 404:
             await bot.send_message(message.chat.id, "Задайте группу")
         else:
-            res = httpx.get(f"{API_URL}/finalize_schedule/{group}?text=true")
-            if res.status_code == 200:
-                days = res.text[2:-2].replace('\\n', '\n')
-                await bot.send_message(message.chat.id, days, parse_mode=types.ParseMode.HTML)
-            else:
-                await bot.send_message(message.chat.id, "Ошибка в запросе")
-    elif res.status_code == 404:
-        await bot.send_message(message.chat.id, "Задайте группу")
-    else:
-        await bot.send_message(message.chat.id, "Ошибка в запросе")
+            await bot.send_message(message.chat.id, "Ошибка в запросе")
 
 
 async def on_startup(dispatcher):
@@ -65,6 +66,11 @@ async def on_shutdown(dispatcher):
     await dispatcher.storage.close()
     await dispatcher.storage.wait_closed()
 
+async def reply_response(res, message: types.Message):
+    if res.status_code == 200 or res.status_code == 400:
+        await bot.send_message(message.chat.id, res.text)
+    else:
+        await bot.send_message(message.chat.id, "Ошибка в запросе")
 
 def start_bot():
     start_webhook(
