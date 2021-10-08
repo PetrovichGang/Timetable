@@ -77,6 +77,3 @@ def start_bot():
         port=3001,
     )
 
-
-if __name__ == '__main__':
-    start_bot()

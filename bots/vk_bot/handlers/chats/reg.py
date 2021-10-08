@@ -35,7 +35,7 @@ async def set_group(message: Message, chat: MessagesConversation, group: str = N
 
                 await load_group(group_info, members)
             else:
-                await message.answer(f"Группа {group} несуществует")
+                await message.answer(f"Группа {group} не существует")
 
         else:
             await message.answer("Группу может менять только владелец чата")

@@ -1,10 +1,12 @@
 from .handlers.chats import chat_bp
+from .handlers.users import user_bp
 from vkbottle.bot import Bot
 from config import VK_TOKEN
 
 
 bot = Bot(token=VK_TOKEN)
 chat_bp.load(bot)
+user_bp.load(bot)
 
 
 def start_bot():

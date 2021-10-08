@@ -2,12 +2,12 @@ from db.models import ChangeModel, DefaultModel, EnumDays, DAYS, VKUserModel, VK
 from starlette.responses import JSONResponse, Response
 from pydantic import ValidationError, parse_obj_as
 from fastapi import Request, APIRouter
+from typing import List, Union
 from templates import schedule
 from datetime import datetime
 from starlette import status
 from db import TimeTableDB
 from config import DB_URL
-from typing import List
 import json
 
 tags_metadata = [
@@ -303,7 +303,8 @@ async def get_finalize_schedule(group: str, text: bool = False):
 @routerPrivate.post("/api/vk/users",
                     summary="Загрузка в базу данных новых пользователей",
                     tags=["VK"])
-async def load_new_users(users: List[VKUserModel]):
+async def load_new_users(users: Union[VKUserModel, List[VKUserModel]]):
+    if isinstance(users, VKUserModel): users = [users, ]
     if users:
         data = [group.dict() for group in parse_obj_as(List[VKUserModel], users)]
         ids = [user["id"] for user in data]
@@ -329,7 +330,7 @@ async def get_users(id: int = None):
         users = await db.async_find(db.VKUsersCollection, {"id": id}, {"_id": 0})
     else:
         users = await db.async_find(db.VKUsersCollection, {}, {"_id": 0})
-    if groups:
+    if users:
         return JSONResponse(users, status_code=status.HTTP_200_OK)
 
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
