@@ -1,6 +1,7 @@
 from db.models import ChangeModel, DefaultModel, EnumDays, DAYS, VKUserModel, VKGroupModel, GroupNames, TGChatModel
 from starlette.responses import JSONResponse, Response
 from pydantic import ValidationError, parse_obj_as
+from templates import schedule, schedule_markdown
 from fastapi import Request, APIRouter
 from typing import List, Union
 from templates import schedule
@@ -247,7 +248,7 @@ async def delete_changes(date: str = None):
 @routerPublic.get("/api/finalize_schedule/{group}",
                   summary="Получение расписания с изменениями для группы",
                   tags=["Изменения в расписание"])
-async def get_finalize_schedule(group: str, text: bool = False):
+async def get_finalize_schedule(group: str, text: bool = False, markdown: bool = False):
     result = []
     today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
     template = lambda: {
@@ -285,13 +286,23 @@ async def get_finalize_schedule(group: str, text: bool = False):
 
             temp["Lessons"].update(lessons)
 
-            if text:
-                result.append(schedule.render(
+            if text and markdown:
+                result.append(schedule_markdown.render(
                     Date=temp["Date"],
                     Lessons=[f"<code><b>{index})</b></code> {lesson}" for index, lesson in enumerate(temp["Lessons"].values(), 1)],
                     Comments=temp["Comments"],
                     ClassHour=False if weekday != 2 else True
                 ))
+
+            elif text:
+                result.append(schedule.render(
+                    Date=temp["Date"],
+                    Lessons=[f"{index}) {lesson}" for index, lesson in
+                             enumerate(temp["Lessons"].values(), 1)],
+                    Comments=temp["Comments"],
+                    ClassHour=False if weekday != 2 else True
+                ))
+
             else:
                 result.append(temp)
 
