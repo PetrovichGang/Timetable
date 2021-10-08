@@ -1,6 +1,6 @@
 import time
 
-from db.models import VKUserModel, VKGroupModel, GroupNames
+from db.models import VKUserModel, GroupNames
 from vkbottle_types.objects import MessagesConversation
 from vkbottle.bot import Blueprint, Message, rules
 from vkbottle_types import BaseStateGroup

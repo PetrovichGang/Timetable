@@ -1,4 +1,4 @@
-from db.models import VKUserModel, VKGroupModel, GroupNames
+from db.models import VKUserModel, VKChatModel, GroupNames
 from vkbottle_types.objects import MessagesConversation
 from vkbottle.bot import Blueprint, Message, rules
 from vkbottle_types import BaseStateGroup
@@ -31,7 +31,7 @@ async def set_group(message: Message, chat: MessagesConversation, group: str = N
             if group in groups.json()["Groups"]:
                 await message.answer(f"Группа {group} установлена")
                 group_info = await get_group_model(chat, message.peer_id, group)
-                members = await get_group_members(message.peer_id)
+                members = await get_group_members(message.peer_id, group)
 
                 await load_group(group_info, members)
             else:
@@ -70,13 +70,13 @@ async def is_owner(message: Message) -> bool:
     return False
 
 
-async def get_group_members(peer_id: int) -> List[VKUserModel]:
+async def get_group_members(peer_id: int, lesson_group: str) -> List[VKUserModel]:
     finalize_members = []
     members = await bp.api.messages.get_conversation_members(peer_id)
 
     for member in members.profiles:
         data = member.dict()
-        data["lesson_group"] = "Test"
+        data["lesson_group"] = lesson_group
         data["photo"] = data["photo_100"]
 
         temp = VKUserModel.parse_obj(data)
@@ -87,18 +87,20 @@ async def get_group_members(peer_id: int) -> List[VKUserModel]:
     return finalize_members
 
 
-async def get_group_model(chat: MessagesConversation, peer_id:int, group: str) -> VKGroupModel:
+async def get_group_model(chat: MessagesConversation, peer_id: int, group: str) -> VKChatModel:
     group_info = chat.chat_settings.dict()
     group_info.update({
         "peer_id": peer_id,
         "lesson_group": group
     })
 
-    return VKGroupModel.parse_obj(group_info)
+    return VKChatModel.parse_obj(group_info)
 
 
-async def load_group(group: VKGroupModel, members: List[VKUserModel]) -> None:
+async def load_group(group: VKChatModel, members: List[VKUserModel]) -> None:
     async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
-        await client.post(f"{API_URL}/vk/groups", json=group.dict())
+        chat_res = await client.post(f"{API_URL}/vk/groups", json=group.dict())
         await client.post(f"{API_URL}/vk/users", json=members)
 
+        if chat_res.status_code == 400:
+            await client.get(f"{API_URL}/vk/chats/set_group?peer_id={group.peer_id}&lesson_group={group.lesson_group}")

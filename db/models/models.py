@@ -1,5 +1,6 @@
 from pydantic import BaseModel, validator, Field
-from typing import Union, Dict, List, Optional
+from typing import Dict, List, Optional
+from typing_extensions import TypedDict
 from datetime import datetime
 from time import time
 from enum import Enum
@@ -75,7 +76,7 @@ class VKUserModel(BaseModel):
     sex: Optional[int] = Field(alias="sex")
 
 
-class VKGroupModel(BaseModel):
+class VKChatModel(BaseModel):
     peer_id: int = Field(alias="peer_id")
     owner_id: int = Field(alias="owner_id")
     title: str = Field(alias="title")
@@ -92,6 +93,11 @@ class VKGroupModel(BaseModel):
     @validator("active_ids", "admin_ids", pre=True, always=True)
     def filter_ids(cls, ids):
         return list(filter(lambda user_id: user_id > 0, ids))
+
+
+class DictIdAndGroup(TypedDict):
+    lesson_group: str
+    users_id: List[int]
 
 
 class TGChatModel(BaseModel):
