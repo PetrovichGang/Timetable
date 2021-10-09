@@ -4,7 +4,6 @@ from config import API_URL, AUTH_HEADER
 from vkbottle import Keyboard, Text, TemplateElement, template_gen, keyboard
 import httpx
 
-
 first_keyboard = Keyboard(one_time=False, inline=False)
 for index, spec in enumerate(GroupNames):
     first_keyboard.add(Callback(spec.value, {'cmd': 'spec', "spec": spec}))

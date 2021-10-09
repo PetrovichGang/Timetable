@@ -20,7 +20,7 @@ bp = Blueprint("UserBot")
 bp.labeler.vbml_ignore_case = True
 
 
-#### ОБРАБОТКА СООБЩЕНИЙ ####
+##### ОБРАБОТКА СООБЩЕНИЙ #####
 @bp.on.private_message(text=["/start", "начать"])
 async def start(message: Message, group: str = "Не задана"):
     async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
