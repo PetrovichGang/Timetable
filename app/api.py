@@ -1,7 +1,11 @@
-from db.models import ChangeModel, DefaultModel, EnumDays, DAYS, VKUserModel, VKChatModel, GroupNames, TGChatModel, DictIdAndGroup
+from pymongo.results import UpdateResult
+
+from db.models import ChangeModel, DefaultModel, EnumDays, DAYS, VKUserModel, VKChatModel, GroupNames, TGChatModel, \
+    DictIdAndGroup, TGState
 from starlette.responses import JSONResponse, Response
 from pydantic import ValidationError, parse_obj_as
-from templates import schedule, schedule_markdown
+from templates import schedule, schedule_markdown, full_timetable_markdown, full_timetable
+from bots.common.strings import strings
 from fastapi import Request, APIRouter
 from typing import List, Union
 from datetime import datetime
@@ -43,7 +47,7 @@ async def startup():
 @routerPublic.get("/api/timetable",
                   summary="Получение основного расписания",
                   tags=["Основное расписание"])
-async def get_timetable(group: str = None, day: EnumDays = None):
+async def get_timetable(group: str = None, day: EnumDays = None, text: str = None):
     """
         Аргументы:
 
@@ -67,7 +71,12 @@ async def get_timetable(group: str = None, day: EnumDays = None):
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
     if content:
-        return JSONResponse(content, status_code=status.HTTP_200_OK)
+        if text == "html":
+            return JSONResponse([full_timetable_markdown.render(tt=content[0])], status_code=status.HTTP_200_OK)
+        elif text == "true":
+            return JSONResponse([full_timetable.render(tt=content[0])], status_code=status.HTTP_200_OK)
+        else:
+            return JSONResponse(content, status_code=status.HTTP_200_OK)
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
@@ -247,7 +256,7 @@ async def delete_changes(date: str = None):
 @routerPublic.get("/api/finalize_schedule/{group}",
                   summary="Получение расписания с изменениями для группы",
                   tags=["Изменения в расписание"])
-async def get_finalize_schedule(group: str, text: bool = False, markdown: bool = False):
+async def get_finalize_schedule(group: str, text: str = ""):
     result = []
     today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
     template = lambda: {
@@ -285,15 +294,16 @@ async def get_finalize_schedule(group: str, text: bool = False, markdown: bool =
 
             temp["Lessons"].update(lessons)
 
-            if text and markdown:
+            if text == "html":
                 result.append(schedule_markdown.render(
                     Date=temp["Date"],
-                    Lessons=[f"<code><b>{index})</b></code> {lesson}" for index, lesson in enumerate(temp["Lessons"].values(), 1)],
+                    Lessons=[f"<code><b>{index})</b></code> {lesson}" for index, lesson in
+                             enumerate(temp["Lessons"].values(), 1)],
                     Comments=temp["Comments"],
                     ClassHour=False if weekday != 2 else True
                 ))
 
-            elif text:
+            elif text == "true":
                 result.append(schedule.render(
                     Date=temp["Date"],
                     Lessons=[f"{index}) {lesson}" for index, lesson in
@@ -337,7 +347,8 @@ async def load_new_users(users: Union[VKUserModel, List[VKUserModel]]):
                     tags=["VK"])
 async def set_users_lesson_group(users: DictIdAndGroup):
     if users["lesson_group"] in db.groups and all(isinstance(user_id, int) for user_id in users["users_id"]):
-        db.VKUsersCollection.update_many({'id': {"$in": users["users_id"]}}, {"$set": {'lesson_group': users["lesson_group"]}})
+        db.VKUsersCollection.update_many({'id': {"$in": users["users_id"]}},
+                                         {"$set": {'lesson_group': users["lesson_group"]}})
         return Response("Учебная группа установлена", status_code=status.HTTP_200_OK)
 
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
@@ -370,8 +381,8 @@ async def load_new_group(chat: VKChatModel):
 
 
 @routerPrivate.get("/api/vk/chats/set_group",
-                    summary="Изменение учебной группы у чата",
-                    tags=["VK"])
+                   summary="Изменение учебной группы у чата",
+                   tags=["VK"])
 async def set_group_lesson_group(peer_id: int, lesson_group: str):
     chat_info = await db.async_find(db.VKGroupsCollection, {"peer_id": peer_id}, {"_id": 0})
     if chat_info and lesson_group in db.groups:
@@ -396,39 +407,49 @@ async def get_groups(peer_id: int = None):
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@routerPrivate.get("/api/tg/chat",
-                   summary="Получение информации о пользователе",
+@routerPrivate.get("/api/tg/chat/{chat_id}",
+                   summary="Получение информации о чате или создание новой записи о чате",
                    tags=["TG"])
-async def get_tg_chat(chat_id: int, user_id: int):
+async def get_tg_chat(chat_id: int):
     content = await db.async_find(db.TGChatsCollection, {"chat_id": chat_id}, {"_id": 0})
     if content:
-        return JSONResponse(content, status_code=status.HTTP_200_OK)
+        return JSONResponse(content[0], status_code=status.HTTP_200_OK)
 
     try:
-        new_chat = TGChatModel(
-            user_id=user_id,
-            chat_id=chat_id,
-            notify_changes=True,
-            operation=0
-        ).dict()
-        await db.TGChatsCollection.insert_one(new_chat)
-        return JSONResponse(json.dumps(new_chat), status_code=status.HTTP_200_OK)
+        new_chat = TGChatModel(chat_id=chat_id,
+                               state=TGState.spec_select,
+                               group=None, notify=True, alarm=0)
+        await db.TGChatsCollection.insert_one(new_chat.dict())
+        return JSONResponse(new_chat.dict(), status_code=status.HTTP_200_OK)
     except ValidationError as e:
         return Response(e.json(), status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@routerPrivate.get("/api/tg/set_group",
-                    summary="Изменение группы в чате",
+@routerPrivate.post("/api/tg/set_group",
+                    summary="Изменение группы в чата",
                     tags=["TG"])
-async def set_group(chat_id: int, group: str):
-    group_check = await TimeTableDB.async_find(db.DLCollection, {"Group": group}, {"_id": 0})
-    if not group_check:
-        return Response("Нет такой группы!", status_code=status.HTTP_400_BAD_REQUEST)
+async def set_tg_group(chat_id: int, group: str):
+    if group not in db.groups:
+        return Response(strings.error.no_group.format(group),
+                        status_code=status.HTTP_404_NOT_FOUND)
 
-    chat_check = await db.async_find(db.TGChatsCollection, {"chat_id": chat_id}, {"_id": 0})
-    if not chat_check:
-        return Response("Вы не начали работу с ботом! Интересно, как так вышло...",
-                        status_code=status.HTTP_400_BAD_REQUEST)
+    update_result: UpdateResult = await db.TGChatsCollection.update_one(
+                                                {'chat_id': chat_id},
+                                                {"$set": {'group': group}})
+    if update_result.modified_count == 0:
+        return Response(strings.error.group_not_changed.format(group), status_code=status.HTTP_200_OK)
+    elif update_result.matched_count == 0:
+        return Response(strings.error.not_started, status_code=status.HTTP_400_BAD_REQUEST)
+    return Response(strings.info.group_set.format(group), status_code=status.HTTP_200_OK)
 
-    await db.TGChatsCollection.update_one({'chat_id': chat_id}, {"$set": {'group': group}})
-    return Response("Изменено", status_code=status.HTTP_200_OK)
+
+@routerPrivate.post("/api/tg/set/{pref}/",
+                    summary="Изменение настроек для чата",
+                    tags=["TG"])
+async def set_tg_pref(chat_id: int, pref: str, value):
+    update_result: UpdateResult = await db.TGChatsCollection.update_one(
+                                                {'chat_id': chat_id},
+                                                {"$set": {pref: value}})
+    if update_result.matched_count == 0:
+        return Response(strings.error.not_started, status_code=status.HTTP_400_BAD_REQUEST)
+    return Response(status_code=status.HTTP_200_OK)

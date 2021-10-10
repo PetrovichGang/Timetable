@@ -1,0 +1,205 @@
+🕗 Расписание для {{ tt["Group"] }}
+
+📅 Понедельник
+{% if "a" in tt["Days"]["MON"] and "p1" in tt["Days"]["MON"]["a"] %}
+    1) {{ tt["Days"]["MON"]["a"]["p1"] }}
+{% else %}
+    1) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["MON"] and "p1" in tt["Days"]["MON"]["b"] %}
+    -- {{ tt["Days"]["MON"]["a"]["p1"] }}
+{% endif %}
+{% if "a" in tt["Days"]["MON"] and "p2" in tt["Days"]["MON"]["a"] %}
+    2) {{ tt["Days"]["MON"]["a"]["p2"] }}
+{% else %}
+    2) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["MON"] and "p2" in tt["Days"]["MON"]["b"] %}
+    -- {{ tt["Days"]["MON"]["a"]["p2"] }}
+{% endif %}
+{% if "a" in tt["Days"]["MON"] and "p3" in tt["Days"]["MON"]["a"] %}
+    3) {{ tt["Days"]["MON"]["a"]["p3"] }}
+{% else %}
+    3) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["MON"] and "p3" in tt["Days"]["MON"]["b"] %}
+    -- {{ tt["Days"]["MON"]["a"]["p3"] }}
+{% endif %}
+{% if "a" in tt["Days"]["MON"] and "p4" in tt["Days"]["MON"]["a"] %}
+    4) {{ tt["Days"]["MON"]["a"]["p4"] }}
+{% else %}
+    4) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["MON"] and "p4" in tt["Days"]["MON"]["b"] %}
+    -- {{ tt["Days"]["MON"]["a"]["p4"] }}
+{% endif %}
+
+📅 Вторник
+{% if "a" in tt["Days"]["TUE"] and "p1" in tt["Days"]["TUE"]["a"] %}
+    1) {{ tt["Days"]["TUE"]["a"]["p1"] }}
+{% else %}
+    1) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["TUE"] and "p1" in tt["Days"]["TUE"]["b"] %}
+    -- {{ tt["Days"]["TUE"]["a"]["p1"] }}
+{% endif %}
+{% if "a" in tt["Days"]["TUE"] and "p2" in tt["Days"]["TUE"]["a"] %}
+    2) {{ tt["Days"]["TUE"]["a"]["p2"] }}
+{% else %}
+    2) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["TUE"] and "p2" in tt["Days"]["TUE"]["b"] %}
+    -- {{ tt["Days"]["TUE"]["a"]["p2"] }}
+{% endif %}
+{% if "a" in tt["Days"]["TUE"] and "p3" in tt["Days"]["TUE"]["a"] %}
+    3) {{ tt["Days"]["TUE"]["a"]["p3"] }}
+{% else %}
+    3) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["TUE"] and "p3" in tt["Days"]["TUE"]["b"] %}
+    -- {{ tt["Days"]["TUE"]["a"]["p3"] }}
+{% endif %}
+{% if "a" in tt["Days"]["TUE"] and "p4" in tt["Days"]["TUE"]["a"] %}
+    4) {{ tt["Days"]["TUE"]["a"]["p4"] }}
+{% else %}
+    4) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["TUE"] and "p4" in tt["Days"]["TUE"]["b"] %}
+    -- {{ tt["Days"]["TUE"]["a"]["p4"] }}
+{% endif %}
+
+📅 Среда
+{% if tt["Days"]["WED"]["a"]["p1"] %}
+    1) {{ tt["Days"]["WED"]["a"]["p1"] }}
+{% else %}
+    1) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["WED"] and "p1" in tt["Days"]["WED"]["b"] %}
+    -- {{ tt["Days"]["WED"]["a"]["p1"] }}
+{% endif %}
+{% if "a" in tt["Days"]["WED"] and "p2" in tt["Days"]["WED"]["a"] %}
+    2) {{ tt["Days"]["WED"]["a"]["p2"] }}
+{% else %}
+    2) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["WED"] and "p2" in tt["Days"]["WED"]["b"] %}
+    -- {{ tt["Days"]["WED"]["a"]["p2"] }}
+{% endif %}
+{% if "a" in tt["Days"]["WED"] and "p3" in tt["Days"]["WED"]["a"] %}
+    3) {{ tt["Days"]["WED"]["a"]["p3"] }}
+{% else %}
+    3) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["WED"] and "p3" in tt["Days"]["WED"]["b"] %}
+    -- {{ tt["Days"]["WED"]["a"]["p3"] }}
+{% endif %}
+{% if "a" in tt["Days"]["WED"] and "p4" in tt["Days"]["WED"]["a"] %}
+    4) {{ tt["Days"]["WED"]["a"]["p4"] }}
+{% else %}
+    4) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["WED"] and "p4" in tt["Days"]["WED"]["b"] %}
+    -- {{ tt["Days"]["WED"]["a"]["p4"] }}
+{% endif %}
+
+📅 Четверг
+{% if "a" in tt["Days"]["THU"] and "p1" in tt["Days"]["THU"]["a"] %}
+    1) {{ tt["Days"]["THU"]["a"]["p1"] }}
+{% else %}
+    1) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["THU"] and "p1" in tt["Days"]["THU"]["b"] %}
+    -- {{ tt["Days"]["THU"]["a"]["p1"] }}
+{% endif %}
+{% if "a" in tt["Days"]["THU"] and "p2" in tt["Days"]["THU"]["a"] %}
+    2) {{ tt["Days"]["THU"]["a"]["p2"] }}
+{% else %}
+    2) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["THU"] and "p2" in tt["Days"]["THU"]["b"] %}
+    -- {{ tt["Days"]["THU"]["a"]["p2"] }}
+{% endif %}
+{% if "a" in tt["Days"]["THU"] and "p3" in tt["Days"]["THU"]["a"] %}
+    3) {{ tt["Days"]["THU"]["a"]["p3"] }}
+{% else %}
+    3) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["THU"] and "p3" in tt["Days"]["THU"]["b"] %}
+    -- {{ tt["Days"]["THU"]["a"]["p3"] }}
+{% endif %}
+{% if "a" in tt["Days"]["THU"] and "p4" in tt["Days"]["THU"]["a"] %}
+    4) {{ tt["Days"]["THU"]["a"]["p4"] }}
+{% else %}
+    4) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["THU"] and "p4" in tt["Days"]["THU"]["b"] %}
+    -- {{ tt["Days"]["THU"]["a"]["p4"] }}
+{% endif %}
+
+📅 Пятница
+{% if "a" in tt["Days"]["FRI"] and "p1" in tt["Days"]["FRI"]["a"] %}
+    1) {{ tt["Days"]["FRI"]["a"]["p1"] }}
+{% else %}
+    1) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["FRI"] and "p1" in tt["Days"]["FRI"]["b"] %}
+    -- {{ tt["Days"]["FRI"]["a"]["p1"] }}
+{% endif %}
+{% if "a" in tt["Days"]["FRI"] and "p2" in tt["Days"]["FRI"]["a"] %}
+    2) {{ tt["Days"]["FRI"]["a"]["p2"] }}
+{% else %}
+    2) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["FRI"] and "p2" in tt["Days"]["FRI"]["b"] %}
+    -- {{ tt["Days"]["FRI"]["a"]["p2"] }}
+{% endif %}
+{% if "a" in tt["Days"]["FRI"] and "p3" in tt["Days"]["FRI"]["a"] %}
+    3) {{ tt["Days"]["FRI"]["a"]["p3"] }}
+{% else %}
+    3) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["FRI"] and "p3" in tt["Days"]["FRI"]["b"] %}
+    -- {{ tt["Days"]["FRI"]["a"]["p3"] }}
+{% endif %}
+{% if "a" in tt["Days"]["FRI"] and "p4" in tt["Days"]["FRI"]["a"] %}
+    4) {{ tt["Days"]["FRI"]["a"]["p4"] }}
+{% else %}
+    4) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["FRI"] and "p4" in tt["Days"]["FRI"]["b"] %}
+    -- {{ tt["Days"]["FRI"]["a"]["p4"] }}
+{% endif %}
+
+📅 Суббота
+{% if "a" in tt["Days"]["SAT"] and "p1" in tt["Days"]["SAT"]["a"] %}
+    1) {{ tt["Days"]["SAT"]["a"]["p1"] }}
+{% else %}
+    1) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["SAT"] and "p1" in tt["Days"]["SAT"]["b"] %}
+    -- {{ tt["Days"]["SAT"]["a"]["p1"] }}
+{% endif %}
+{% if "a" in tt["Days"]["SAT"] and "p2" in tt["Days"]["SAT"]["a"] %}
+    2) {{ tt["Days"]["SAT"]["a"]["p2"] }}
+{% else %}
+    2) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["SAT"] and "p2" in tt["Days"]["SAT"]["b"] %}
+    -- {{ tt["Days"]["SAT"]["a"]["p2"] }}
+{% endif %}
+{% if "a" in tt["Days"]["SAT"] and "p3" in tt["Days"]["SAT"]["a"] %}
+    3) {{ tt["Days"]["SAT"]["a"]["p3"] }}
+{% else %}
+    3) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["SAT"] and "p3" in tt["Days"]["SAT"]["b"] %}
+    -- {{ tt["Days"]["SAT"]["a"]["p3"] }}
+{% endif %}
+{% if "a" in tt["Days"]["SAT"] and "p4" in tt["Days"]["SAT"]["a"] %}
+    4) {{ tt["Days"]["SAT"]["a"]["p4"] }}
+{% else %}
+    4) НЕТ
+{% endif %}
+{% if "b" in tt["Days"]["SAT"] and "p4" in tt["Days"]["SAT"]["b"] %}
+    -- {{ tt["Days"]["SAT"]["a"]["p4"] }}
+{% endif %}

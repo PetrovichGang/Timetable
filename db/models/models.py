@@ -1,3 +1,6 @@
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+
+from bots.common.strings import strings
 from pydantic import BaseModel, validator, Field
 from typing import Dict, List, Optional
 from typing_extensions import TypedDict
@@ -100,18 +103,31 @@ class DictIdAndGroup(TypedDict):
     users_id: List[int]
 
 
+class TGState(str, Enum):
+    default = 'default'
+    spec_select = 'spec_select'
+    group_select = 'group_select'
+    alarm = 'alarm'
+
+
 class TGChatModel(BaseModel):
-    user_id: int = Field(alias="user_id")
     chat_id: int = Field(alias="chat_id")
     group: Optional[str] = Field(alias="group")
-    notify_changes: bool = Field(alias="notify_changes")
+    notify: bool = Field(alias="notify")
+    alarm: int = Field(alias="alarm")
+    state: TGState = Field(alias="state")
 
-    # 0 - Главное меню с настройками (оповещения/группа/будильник)
-    # 1 - Выбор буквы группы
-    # 2 - Выбор группы
-    operation: int = Field(alias="operation")
+    def to_keyboard(self) -> ReplyKeyboardMarkup:
+        return ReplyKeyboardMarkup(resize_keyboard=True) \
+            .row(KeyboardButton(strings.button.changes)) \
+            .row(KeyboardButton(strings.button.timetable)) \
+            .row(KeyboardButton(strings.button.notify.format('✅' if self.notify else '⬜')),
+                 KeyboardButton(strings.button.alarm.format(self.alarm if self.alarm != 0 else 'выкл.'))) \
+            .row(KeyboardButton(strings.button.group.format(self.group)))
 
-    # # #
+
+class TGChatExtendedModel(TGChatModel):
+    user_id: Optional[int] = Field(alias="user_id")
     chat_title: Optional[str] = Field(alias="group_title")
     user_username: Optional[str] = Field(alias="user_username")
     chat_username: Optional[str] = Field(alias="group_username")
