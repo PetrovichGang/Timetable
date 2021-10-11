@@ -1,60 +1,53 @@
-from config import AUTH_HEADER
+from config import AUTH_HEADER, API_URL, CWD
+from db.models import DAYS
 from typing import Union
 from pathlib import Path
 import pandas as pd
+import httpx
 import json
 import re
 
 BIG_SPACE_REGEX = re.compile(r"( ){5,}", re.IGNORECASE)
-DAYS_LIST = {
-        0: "MON",
-        1: "TUE",
-        2: "WED",
-        3: "THU",
-        4: "FRI",
-        5: "SAT"
-    }
 
 
 def parse_excel_main_scheduler(file_path: Union[Path, str]) -> dict:
-    if isinstance(file_path, str): file_path = Path(file_path)
+    if isinstance(file_path, str): file_path = Path(CWD, file_path)
 
-    if file_path.exists():
-        groups = {}
-        dfs = pd.read_excel(str(file_path), sheet_name=None)
-        for page in dfs:
-            group_columns = list(filter(lambda x: "Unnamed" not in x, dfs[page].columns))[
-                            1 if "№ пары" not in dfs[page].columns else 2:]
+    if not file_path.exists():
+        raise FileNotFoundError(f"Отсутствует файл с расписанием {file_path.name}")
 
-            for group_name in group_columns:
+    groups = {}
+    dfs = pd.read_excel(str(file_path), sheet_name=None)
+    for page in dfs:
+        group_columns = list(filter(lambda x: "Unnamed" not in x, dfs[page].columns))[
+                        1 if "№ пары" not in dfs[page].columns else 2:]
 
-                lessons = []
-                days = {day: [] for day in range(6)}
-                day = 0
-                enum = 1
+        page = dfs[page].drop(index=[8]).reset_index(drop=True)
 
-                group = dfs[page][group_name]
-                for index in range(0, group.shape[0]):
-                    lessons.append(group[index] if isinstance(group[index], str) else None)
+        pair_column_name = page.columns[1:2]
+        pair_column = page[pair_column_name]
+        first_pair_indexs = pair_column[pair_column["№ пары"] == 1.0].index.to_list()
+        first_pair_indexs.append(pair_column.shape[0])
 
-                    if enum % 8 == 0 and day != 1 or enum == group.shape[0] - 1:
-                        days[day] = lessons
-                        lessons = []
-                        day += 1
+        for group_name in group_columns:
+            lessons = []
+            days = {day: [] for day in range(6)}
+            day = 0
 
-                    elif day == 1 and enum == 17:
-                        days[day] = lessons
-                        lessons = []
-                        enum -= 1
-                        day += 1
+            group = page[group_name]
+            group = group.where(pd.notnull(group), None)
+            last_index = first_pair_indexs[0]
 
-                    enum += 1
+            for index in first_pair_indexs[1:]:
+                lessons = group[last_index: index].values.tolist()
+                days[day] = lessons
 
-                groups[group_name] = days
+                last_index = index
+                day += 1
 
-        return groups
+            groups[group_name] = days
 
-    return {}
+    return groups
 
 
 def replace_trash(str: str) -> str:
@@ -65,33 +58,22 @@ def finalize_dict(groups: dict) -> list:
     final = []
     for group, data in groups.items():  # 'и-19-1: {...}'
         days = {}
-        for day_of_week, strings in data.items():  # '0': [None,...]
+        for day_of_week, pairs in data.items():  # '0': [None,...]
             a = {}  # четная неделя / все недели
             b = {}  # нечетная неделя
-            pair = 0
-            prev = "start"
-            added_b = False
-            for val in strings:  # [None,...]
-                if val is None:
-                    if prev is None:
-                        pair += 1
+            pair_index = 1
 
-                else:
-                    if val.startswith("Классный"):
-                        prev = "start"
-                        continue
+            for index, pair in enumerate(pairs, 1):
+                if index % 2 == 1 and pair:
+                    a[f"p{pair_index}"] = replace_trash(pair)
 
-                    if prev is None or prev == "start" or added_b:
-                        pair += 1
-                        a[f"p{pair}"] = replace_trash(val)
-                        added_b = False
-                    else:
-                        b[f"p{pair}"] = replace_trash(val)
-                        added_b = True
+                elif index % 2 == 0 and pair:
+                    b[f"p{pair_index}"] = replace_trash(pair)
 
-                prev = val
+                if index % 2 == 0 and pair_index != 4:
+                    pair_index += 1
 
-            day = DAYS_LIST[day_of_week]
+            day = list(DAYS.keys())[day_of_week]
             if len(b) == 0:
                 days[day] = {"a": a}
             else:
@@ -101,15 +83,16 @@ def finalize_dict(groups: dict) -> list:
     return final
 
 
-if __name__ == '__main__':
-    from config import API_URL
-    import httpx
+def start(file: Union[str, Path] = "rasp.xls"):
     print("Создание расписания...")
-    groups = parse_excel_main_scheduler("rasp.xls")
+    groups = parse_excel_main_scheduler(file)
     final_dict = finalize_dict(groups)
-
     data = json.dumps(final_dict, ensure_ascii=False, separators=(',', ':'), indent=4)
 
     httpx.delete(f"{API_URL}/timetable", headers=AUTH_HEADER)
     res = httpx.post(f"{API_URL}/timetable", json=data, headers=AUTH_HEADER)
-    print(res.status_code, res.content)
+    print(res.status_code, res.content.decode("utf-8"))
+
+
+if __name__ == '__main__':
+    start()
