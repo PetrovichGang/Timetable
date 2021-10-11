@@ -41,7 +41,7 @@ class TimeTableDB:
             else:
                 self._connection = AsyncIOMotorClient(self.url, serverSelectionTimeoutMS=5000)
 
-            self.status = self._connection.admin.command('ping')
+            self._connection.server_info()
         except (pymongo.errors.ServerSelectionTimeoutError, pymongo.errors.OperationFailure) as err:
             print(err)
             self.reconnect()
@@ -61,10 +61,6 @@ class TimeTableDB:
         self.VKUsersCollection = self.SocialDB["VKUsers"]
 
         self.TGChatsCollection = self.SocialDB["TGChats"]
-        
-    def ping(self) -> dict:
-        self.status = self._connection.admin.command("ping")
-        return self.status
 
     @staticmethod
     async def async_iteration(cursor: AsyncIOMotorCursor) -> list:

@@ -1,9 +1,12 @@
-from fastapi import HTTPException, FastAPI, Depends
 from fastapi.security import HTTPBasicCredentials, HTTPBearer
+from fastapi import HTTPException, FastAPI, Depends
 from .api import routerPublic, routerPrivate
 from config import API_TOKEN
 
+
+app = FastAPI()
 security = HTTPBearer()
+
 
 async def has_access(credentials: HTTPBasicCredentials = Depends(security)):
     token = credentials.credentials
@@ -12,7 +15,6 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)):
             status_code=401,
             detail='Token required')
 
-app = FastAPI()
 
 PROTECTED = [Depends(has_access)]
 
