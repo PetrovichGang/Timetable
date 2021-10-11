@@ -11,7 +11,7 @@ alarm = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2) \
     .insert(KeyboardButton(strings.button.cancel))
 
 specialities = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-groups: dict[str, ReplyKeyboardMarkup] = {}
+groups = {}
 
 
 for index, spec in enumerate(GroupNames):
