@@ -8,6 +8,8 @@ bot = Bot(token=VK_TOKEN)
 chat_bp.load(bot)
 user_bp.load(bot)
 
+#bot.loop_wrapper.auto_reload = True
+
 
 def start_bot():
     bot.run_forever()

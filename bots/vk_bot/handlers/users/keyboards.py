@@ -1,53 +1,37 @@
+from vkbottle.tools.dev_tools.keyboard import color
 from vkbottle.tools.dev_tools.keyboard.action import Callback
 from db.models import VKUserModel, GroupNames
 from config import API_URL, AUTH_HEADER
-from vkbottle import Keyboard, Text, TemplateElement, template_gen, keyboard
+from vkbottle import Keyboard, Text, TemplateElement, template_gen, keyboard, KeyboardButtonColor
 import httpx
 
-first_keyboard = Keyboard(one_time=False, inline=False)
-for index, spec in enumerate(GroupNames):
-    first_keyboard.add(Callback(spec.value, {'cmd': 'spec', "spec": spec}))
-    if index % 3 == 0:
-        first_keyboard.row()
-
-
-inf_keyboard = Keyboard(one_time=False, inline=False)
-for index, group in enumerate(httpx.get(f"{API_URL}/groups/Информатики", headers=AUTH_HEADER).json()["Groups"]):
-    inf_keyboard.add(Callback(group, {"cmd": "group", "group": group}))
-    if index % 5 == 0:
-        inf_keyboard.row()
-
-
-mech_keyboard = Keyboard(one_time=False, inline=False)
-for index, group in enumerate(httpx.get(f"{API_URL}/groups/Механики", headers=AUTH_HEADER).json()["Groups"]):
-    mech_keyboard.add(Callback(group, {"cmd": "group", "group": group}))
-    if index % 5 == 0:
-        mech_keyboard.row()
-
-
-elect_keyboard = Keyboard(one_time=False, inline=False)
-for index, group in enumerate(httpx.get(f"{API_URL}/groups/Электрики", headers=AUTH_HEADER).json()["Groups"]):
-    elect_keyboard.add(Callback(group, {"cmd": "group", "group": group}))
-    if index % 5 == 0:
-        elect_keyboard.row()
-
-
-neft_keyboard = Keyboard(one_time=False, inline=False)
-for index, group in enumerate(httpx.get(f"{API_URL}/groups/Нефтяники", headers=AUTH_HEADER).json()["Groups"]):
-    neft_keyboard.add(Callback(group, {"cmd": "group", "group": group}))
-    if index == 3 or index == 6 or index == 10 or index == 14 or index == 18 or index == 22 or index == 26:
-        neft_keyboard.row()
-        print(index)
-
-
-buh_keyboard = Keyboard(one_time=False, inline=False)
-for index, group in enumerate(httpx.get(f"{API_URL}/groups/Бухгалтеры", headers=AUTH_HEADER).json()["Groups"]):
-    buh_keyboard.add(Callback(group, {"cmd": "group", "group": group}))
-    if index % 5 == 0:
-        buh_keyboard.row()
+specialities = Keyboard(one_time=False, inline=False)
+groups = {}
 
 main_keyboard = Keyboard(one_time=False, inline=False)
 main_keyboard.add(Callback("Изменить группу", {"cmd": "spec", "spec": "Started"}))
 main_keyboard.add(Callback("Расписание", {"cmd": "spec", "spec": "Timetable"}))
 
-keyboard_list = [inf_keyboard, elect_keyboard, neft_keyboard, mech_keyboard, buh_keyboard, main_keyboard]
+
+for index, spec in enumerate(GroupNames):
+    specialities.add(Callback(spec.value, {'cmd': 'spec', "spec": spec}))
+    specialities.row() if index % 2 == 1 else None
+    res = httpx.get(f"{API_URL}/groups/{spec}")
+    if res.status_code != 200:
+        print(f"При загрузке групп произошла ошибка: {res.text}")
+        raise SystemExit
+
+    groups_keyboard = Keyboard(one_time=False, inline=False)
+    last_year = ""
+
+    for group in res.json()["Groups"]:
+        if not (group[0] != 'Н' or last_year == group[2:4]):
+            groups_keyboard.row()
+
+        groups_keyboard.add(Callback(group, {"cmd": "group", "group": group}))
+        last_year = group[2:4]
+    groups_keyboard.row()
+    groups_keyboard.add(Callback("Назад", {"cmd": "spec", "spec": "Started"}), color=KeyboardButtonColor.NEGATIVE)
+
+    groups[spec] = groups_keyboard
+

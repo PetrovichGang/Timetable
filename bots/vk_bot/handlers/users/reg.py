@@ -27,7 +27,7 @@ async def start(message: Message, group: str = "Не задана"):
         user = await get_user_info(message, group)
 
         await client.post(f"{API_URL}/vk/users", json=user.dict())
-        await message.answer(f"Введите специальность.", keyboard=keyboards.first_keyboard)
+        await message.answer(f"Введите специальность.", keyboard=keyboards.specialities)
 
 
 @bp.on.raw_event(GroupEventType.MESSAGE_EVENT, dataclass=MessageEvent)
@@ -41,44 +41,26 @@ async def start(event: GroupEventType.MESSAGE_EVENT):
                     if group["lesson_group"]:
                         changes = await client.get(f"{API_URL}/finalize_schedule/{group['lesson_group']}?text=true")
                         for change in changes.json():
-                            await bp.api.messages.send(random_id=0, message=change, keyboard=keyboards.main_keyboard,
-                                                       event_id=event.object.event_id, peer_id=event.object.peer_id,
-                                                       user_id=event.object.user_id)
+                            await bp.api.messages.send(random_id=0, message=change, event_id=event.object.event_id, peer_id=event.object.peer_id, user_id=event.object.user_id)
                     else:
-                        await message.answer("Учебная группа не установлена\nУстановите группу через /set_group группа")
+                        await bp.api.messages.send(random_id=0, message="Учебная группа не установлена\nУстановите группу через /set_group группа", event_id=event.object.event_id,
+                                                       peer_id=event.object.peer_id,
+                                                       user_id=event.object.user_id)
                 else:
-                    await message.answer("Учебная группа не установлена\nУстановите группу через /set_group группа")
+                    await bp.api.messages.send(random_id=0, message="Учебная группа не установлена\nУстановите группу через /set_group группа",
+                                                       event_id=event.object.event_id,
+                                                       peer_id=event.object.peer_id,
+                                                       user_id=event.object.user_id)
+        else: 
 
-
-        if event.object.payload["spec"] == "Started":
-            await bp.api.messages.send(random_id=0, message="Выберите специальность.", keyboard=keyboards.first_keyboard,
-                               event_id=event.object.event_id, peer_id=event.object.peer_id,
-                               user_id=event.object.user_id)
-
-        if event.object.payload["spec"] == "Информатики":
-            await bp.api.messages.send(random_id=0, message="Выберите группу.", keyboard=keyboards.inf_keyboard,
-                               event_id=event.object.event_id, peer_id=event.object.peer_id,
-                               user_id=event.object.user_id)
-
-        elif event.object.payload["spec"] == "Механики":
-            await bp.api.messages.send(random_id=0, message="Выберите группу.", keyboard=keyboards.mech_keyboard,
-                               event_id=event.object.event_id, peer_id=event.object.peer_id,
-                               user_id=event.object.user_id)
-
-        elif event.object.payload["spec"] == "Электрики":
-            await bp.api.messages.send(random_id=0, message="Выберите группу.", keyboard=keyboards.elect_keyboard,
-                               event_id=event.object.event_id, peer_id=event.object.peer_id,
-                               user_id=event.object.user_id)
-
-        elif event.object.payload["spec"] == "Нефтяники":
-            await bp.api.messages.send(random_id=0, message="Выберите группу.", keyboard=keyboards.neft_keyboard,
-                               event_id=event.object.event_id, peer_id=event.object.peer_id,
-                               user_id=event.object.user_id)
-
-        elif event.object.payload["spec"] == "Бухгалтеры":
-            await bp.api.messages.send(random_id=0, message="Выберите группу.", keyboard=keyboards.buh_keyboard,
-                               event_id=event.object.event_id, peer_id=event.object.peer_id,
-                               user_id=event.object.user_id)
+            if event.object.payload["spec"] == "Started":
+                await bp.api.messages.send(random_id=0, message="Выберите специальность.", keyboard=keyboards.specialities,
+                                event_id=event.object.event_id, peer_id=event.object.peer_id,
+                                user_id=event.object.user_id)
+            else:
+                await bp.api.messages.send(random_id=0, message="Выберите группу.", keyboard=keyboards.groups[event.object.payload["spec"]],
+                                    event_id=event.object.event_id, peer_id=event.object.peer_id,
+                                    user_id=event.object.user_id)
 
     elif event.object.payload["cmd"] == "group":
         async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
@@ -86,10 +68,7 @@ async def start(event: GroupEventType.MESSAGE_EVENT):
 
             await bp.api.messages.send(random_id=0, message=f"Группа {event.object.payload['group']} установлена",
                                    event_id=event.object.event_id, peer_id=event.object.peer_id,
-                                   user_id=event.object.user_id)
-            await bp.api.messages.send(random_id=0, message="ого говно", keyboard=keyboards.main_keyboard,
-                                       event_id=event.object.event_id, peer_id=event.object.peer_id,
-                                       user_id=event.object.user_id)
+                                   user_id=event.object.user_id, keyboard=keyboards.main_keyboard)
 
     
     await event.ctx_api.messages.send_message_event_answer(event_id=event.object.event_id, peer_id=event.object.peer_id, user_id=event.object.user_id)
@@ -99,9 +78,9 @@ async def start(event: GroupEventType.MESSAGE_EVENT):
 async def set_group(message: Message, group: str = None):
     async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
         groups = await client.get(f"{API_URL}/groups")
-        user = await get_user_info(message, group)
 
         if group in groups.json()["Groups"]:
+            user = await get_user_info(message, group)
             await client.post(f"{API_URL}/vk/users", json=user.dict())
             await client.post(f"{API_URL}/vk/users/set_group", json={"lesson_group": group, "users_id": [user.id]})
             await message.answer(f"Группа {group} установлена")
@@ -136,9 +115,13 @@ async def help(message: Message):
 #### ФУНКЦИИ ####
 async def get_user_info(message: Message, lessons_group: str = None) -> VKUserModel:
     user_info = await bp.api.users.get(message.from_id)
+    print(user_info)
     temp = user_info[0].dict()
+
+    temp["photo"] = temp["photo_100"]
     temp.update({"lesson_group": lessons_group})
-    temp = VKUserModel.parse_obj(temp)
-    temp.join = int(time.time())
-    temp.peer_id = message.peer_id
-    return temp
+    user = VKUserModel.parse_obj(temp)
+    user.join = int(time.time())
+    user.peer_id = message.peer_id
+
+    return user
