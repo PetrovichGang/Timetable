@@ -15,3 +15,5 @@ aiogram==2.15
 vkbottle==3.0.2
 certifi==2021.5.30
 Jinja2==3.0.1
+apscheduler==3.8.0
+pytz==2021.1

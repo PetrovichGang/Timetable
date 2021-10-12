@@ -1,9 +1,10 @@
+from fastapi import Request, APIRouter, BackgroundTasks
 from starlette.responses import JSONResponse, Response
 from templates import schedule, schedule_markdown
+from app.parser import start_parse_changes
 from db.models import ChangeModel, DAYS
-from fastapi import Request, APIRouter
 from pydantic import ValidationError
-from .api import db, TimeTableDB
+from .tools import db, TimeTableDB
 from datetime import datetime
 from starlette import status
 import json
@@ -11,6 +12,7 @@ import json
 
 routerPublicChanges = APIRouter()
 routerPrivateChanges = APIRouter()
+PARSER_BLOCK = False
 
 
 @routerPublicChanges.get("/api/changes",
@@ -167,3 +169,23 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
         return JSONResponse(result, status_code=status.HTTP_200_OK)
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@routerPrivateChanges.get("/api/parse_changes",
+                  summary="Запуск парсинга изменений",
+                  tags=["Изменения в расписание"])
+async def parse_changes(background_tasks: BackgroundTasks):
+    global PARSER_BLOCK
+    if PARSER_BLOCK:
+        return Response(status_code=status.HTTP_423_LOCKED)
+
+    background_tasks.add_task(__parse_changes)
+    PARSER_BLOCK = True
+    return Response(status_code=status.HTTP_202_ACCEPTED)
+
+
+def __parse_changes():
+    global PARSER_BLOCK
+
+    start_parse_changes()
+    PARSER_BLOCK = False

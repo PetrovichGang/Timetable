@@ -1,5 +1,5 @@
-from config import API_URL, Schedule_URL, AUTH_HEADER
-from datetime import datetime, timedelta
+from config import API_URL, Schedule_URL, AUTH_HEADER, CWD
+from datetime import datetime
 from pathlib import Path
 from typing import Union
 import camelot
@@ -8,7 +8,7 @@ import httpx
 import json
 import re
 
-PATH = Path(__file__).parent.absolute()
+
 URL = Schedule_URL
 
 
@@ -31,7 +31,7 @@ def get_schedule_links(url: str = URL) -> list:
 
 def download_schedule(url: str) -> None:
     file_name = url.split("/")[-1]
-    path = Path(PATH, "schedule")
+    path = Path(CWD, "schedule")
     if not path.exists(): path.mkdir()
 
     final_file_path = Path(path, file_name)
@@ -45,7 +45,7 @@ def download_schedule(url: str) -> None:
 
 
 def clear_schedule_dir():
-    path = Path(PATH, "schedule")
+    path = Path(CWD, "schedule")
     for file in path.glob("*.*"):
         file.unlink()
 
@@ -108,22 +108,20 @@ def parse_schedule(tables: pandas.DataFrame) -> dict:
     return groups
 
 
-class DateTime:
-    def __init__(self):
-        self.today = datetime.now().strftime("%d.%m.%Y")
-        self.tomorrow = (datetime.now() + timedelta(days=1)).strftime("%d.%m.%Y")
-
-
-if __name__ == '__main__':
+def start(clear_dir: bool = False):
+    today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
     for link in get_schedule_links():
         download_schedule(link)
 
-    res = httpx.delete(f"{API_URL}/changes", headers=AUTH_HEADER)
-    print("Delete status", res.status_code)
-    for i, pdf in enumerate(Path(PATH, "schedule").glob("*.pdf")):
+    httpx.delete(f"{API_URL}/changes", headers=AUTH_HEADER)
+    for pdf in filter(lambda data: datetime.strptime(data.name.split("-")[-2], "%d.%m.%Y") >= today, Path(CWD, "schedule").glob("*.pdf")):
         data_frame = parse_pdf(pdf)
         data = json.dumps({"Date": pdf.name.split('-')[2], "Groups": parse_schedule(data_frame)}, ensure_ascii=False)
-        res = httpx.post(f"{API_URL}/changes", json=data, headers=AUTH_HEADER)
-        print("Upload status", res.status_code)
+        httpx.post(f"{API_URL}/changes", json=data, headers=AUTH_HEADER)
 
-    #clear_schedule_dir()
+    if clear_dir:
+        clear_schedule_dir()
+
+
+if __name__ == '__main__':
+    start()

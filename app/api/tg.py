@@ -5,7 +5,7 @@ from bots.common.strings import strings
 from pydantic import ValidationError
 from fastapi import APIRouter
 from starlette import status
-from .api import db
+from .tools import db
 
 routerPrivateTG = APIRouter()
 

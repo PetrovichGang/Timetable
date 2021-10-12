@@ -3,7 +3,7 @@ from templates import full_timetable_markdown, full_timetable
 from starlette.responses import JSONResponse, Response
 from fastapi import Request, APIRouter
 from pydantic import ValidationError
-from .api import db, TimeTableDB
+from .tools import db, TimeTableDB
 from starlette import status
 import json
 
