@@ -22,7 +22,7 @@ bp.labeler.vbml_ignore_case = True
 
 # keyboards.main_keyboard.row()
 # auto_color = KeyboardButtonColor.POSITIVE if auto_get else KeyboardButtonColor.NEGATIVE
-# keyboards.main_keyboard.add(Callback(strings.button.notify.format(""), {"cmd": "auto"}), color=auto_color)
+keyboards.main_keyboard.add(Callback(strings.button.notify.format(""), {"cmd": "auto"}), color=KeyboardButtonColor.POSITIVE)
 
 ##### ОБРАБОТКА СООБЩЕНИЙ #####
 @bp.on.private_message(text=["/start", "начать"])
@@ -65,6 +65,9 @@ async def start(event: GroupEventType.MESSAGE_EVENT):
                 await bp.api.messages.send(random_id=0, message="Выберите группу.", keyboard=keyboards.groups[event.object.payload["spec"]],
                                     event_id=event.object.event_id, peer_id=event.object.peer_id,
                                     user_id=event.object.user_id)
+
+    elif event.object.payload["cmd"] == "auto":
+        await change_notify(event.object.user_id)
 
     elif event.object.payload["cmd"] == "group":
         async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
@@ -119,7 +122,7 @@ async def help(message: Message):
 #### ФУНКЦИИ ####
 async def get_user_info(message: Message, lessons_group: str = None) -> VKUserModel:
     user_info = await bp.api.users.get(message.from_id)
-    print(user_info)
+    #print(user_info)
     temp = user_info[0].dict()
 
     temp.update({"lesson_group": lessons_group})
@@ -129,3 +132,8 @@ async def get_user_info(message: Message, lessons_group: str = None) -> VKUserMo
     user.auto_changes = False
 
     return user
+
+async def change_notify(user_id: int):
+    user = httpx.get(f"{API_URL}/vk/users?id={user_id}")
+    print(user.json()[0]["id"])
+
