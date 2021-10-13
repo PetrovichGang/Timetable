@@ -1,6 +1,8 @@
 from db import TimeTableDB
 from config import DB_URL
+import loguru
 
+logger = loguru.logger
 db = TimeTableDB(DB_URL)
 
 tags_metadata = [

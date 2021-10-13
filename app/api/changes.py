@@ -132,9 +132,9 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
 
             lessons = {}
             changes = data.get("Lessons")
-
             lessons = default_lessons[0]["Lessons"]["a"]
-            if num_week % 2 == 1 and len(default_lessons[0]) > 2:
+
+            if num_week % 2 == 1 and "b" in default_lessons[0]["Lessons"].keys():
                 lessons.update(default_lessons[0]["Lessons"]["b"])
 
             if len(data) > 1:
@@ -144,6 +144,13 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
                 temp["Comments"] = changes["Comments"]
 
             temp["Lessons"].update(lessons)
+
+            if (html or text) and len(data) > 1:
+                changes_with_emoji = {}
+                for key, item in changes["ChangeLessons"].items():
+                    changes_with_emoji["key"] = item + " ✏️"
+
+                temp["Lessons"].update(changes_with_emoji)
 
             if html:
                 result.append(schedule_markdown.render(

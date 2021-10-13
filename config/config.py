@@ -1,5 +1,6 @@
 from environs import load_dotenv, Env
 from pathlib import Path
+import pytz
 
 env = Env()
 CWD = Path(__file__).parent.parent.absolute()
@@ -23,3 +24,5 @@ TG_TOKEN = env.str("TG_TOKEN")
 
 TG_DOMAIN = env.str("TG_DOMAIN")
 TG_PATH = env.str("TG_PATH")
+
+TIMEZONE = pytz.timezone(env.str("TimeZone"))
