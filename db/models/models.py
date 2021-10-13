@@ -75,9 +75,7 @@ class VKUserModel(BaseModel):
     first_name: Optional[str] = Field(alias="first_name")
     last_name: Optional[str] = Field(alias="last_name")
     is_closed: Optional[bool] = Field(alias="is_closed")
-    photo: Optional[str] = Field(alias="photo")
-    sex: Optional[int] = Field(alias="sex")
-
+    auto_changes: Optional[bool] = Field(alias="auto_changes", const=False)
 
 class VKChatModel(BaseModel):
     peer_id: int = Field(alias="peer_id")

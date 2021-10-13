@@ -1,5 +1,6 @@
 from vkbottle.tools.dev_tools.keyboard import color
 from vkbottle.tools.dev_tools.keyboard.action import Callback
+from vkbottle_types.events.user_events import Call
 from db.models import VKUserModel, GroupNames
 from config import API_URL, AUTH_HEADER
 from vkbottle import Keyboard, Text, TemplateElement, template_gen, keyboard, KeyboardButtonColor
@@ -7,6 +8,7 @@ import httpx
 
 specialities = Keyboard(one_time=False, inline=False)
 groups = {}
+
 
 main_keyboard = Keyboard(one_time=False, inline=False)
 main_keyboard.add(Callback("Изменить группу", {"cmd": "spec", "spec": "Started"}))

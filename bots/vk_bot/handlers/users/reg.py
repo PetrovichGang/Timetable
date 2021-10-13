@@ -15,10 +15,14 @@ from pprint import pprint
 import json
 import httpx
 import bots.vk_bot.handlers.users.keyboards as keyboards
+from bots.common.strings import strings
 
 bp = Blueprint("UserBot")
 bp.labeler.vbml_ignore_case = True
 
+# keyboards.main_keyboard.row()
+# auto_color = KeyboardButtonColor.POSITIVE if auto_get else KeyboardButtonColor.NEGATIVE
+# keyboards.main_keyboard.add(Callback(strings.button.notify.format(""), {"cmd": "auto"}), color=auto_color)
 
 ##### ОБРАБОТКА СООБЩЕНИЙ #####
 @bp.on.private_message(text=["/start", "начать"])
@@ -118,10 +122,10 @@ async def get_user_info(message: Message, lessons_group: str = None) -> VKUserMo
     print(user_info)
     temp = user_info[0].dict()
 
-    temp["photo"] = temp["photo_100"]
     temp.update({"lesson_group": lessons_group})
     user = VKUserModel.parse_obj(temp)
     user.join = int(time.time())
     user.peer_id = message.peer_id
+    user.auto_changes = False
 
     return user
