@@ -5,14 +5,17 @@ from db.models import VKUserModel, GroupNames
 from config import API_URL, AUTH_HEADER
 from vkbottle import Keyboard, Text, TemplateElement, template_gen, keyboard, KeyboardButtonColor
 import httpx
+from bots.common.strings import strings
 
 specialities = Keyboard(one_time=False, inline=False)
 groups = {}
 
 
 main_keyboard = Keyboard(one_time=False, inline=False)
-main_keyboard.add(Callback("Изменить группу", {"cmd": "spec", "spec": "Started"}))
-main_keyboard.add(Callback("Расписание", {"cmd": "spec", "spec": "Timetable"}))
+main_keyboard.add(Callback("Назначить группу", {"cmd": "spec", "spec": "Started"}), color=KeyboardButtonColor.PRIMARY)
+main_keyboard.row()
+main_keyboard.add(Callback("Расписание", {"cmd": "spec", "spec": "Timetable"}), color=KeyboardButtonColor.PRIMARY)
+
 
 
 for index, spec in enumerate(GroupNames):
