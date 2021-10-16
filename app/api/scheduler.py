@@ -41,7 +41,9 @@ async def check_changes(url: str = Schedule_URL):
         for link in raw_links:
             links.add(link.split('-')[-2])
 
-        if links.difference(changes):
+        diff = links.difference(changes)
+        diff = list(filter(lambda date_diff: datetime.strptime(date_diff, "%d.%m.%Y") >= date, [date_diff for date_diff in list(diff)]))
+        if diff:
             logger.info("Find new changes")
             logger.info("Start parsing")
 
@@ -53,6 +55,6 @@ async def check_changes(url: str = Schedule_URL):
             logger.info("Terminate check_changes job")
             logger.info(f"Next schedule check: {(date + timedelta(days=1, hours=10)).strftime('%d.%m.%Y %H:%M')}")
 
-        elif links == changes and time > datetime.strptime("14:00", "%H:%M"):
+        elif not diff and time > datetime.strptime("14:00", "%H:%M"):
             scheduler.get_job("check_changes").remove()
             logger.info("Terminate check_changes job")

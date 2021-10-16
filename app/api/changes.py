@@ -148,7 +148,7 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
             if (html or text) and len(data) > 1:
                 changes_with_emoji = {}
                 for key, item in changes["ChangeLessons"].items():
-                    changes_with_emoji["key"] = item + " ✏️"
+                    changes_with_emoji[key] = item + " ✏️"
 
                 temp["Lessons"].update(changes_with_emoji)
 
