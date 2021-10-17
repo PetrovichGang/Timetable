@@ -1,4 +1,5 @@
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorClient, AsyncIOMotorCursor
+from config import MONGODB_URL
 from typing import Union
 from pathlib import Path
 import certifi
@@ -7,8 +8,8 @@ import pymongo
 
 
 class TimeTableDB:
-    def __init__(self, uri: str, certificate: Union[Path, str] = None):
-        self.url = uri
+    def __init__(self, url: str = MONGODB_URL, certificate: Union[Path, str] = None):
+        self.url = url
         self.certificate = certificate
 
         self.groups = []

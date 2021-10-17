@@ -1,3 +1,4 @@
+from config import RABBITMQ_ENABLE, RABBITMQ_URL, RABBITMQ_PORT
 from typing import List, Callable, Dict, Union
 from aio_pika import IncomingMessage
 from pydantic import BaseModel
@@ -14,7 +15,7 @@ class RoutingKey(BaseModel):
 
 
 class Consumer:
-    def __init__(self, url: str, exchange_name: str, routing_keys: List[RoutingKey], prefetch_count: int = 1, loop: asyncio.AbstractEventLoop = None, port: int = 5672):
+    def __init__(self, exchange_name: str, routing_keys: List[RoutingKey], prefetch_count: int = 1, url: str = RABBITMQ_URL, port: int = RABBITMQ_PORT, loop: asyncio.AbstractEventLoop = None):
         self.url = url
         self.port = port
         self.exchange_name = exchange_name
@@ -31,6 +32,10 @@ class Consumer:
         self.queues: Dict[str, aio_pika.Queue] = {}
 
     async def start(self) -> bool:
+        if not RABBITMQ_ENABLE:
+            logger.info(f"RabbitMQ is disabled, set RABBITMQ_ENABLE to True on .env")
+            return False
+
         try:
             if self.loop:
                 self.connection = await aio_pika.connect(self.url, loop=self.loop, port=self.port)
@@ -69,7 +74,7 @@ class Consumer:
 
 
 class Producer:
-    def __init__(self, url: str, exchange_name: str, loop: asyncio.AbstractEventLoop = None, port: int = 5672):
+    def __init__(self, exchange_name: str, url: str = RABBITMQ_URL, port: int = RABBITMQ_PORT, loop: asyncio.AbstractEventLoop = None):
         self.url = url
         self.port = port
         self.exchange_name = exchange_name
@@ -80,6 +85,10 @@ class Producer:
         self.exchange: aio_pika.Exchange
 
     async def start(self) -> bool:
+        if not RABBITMQ_ENABLE:
+            logger.info(f"RabbitMQ is disabled, set RABBITMQ_ENABLE to True on .env")
+            return False
+
         try:
             if self.loop:
                 self.connection = await aio_pika.connect(self.url, loop=self.loop, port=self.port)

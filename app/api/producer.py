@@ -1,4 +1,3 @@
-from config import RABBITMQ_URL, RABBITMQ_PORT
 from starlette.responses import Response
 from databases.rabbitmq import Producer
 from databases.models import Message
@@ -7,7 +6,7 @@ from starlette import status
 
 
 routerPublicProducer = APIRouter()
-prod = Producer(RABBITMQ_URL, "Bots message", port=RABBITMQ_PORT)
+prod = Producer("Bots message")
 
 
 @routerPublicProducer.get("/api/producer/send_message")

@@ -1,2 +1,2 @@
-from .db import *
+from .mongodb import *
 from .models import models

@@ -1,4 +1,3 @@
-from config import RABBITMQ_URL, RABBITMQ_PORT
 from databases.rabbitmq import Consumer, RoutingKey
 from aio_pika import IncomingMessage
 from databases.models import Message
@@ -22,5 +21,5 @@ async def on_tg_message(message: IncomingMessage, bot: Bot):
 async def start(bot: Bot):
     on_message = partial(on_tg_message, bot=bot)
     routing_key = RoutingKey(key="TG", func=on_message)
-    consumer = Consumer(RABBITMQ_URL, "Bots message", [routing_key], port=RABBITMQ_PORT)
+    consumer = Consumer("Bots message", [routing_key])
     await consumer.start()

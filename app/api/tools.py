@@ -1,9 +1,8 @@
 from databases import TimeTableDB
-from config import MONGODB_URL
 import loguru
 
 logger = loguru.logger
-db = TimeTableDB(MONGODB_URL)
+db = TimeTableDB()
 
 tags_metadata = [
     {
