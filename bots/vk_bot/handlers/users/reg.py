@@ -6,7 +6,7 @@ from vkbottle.tools.dev_tools.mini_types.bot import message
 from vkbottle_types.events.bot_events import MessageEvent
 from vkbottle_types.events.enums.group_events import GroupEventType
 from vkbottle_types.methods import users
-from db.models import VKUserModel, GroupNames
+from databases.models import VKUserModel, GroupNames
 from vkbottle_types.objects import MessagesConversation
 from vkbottle.bot import Blueprint, Message, rules
 from vkbottle_types import BaseStateGroup, GroupTypes

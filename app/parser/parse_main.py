@@ -1,5 +1,5 @@
 from config import AUTH_HEADER, API_URL, CWD
-from db.models import DAYS
+from databases.models import DAYS
 from typing import Union
 from pathlib import Path
 import pandas as pd

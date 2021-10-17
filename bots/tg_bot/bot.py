@@ -1,18 +1,17 @@
-from typing import Optional
-
-import httpx as httpxlib
-
-from aiogram import Bot, types
+from config import TG_TOKEN, AUTH_HEADER, API_URL
+from databases.models import TGChatModel, TGState
 from aiogram.dispatcher import Dispatcher
+from bots.common.strings import strings
 from aiogram.types import ContentType
 from pydantic import ValidationError
-
-from config import TG_TOKEN, AUTH_HEADER, API_URL
-from bots.common.strings import strings
-from db.models import TGChatModel, TGState
 import bots.tg_bot.keyboards as kb
+from aiogram import Bot, types
+from typing import Optional
+from .consumer import start
+import httpx as httpxlib
 
 bot = Bot(token=TG_TOKEN)
+bot.loop.run_until_complete(start(bot))
 dp = Dispatcher(bot)
 httpx = httpxlib.AsyncClient(headers=AUTH_HEADER)
 
@@ -28,7 +27,7 @@ async def start(message: types.Message):
     if await prefs_error(message, prefs):
         pass
     elif prefs.state == TGState.spec_select:
-        await message.answer(f"{strings.welcome}\n\n{strings.input.spec}",reply_markup=kb.specialities)
+        await message.answer(f"{strings.welcome}\n\n{strings.input.spec}", reply_markup=kb.specialities)
     else:
         await message.answer(strings.menu, reply_markup=prefs.to_keyboard())
 

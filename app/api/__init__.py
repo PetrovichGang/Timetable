@@ -1,6 +1,6 @@
 from .changes import routerPublicChanges, routerPrivateChanges
 from .timetable import routerPublicTT, routerPrivateTT
-from config import AUTH_HEADER, API_URL
+from .producer import prod, routerPublicProducer
 from .tools import db, TimeTableDB
 from .scheduler import scheduler
 from .vk import routerPrivateVK
@@ -12,6 +12,7 @@ __all__ = ["routerPrivate", "routerPublic"]
 routerPublic = APIRouter()
 routerPublic.include_router(routerPublicTT)
 routerPublic.include_router(routerPublicChanges)
+routerPublic.include_router(routerPublicProducer)
 
 routerPrivate = APIRouter()
 routerPrivate.include_router(routerPrivateVK)
@@ -25,3 +26,10 @@ async def startup():
     content = await TimeTableDB.async_find(db.DLCollection, {}, {"_id": 0, "Group": 1})
     db.groups = [group.get("Group") for group in content]
     scheduler.start()
+    await prod.start()
+
+
+@routerPublic.on_event("shutdown")
+async def startup():
+    scheduler.shutdown()
+    await prod.close()

@@ -6,10 +6,16 @@ env = Env()
 CWD = Path(__file__).parent.parent.absolute()
 load_dotenv(Path(CWD, ".env"))
 
-DB_IP = env.str("TimeTable_DB_IP")
-DB_PORT = env.int("TimeTable_DB_PORT")
-DB_URL = f"mongodb://{DB_IP}:{DB_PORT}" if env.str("TimeTable_DB_URL") == "0" else env.str("TimeTable_DB_URL")
-DB_CERTIFICATE = env.str("TimeTable_DB_CERTIFICATE")
+MONGODB_IP = env.str("MONGODB_IP")
+MONGODB_PORT = env.int("MONGODB_PORT")
+MONGODB_URL = f"mongodb://{MONGODB_IP}:{MONGODB_PORT}" if env.str("MONGODB_URL") == "0" else env.str("MONGODB_URL")
+MONGODB_CERTIFICATE = env.str("MONGODB_CERTIFICATE")
+
+RABBITMQ_IP = env.str("RABBITMQ_IP")
+RABBITMQ_PORT = env.str("RABBITMQ_PORT")
+RABBITMQ_USER = env.str("RABBITMQ_USER")
+RABBITMQ_PASS = env.str("RABBITMQ_PASS")
+RABBITMQ_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASS}@{RABBITMQ_IP}/"
 
 API_IP = env.str('TimeTable_API_IP')
 API_PORT = env.int('TimeTable_API_PORT')

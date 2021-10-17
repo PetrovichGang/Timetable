@@ -2,7 +2,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from bots.common.strings import strings
 from config import API_URL
-from db.models import GroupNames
+from databases.models import GroupNames
 import httpx
 
 

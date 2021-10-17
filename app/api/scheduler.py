@@ -1,4 +1,4 @@
-from config import AUTH_HEADER, API_URL, Schedule_URL, TIMEZONE, DB_URL
+from config import AUTH_HEADER, API_URL, Schedule_URL, TIMEZONE, MONGODB_URL
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.mongodb import MongoDBJobStore
 from datetime import datetime, timedelta
@@ -8,7 +8,7 @@ import re
 
 scheduler = AsyncIOScheduler(timezone=TIMEZONE)
 
-jobstore = MongoDBJobStore(host=DB_URL)
+jobstore = MongoDBJobStore(host=MONGODB_URL)
 scheduler.add_jobstore(jobstore)
 
 

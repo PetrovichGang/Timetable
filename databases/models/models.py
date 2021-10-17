@@ -5,6 +5,7 @@ from pydantic import BaseModel, validator, Field
 from typing import Dict, List, Optional
 from typing_extensions import TypedDict
 from datetime import datetime
+from io import BytesIO
 from time import time
 from enum import Enum
 
@@ -129,3 +130,12 @@ class TGChatExtendedModel(TGChatModel):
     chat_title: Optional[str] = Field(alias="group_title")
     user_username: Optional[str] = Field(alias="user_username")
     chat_username: Optional[str] = Field(alias="group_username")
+
+
+class Message(BaseModel):
+    routing_key: str = Field(alias="routing_key")
+    recipient_ids: List[int] = Field(alias="recipient_ids")
+
+    text: str = Field(alias="text")
+    images_url: Optional[List[str]] = Field(alias="images_url")
+

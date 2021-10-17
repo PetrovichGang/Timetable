@@ -1,4 +1,4 @@
-from db.models import VKUserModel, VKChatModel, GroupNames
+from databases.models import VKUserModel, VKChatModel, GroupNames
 from vkbottle_types.objects import MessagesConversation
 from vkbottle.bot import Blueprint, Message, rules
 from vkbottle_types import BaseStateGroup

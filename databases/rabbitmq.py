@@ -1,4 +1,4 @@
-from typing import List, Callable, Dict
+from typing import List, Callable, Dict, Union
 from aio_pika import IncomingMessage
 from pydantic import BaseModel
 import aio_pika
@@ -14,8 +14,9 @@ class RoutingKey(BaseModel):
 
 
 class Consumer:
-    def __init__(self, url: str, exchange_name: str, routing_keys: List[RoutingKey], prefetch_count: int = 1, loop: asyncio.AbstractEventLoop = None):
+    def __init__(self, url: str, exchange_name: str, routing_keys: List[RoutingKey], prefetch_count: int = 1, loop: asyncio.AbstractEventLoop = None, port: int = 5672):
         self.url = url
+        self.port = port
         self.exchange_name = exchange_name
         self.prefetch_count = prefetch_count
         self.loop: asyncio.AbstractEventLoop = loop
@@ -23,9 +24,6 @@ class Consumer:
 
         if not all(isinstance(rout, RoutingKey) for rout in self.routing_keys):
             raise ValueError(f"Invalid routing keys")
-
-        for rout in self.routing_keys:
-            setattr(self, rout.key, rout.func)
 
         self.connection: aio_pika.Connection
         self.exchange: aio_pika.Exchange
@@ -35,10 +33,10 @@ class Consumer:
     async def start(self) -> bool:
         try:
             if self.loop:
-                self.connection = await aio_pika.connect(self.url, loop=self.loop)
+                self.connection = await aio_pika.connect(self.url, loop=self.loop, port=self.port)
             else:
                 self.loop = asyncio.get_event_loop()
-                self.connection = await aio_pika.connect(self.url, loop=self.loop)
+                self.connection = await aio_pika.connect(self.url, loop=self.loop, port=self.port)
             logger.info(f"RabbitMQ Consumer: The connection is established")
 
             self.channel = await self.connection.channel()
@@ -71,8 +69,9 @@ class Consumer:
 
 
 class Producer:
-    def __init__(self, url: str, exchange_name: str, loop: asyncio.AbstractEventLoop = None):
+    def __init__(self, url: str, exchange_name: str, loop: asyncio.AbstractEventLoop = None, port: int = 5672):
         self.url = url
+        self.port = port
         self.exchange_name = exchange_name
         self.loop: asyncio.AbstractEventLoop = loop
 
@@ -80,18 +79,21 @@ class Producer:
         self.channel: aio_pika.Channel
         self.exchange: aio_pika.Exchange
 
-    async def start(self):
+    async def start(self) -> bool:
         try:
             if self.loop:
-                self.connection = await aio_pika.connect(self.url, loop=self.loop)
+                self.connection = await aio_pika.connect(self.url, loop=self.loop, port=self.port)
             else:
                 self.loop = asyncio.get_event_loop()
-                self.connection = await aio_pika.connect(self.url, loop=self.loop)
+                self.connection = await aio_pika.connect(self.url, loop=self.loop, port=self.port)
+            logger.info(f"RabbitMQ Producer: The connection is established")
 
             channel = await self.connection.channel()
             self.exchange = await channel.declare_exchange(self.exchange_name, aio_pika.ExchangeType.DIRECT)
         except ConnectionError as ex:
             logger.error(f"RabbitMQ Producer: Connection Error {ex}")
+            return False
+        return True
 
     async def close(self):
         try:
@@ -100,43 +102,12 @@ class Producer:
         except AttributeError as ex:
             logger.error(f"RabbitMQ Producer: {ex}")
 
-    async def send_message(self, message: str, routing_key: str):
+    async def send_message(self, message: Union[str, bytes], routing_key: str):
         try:
-            message = aio_pika.Message(body=message.encode())
+            message = message if isinstance(message, bytes) else message.encode()
+            message = aio_pika.Message(body=message)
             await self.exchange.publish(message, routing_key=routing_key)
             logger.debug(
                 f"RabbitMQ Producer: Exchange: '{self.exchange_name}' Routing key: '{routing_key}' Message body: {message.body}")
         except AttributeError as ex:
             logger.error(f"RabbitMQ Producer: {ex}")
-
-
-if __name__ == "__main__":
-    async def main(loop):
-        async def on_vk_message(message: IncomingMessage):
-            logger.debug("VK: [x] %r" % message.body)
-            await asyncio.sleep(0.1)
-
-            if True:
-                message.ack()
-            else:
-                message.nack()
-
-        async def on_tg_message(message: IncomingMessage):
-            logger.debug("TG: [x] %r" % message.body)
-            await asyncio.sleep(0.1)
-
-            if True:
-                message.ack()
-            else:
-                message.nack()
-
-        v = RoutingKey(key="VK", func=on_vk_message)
-        t = RoutingKey(key="TG", func=on_tg_message)
-
-        c = Consumer("amqp://user:user@192.168.1.160/", "Bots message", [v, t], loop=loop)
-        status = await c.start()
-
-    loop = asyncio.get_event_loop()
-    connection = loop.run_until_complete(main(loop))
-
-    loop.run_forever()

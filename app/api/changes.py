@@ -2,17 +2,20 @@ from fastapi import Request, APIRouter, BackgroundTasks
 from starlette.responses import JSONResponse, Response
 from templates import schedule, schedule_markdown
 from app.parser import start_parse_changes
-from db.models import ChangeModel, DAYS
+from databases.models import ChangeModel, DAYS
 from pydantic import ValidationError
 from .tools import db, TimeTableDB
 from datetime import datetime
 from starlette import status
+import calendar
+import locale
 import json
-
 
 routerPublicChanges = APIRouter()
 routerPrivateChanges = APIRouter()
 PARSER_BLOCK = False
+
+locale.setlocale(locale.LC_ALL, 'ru_RU')
 
 
 @routerPublicChanges.get("/api/changes",
@@ -154,6 +157,7 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
 
             if html:
                 result.append(schedule_markdown.render(
+                    Day=calendar.day_name[weekday - 1].title(),
                     Date=temp["Date"],
                     Lessons=[f"<code><b>{index})</b></code> {lesson}" for index, lesson in
                              enumerate(temp["Lessons"].values(), 1)],
@@ -163,6 +167,7 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
 
             elif text:
                 result.append(schedule.render(
+                    Day=calendar.day_name[weekday - 1].title(),
                     Date=temp["Date"],
                     Lessons=[f"{index}) {lesson}" for index, lesson in
                              enumerate(temp["Lessons"].values(), 1)],
@@ -181,9 +186,9 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
 @routerPrivateChanges.get("/api/parse_changes",
                   summary="Запуск парсинга изменений",
                   tags=["Изменения в расписание"])
-async def parse_changes(background_tasks: BackgroundTasks):
+async def parse_changes(background_tasks: BackgroundTasks, force: bool = False):
     global PARSER_BLOCK
-    if PARSER_BLOCK:
+    if PARSER_BLOCK and not force:
         return Response(status_code=status.HTTP_423_LOCKED)
 
     background_tasks.add_task(__parse_changes)

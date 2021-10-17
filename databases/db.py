@@ -79,9 +79,9 @@ class TimeTableDB:
 
 
 if __name__ == '__main__':
-    from config import DB_URL
+    from config import MONGODB_URL
 
-    db = TimeTableDB(DB_URL)
+    db = TimeTableDB(MONGODB_URL)
     cursor = TimeTableDB.async_find(db.DLCollection, {})
 
     loop = asyncio.get_event_loop()

@@ -1,4 +1,4 @@
-from db.models import DefaultModel, EnumDays, DAYS, GroupNames
+from databases.models import DefaultModel, EnumDays, DAYS, GroupNames
 from templates import full_timetable_markdown, full_timetable
 from starlette.responses import JSONResponse, Response
 from fastapi import Request, APIRouter

@@ -1,4 +1,4 @@
-from db.models import VKUserModel, VKChatModel, DictIdAndGroup
+from databases.models import VKUserModel, VKChatModel, DictIdAndGroup
 from starlette.responses import JSONResponse, Response
 from pydantic import parse_obj_as
 from typing import List, Union
