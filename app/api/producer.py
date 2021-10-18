@@ -1,6 +1,5 @@
+from databases.rabbitmq import Producer, Message
 from starlette.responses import Response
-from databases.rabbitmq import Producer
-from databases.models import Message
 from fastapi import APIRouter
 from starlette import status
 

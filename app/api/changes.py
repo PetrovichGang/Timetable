@@ -1,15 +1,18 @@
 from fastapi import Request, APIRouter, BackgroundTasks
 from starlette.responses import JSONResponse, Response
 from templates import schedule, schedule_markdown
-from app.parser import start_parse_changes
 from databases.models import ChangeModel, DAYS
+from app.parser import start_parse_changes
+from .scheduler import start_send_changes
 from pydantic import ValidationError
 from .tools import db, TimeTableDB
 from datetime import datetime
 from starlette import status
+from config import TIMEZONE
 import calendar
 import locale
 import json
+
 
 routerPublicChanges = APIRouter()
 routerPrivateChanges = APIRouter()
@@ -107,12 +110,14 @@ async def delete_changes(date: str = None):
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@routerPublicChanges.get("/api/finalize_schedule/{group}",
+@routerPublicChanges.get("/api/changes/finalize_schedule/{group}",
                   summary="Получение расписания с изменениями для группы",
                   tags=["Изменения в расписание"])
 async def get_finalize_schedule(group: str, text: bool = False, html: bool = False):
     result = []
     today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
+    time = datetime.strptime(datetime.now(TIMEZONE).strftime("%H:%M"), "%H:%M")
+
     template = lambda: {
         "Date": "",
         "Lessons": {f"p{num}": "Нет" for num in range(1, 4)},
@@ -124,6 +129,9 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
                                                {"_id": 0, "Date": 1, "Lessons": f"$Groups.{group}"})
 
         for data in filter(lambda data: datetime.strptime(data.get("Date"), "%d.%m.%Y") >= today, content):
+            if time > datetime.strptime("15:20", "%H:%M") and today == datetime.strptime(data.get("Date"), "%d.%m.%Y"):
+                continue
+
             day = datetime.strptime(data.get("Date"), "%d.%m.%Y")
             num_week = day.isocalendar()[1]
             weekday = day.isocalendar()[2]
@@ -183,7 +191,7 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@routerPrivateChanges.get("/api/parse_changes",
+@routerPrivateChanges.get("/api/changes/parse_changes",
                   summary="Запуск парсинга изменений",
                   tags=["Изменения в расписание"])
 async def parse_changes(background_tasks: BackgroundTasks, force: bool = False):
@@ -201,3 +209,11 @@ def __parse_changes():
 
     start_parse_changes()
     PARSER_BLOCK = False
+
+
+@routerPrivateChanges.get("/api/changes/start_send_changes",
+                  summary="Запуск отправки изменений",
+                  tags=["Изменения в расписание"])
+async def parse_changes(force: bool = False):
+    await start_send_changes(force)
+    return Response(status_code=status.HTTP_200_OK)

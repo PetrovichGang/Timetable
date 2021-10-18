@@ -47,7 +47,7 @@ async def start(event: GroupEventType.MESSAGE_EVENT):
                 if group.status_code == 200:
                     group = group.json()[0]
                     if group["lesson_group"]:
-                        changes = await client.get(f"{API_URL}/finalize_schedule/{group['lesson_group']}?text=true")
+                        changes = await client.get(f"{API_URL}/changes/finalize_schedule/{group['lesson_group']}?text=true")
                         for change in changes.json():
                             await bp.api.messages.send(random_id=0, message=change, event_id=event.object.event_id, peer_id=event.object.peer_id, user_id=event.object.user_id)
                     else:
@@ -116,7 +116,7 @@ async def send_changes(message: Message):
             group = group.json()[0]
 
             if group["lesson_group"]:
-                changes = await client.get(f"{API_URL}/finalize_schedule/{group['lesson_group']}?text=true")
+                changes = await client.get(f"{API_URL}/changes/finalize_schedule/{group['lesson_group']}?text=true")
                 for change in changes.json():
                     await message.answer(change)
             else:

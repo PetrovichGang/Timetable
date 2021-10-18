@@ -53,7 +53,7 @@ async def send_changes(message: Message):
             group = group.json()[0]
 
             if group["lesson_group"]:
-                changes = await client.get(f"{API_URL}/finalize_schedule/{group['lesson_group']}?text=true")
+                changes = await client.get(f"{API_URL}/changes/finalize_schedule/{group['lesson_group']}?text=true")
                 for change in changes.json():
                     await message.answer(change)
             else:

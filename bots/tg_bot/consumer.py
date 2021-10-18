@@ -1,6 +1,5 @@
-from databases.rabbitmq import Consumer, RoutingKey
+from databases.rabbitmq import Consumer, RoutingKey, Message
 from aio_pika import IncomingMessage
-from databases.models import Message
 from functools import partial
 from aiogram import Bot
 import loguru

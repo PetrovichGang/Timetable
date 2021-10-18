@@ -3,7 +3,6 @@ from fastapi import HTTPException, FastAPI, Depends
 from .api import routerPublic, routerPrivate
 from config import API_TOKEN
 
-
 app = FastAPI()
 security = HTTPBearer()
 

@@ -105,4 +105,26 @@ async def get_groups(peer_id: int = None):
     if chat_vk:
         return JSONResponse(chat_vk, status_code=status.HTTP_200_OK)
 
-    return Response(status_code=status.HTTP_400_BAD_REQUEST)
+    return Response(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@routerPrivateVK.get("/api/vk/chats/{lesson_group}",
+                   summary="Получение всех бесед VK с определенной учебной группой из базы данных",
+                   tags=["VK"])
+async def get_chats_with_group(lesson_group: str = None):
+    chats = await db.async_find(db.VKGroupsCollection, {"lesson_group": lesson_group}, {"_id": 0})
+    if chats:
+        return JSONResponse(chats, status_code=status.HTTP_200_OK)
+
+    return Response(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@routerPrivateVK.get("/api/vk/users/{lesson_group}",
+                   summary="Получение всех пользователей VK с определенной учебной группой из базы данных",
+                   tags=["VK"])
+async def get_users_with_group(lesson_group: str = None):
+    users = await db.async_find(db.VKUsersCollection, {"lesson_group": lesson_group}, {"_id": 0})
+    if users:
+        return JSONResponse(users, status_code=status.HTTP_200_OK)
+
+    return Response(status_code=status.HTTP_404_NOT_FOUND)

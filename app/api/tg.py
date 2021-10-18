@@ -56,3 +56,14 @@ async def set_tg_pref(chat_id: int, pref: str, value):
     if update_result.matched_count == 0:
         return Response(strings.error.not_started, status_code=status.HTTP_400_BAD_REQUEST)
     return Response(status_code=status.HTTP_200_OK)
+
+
+@routerPrivateTG.get("/api/tg/chats/{lesson_group}",
+                   summary="Получение всех чатов с определенной учебной группой",
+                   tags=["TG"])
+async def get_chats_with_group(lesson_group: str = None):
+    chats = await db.async_find(db.TGChatsCollection, {"lesson_group": lesson_group}, {"_id": 0})
+    if chats:
+        return JSONResponse(chats, status_code=status.HTTP_200_OK)
+
+    return Response(status_code=status.HTTP_404_NOT_FOUND)

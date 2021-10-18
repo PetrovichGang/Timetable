@@ -1,7 +1,6 @@
+from databases.rabbitmq import Consumer, RoutingKey, Message
 from pydantic.error_wrappers import ValidationError
-from databases.rabbitmq import Consumer, RoutingKey
 from aio_pika import IncomingMessage
-from databases.models import Message
 from functools import partial
 from vkbottle import Bot
 import loguru
@@ -16,9 +15,6 @@ async def on_vk_message(message: IncomingMessage, bot: Bot):
     if message.routing_key == "VK":
         try:
             await bot.api.messages.send(message=message_body.text, peer_ids=message_body.recipient_ids, random_id=0)
-
-        except ValidationError as ex:
-            logger.warning(ex)
             await message.ack()
 
         except Exception as ex:

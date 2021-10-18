@@ -78,6 +78,7 @@ class VKUserModel(BaseModel):
     is_closed: Optional[bool] = Field(alias="is_closed")
     notify: Optional[bool] = Field(alias="notify", const=False)
 
+
 class VKChatModel(BaseModel):
     peer_id: int = Field(alias="peer_id")
     owner_id: int = Field(alias="owner_id")
@@ -130,12 +131,3 @@ class TGChatExtendedModel(TGChatModel):
     chat_title: Optional[str] = Field(alias="group_title")
     user_username: Optional[str] = Field(alias="user_username")
     chat_username: Optional[str] = Field(alias="group_username")
-
-
-class Message(BaseModel):
-    routing_key: str = Field(alias="routing_key")
-    recipient_ids: List[int] = Field(alias="recipient_ids")
-
-    text: str = Field(alias="text")
-    images_url: Optional[List[str]] = Field(alias="images_url")
-

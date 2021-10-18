@@ -1,7 +1,7 @@
 from config import RABBITMQ_ENABLE, RABBITMQ_URL, RABBITMQ_PORT
-from typing import List, Callable, Dict, Union
+from typing import List, Callable, Dict, Union, Optional
+from pydantic import BaseModel, Field
 from aio_pika import IncomingMessage
-from pydantic import BaseModel
 import aio_pika
 import asyncio
 import loguru
@@ -12,6 +12,14 @@ logger = loguru.logger
 class RoutingKey(BaseModel):
     key: str
     func: Callable[[IncomingMessage], None]
+
+
+class Message(BaseModel):
+    routing_key: str = Field(alias="routing_key")
+    recipient_ids: List[int] = Field(alias="recipient_ids")
+
+    text: str = Field(alias="text")
+    images_url: Optional[List[str]] = Field(alias="images_url")
 
 
 class Consumer:

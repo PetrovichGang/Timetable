@@ -81,7 +81,7 @@ async def changes(message: types.Message):
 @dp.message_handler(regexp=f'^{strings.button.changes}$')
 @dp.message_handler(commands=['changes', 'изменения'])
 async def changes(message: types.Message):
-    await get_timetable(message, "finalize_schedule/{}?html=true")
+    await get_timetable(message, "changes/finalize_schedule/{}?html=true")
 
 
 @dp.message_handler(regexp=f'^{strings.button.timetable}$')
