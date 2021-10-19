@@ -58,7 +58,7 @@ async def check_changes(url: str = Schedule_URL):
             logger.info("Start parsing")
 
             async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
-                await client.get(f"{API_URL}/changes/parse_changes")
+                await client.get(f"{API_URL}/parse_changes")
 
             scheduler.get_job("check_changes").remove()
             scheduler.get_job("start_check_changes").modify(next_run_time=date + timedelta(days=1, hours=10))

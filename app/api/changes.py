@@ -53,7 +53,7 @@ async def change_groups():
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@routerPrivateChanges.get("/api/changes/parse_changes",
+@routerPrivateChanges.get("/api/parse_changes",
                   summary="Запуск парсинга изменений",
                   tags=["Изменения в расписание"])
 async def parse_changes(background_tasks: BackgroundTasks, force: bool = False):
