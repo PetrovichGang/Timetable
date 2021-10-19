@@ -50,6 +50,26 @@ async def change_groups():
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
+@routerPrivateChanges.get("/api/changes/parse_changes",
+                  summary="Запуск парсинга изменений",
+                  tags=["Изменения в расписание"])
+async def parse_changes(background_tasks: BackgroundTasks, force: bool = False):
+    global PARSER_BLOCK
+    if PARSER_BLOCK and not force:
+        return Response(status_code=status.HTTP_423_LOCKED)
+
+    background_tasks.add_task(__parse_changes)
+    PARSER_BLOCK = True
+    return Response(status_code=status.HTTP_202_ACCEPTED)
+
+
+def __parse_changes():
+    global PARSER_BLOCK
+
+    start_parse_changes()
+    PARSER_BLOCK = False
+
+
 @routerPublicChanges.get("/api/changes/{group}",
                   summary="Получение изменения в расписании у указанной группы",
                   tags=["Изменения в расписание"])
@@ -189,26 +209,6 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
         return JSONResponse(result, status_code=status.HTTP_200_OK)
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
-
-
-@routerPrivateChanges.get("/api/changes/parse_changes",
-                  summary="Запуск парсинга изменений",
-                  tags=["Изменения в расписание"])
-async def parse_changes(background_tasks: BackgroundTasks, force: bool = False):
-    global PARSER_BLOCK
-    if PARSER_BLOCK and not force:
-        return Response(status_code=status.HTTP_423_LOCKED)
-
-    background_tasks.add_task(__parse_changes)
-    PARSER_BLOCK = True
-    return Response(status_code=status.HTTP_202_ACCEPTED)
-
-
-def __parse_changes():
-    global PARSER_BLOCK
-
-    start_parse_changes()
-    PARSER_BLOCK = False
 
 
 @routerPrivateChanges.get("/api/changes/start_send_changes",
