@@ -214,7 +214,7 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@routerPrivateChanges.get("/api/changes/start_send_changes",
+@routerPrivateChanges.get("/api/start_send_changes",
                   summary="Запуск отправки изменений",
                   tags=["Изменения в расписание"])
 async def parse_changes(force: bool = False):
