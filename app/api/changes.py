@@ -9,16 +9,19 @@ from .tools import db, TimeTableDB
 from datetime import datetime
 from starlette import status
 from config import TIMEZONE
+import platform
 import calendar
 import locale
 import json
-
 
 routerPublicChanges = APIRouter()
 routerPrivateChanges = APIRouter()
 PARSER_BLOCK = False
 
-locale.setlocale(locale.LC_ALL, 'ru_RU')
+if platform.system() == "Windows":
+    locale.setlocale(locale.LC_ALL, 'ru_RU')
+elif platform.system() == "Linux":
+    locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 
 
 @routerPublicChanges.get("/api/changes",
