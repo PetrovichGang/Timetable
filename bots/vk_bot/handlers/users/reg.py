@@ -1,22 +1,21 @@
-import time
-from typing import List
-from vkbottle.tools.dev_tools.keyboard.action import Callback
+from vkbottle import Keyboard, Text, TemplateElement, template_gen, keyboard
 from vkbottle.tools.dev_tools.keyboard.color import KeyboardButtonColor
+from vkbottle_types.events.enums.group_events import GroupEventType
+from vkbottle.tools.dev_tools.keyboard.action import Callback
 from vkbottle.tools.dev_tools.mini_types.bot import message
 from vkbottle_types.events.bot_events import MessageEvent
-from vkbottle_types.events.enums.group_events import GroupEventType
-from vkbottle_types.methods import users
-from databases.models import VKUserModel, GroupNames
-from vkbottle_types.objects import MessagesConversation
-from vkbottle.bot import Blueprint, Message, rules
-from vkbottle_types import BaseStateGroup, GroupTypes
-from config import API_URL, AUTH_HEADER
-from vkbottle import Keyboard, Text, TemplateElement, template_gen, keyboard
-from pprint import pprint
-import json
-import httpx
 import bots.vk_bot.handlers.users.keyboards as keyboards
+from vkbottle_types.objects import MessagesConversation
+from vkbottle_types import BaseStateGroup, GroupTypes
+from config import API_URL, AUTH_HEADER, VK_ADMINS_ID
+from databases.models import VKUserModel, GroupNames
+from vkbottle.bot import Blueprint, Message, rules
+from vkbottle_types.methods import users
 from bots.common.strings import strings
+from typing import List
+import httpx
+import time
+import json
 
 
 bp = Blueprint("UserBot")
@@ -24,7 +23,7 @@ bp.labeler.vbml_ignore_case = True
 
 #### СОЗДАНИЕ КНОПКИ ДЛЯ ОПОВЕЩЕНИЙ ####
 keyboards.main_keyboard.row()
-keyboards.main_keyboard.add(Callback(strings.button.notify.format(""), {"cmd": "auto"}), color=KeyboardButtonColor.NEGATIVE)
+keyboards.main_keyboard.add(Callback("Оповещения (откл.)", {"cmd": "auto"}), color=KeyboardButtonColor.NEGATIVE)
 
 
 ##### ОБРАБОТКА СООБЩЕНИЙ #####
@@ -90,7 +89,7 @@ async def start(event: GroupEventType.MESSAGE_EVENT):
     
     await event.ctx_api.messages.send_message_event_answer(event_id=event.object.event_id, peer_id=event.object.peer_id, user_id=event.object.user_id)
 
-
+#### ОБРАБОТКА ТЕКСТОВЫХ КОМАНД ####
 @bp.on.private_message(text=["/set_group", "/set_group <group>", "/группа", "/группа <group>"]) #### ОБРАБОТКА /set_group /группа ####
 async def set_group(message: Message, group: str = None):
     async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
@@ -127,13 +126,12 @@ async def send_changes(message: Message):
 
 @bp.on.private_message(text=["/help", "/помощь"]) #### ОБРАБОТКА /help /помощь ####
 async def help(message: Message):
-    await message.answer(f"""
-    👨‍🎓 Задать группу:\n      /set_group <группа>\n      /группа <группа>\n\n📚 Получить расписание:\n      /timetable\n      /расписание""")
+    await message.answer(strings.help)
 
 
-@bp.on.private_message(text="<msg>") #### АНТИ-ТРОЛЛЬ СИСТЕМА #### ВОЗМОЖНО, ПРИДЕТСЯ УБРАТЬ
+@bp.on.private_message(text=["<msg>"]) #### АНТИ-ТРОЛЛЬ СИСТЕМА #### ВОЗМОЖНО, ПРИДЕТСЯ УБРАТЬ
 async def anti_troll_system(message: Message, msg):
-    await message.answer("😡 ПОШЕЛ НАХУЙ Я КНОПКИ ДЛЯ КОГО ДЕЛАЛ 😡")
+    await bp.api.messages.send(random_id=0, message=f"{message.peer_id}: {msg}", peer_ids=VK_ADMINS_ID)
 
 
 #### ФУНКЦИИ ####
@@ -160,12 +158,16 @@ async def change_notify(user_id: int, event):
             await client.post(f"{API_URL}/vk/users/set/notify?id={user_id}&value={not user.json()[0]['notify']}")
             if not user.json()[0]["notify"]:
                 keyboards.main_keyboard.buttons[2][0].color=KeyboardButtonColor.POSITIVE
+                keyboards.main_keyboard.buttons[2][0].action.label = strings.button.notify_texted.format("вкл")
+                
                 await bp.api.messages.send(random_id=0, message=strings.info.notify_on, event_id=event.object.event_id,
                                         peer_id=event.object.peer_id, user_id=event.object.user_id, keyboard=keyboards.main_keyboard)
             else: 
                 keyboards.main_keyboard.buttons[2][0].color=KeyboardButtonColor.NEGATIVE
+                keyboards.main_keyboard.buttons[2][0].action.label = strings.button.notify_texted.format("откл")
                 await bp.api.messages.send(random_id=0, message=strings.info.notify_off, event_id=event.object.event_id,
                                         peer_id=event.object.peer_id, user_id=event.object.user_id, keyboard=keyboards.main_keyboard)
         else:
             await bp.api.messages.send(random_id=0, message=strings.error.group_not_set, event_id=event.object.event_id,
                                         peer_id=event.object.peer_id, user_id=event.object.user_id, keyboard=keyboards.specialities)
+

@@ -27,8 +27,9 @@ AUTH_HEADER={'Authorization': f'Bearer {API_TOKEN}'}
 Schedule_URL = env.str("Schedule_URL")
 
 VK_TOKEN = env.str("VK_TOKEN")
-TG_TOKEN = env.str("TG_TOKEN")
+VK_ADMINS_ID = [int(admin_id) for admin_id in env.list("VK_ADMINS_ID")]
 
+TG_TOKEN = env.str("TG_TOKEN")
 TG_DOMAIN = env.str("TG_DOMAIN")
 TG_PATH = env.str("TG_PATH")
 
