@@ -119,7 +119,7 @@ async def delete_changes(date: str = None):
                   summary="Получение расписания с изменениями для группы",
                   tags=["Изменения в расписание"])
 async def get_finalize_schedule(group: str, text: bool = False, html: bool = False):
-    result = []
+    result = {}
     today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
     time = datetime.strptime(datetime.now(TIMEZONE).strftime("%H:%M"), "%H:%M")
 
@@ -159,39 +159,42 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
 
                 temp["Comments"] = changes["Comments"]
 
-            temp["Lessons"].update(lessons)
-
-            if (html or text) and len(data) > 1:
                 changes_with_emoji = {}
                 for key, item in changes["ChangeLessons"].items():
                     changes_with_emoji[key] = item + " ✏️"
 
-                temp["Lessons"].update(changes_with_emoji)
+                lessons.update(changes_with_emoji)
+
+            temp["Lessons"].update(lessons)
 
             if html:
-                result.append(schedule_markdown.render(
+                result[temp["Date"]] = schedule_markdown.render(
                     Day=calendar.day_name[weekday - 1].title(),
                     Date=temp["Date"],
                     Lessons=[f"<code><b>{index})</b></code> {lesson}" for index, lesson in
                              enumerate(temp["Lessons"].values(), 1)],
                     Comments=temp["Comments"],
                     ClassHour=False if weekday != 2 else True
-                ))
+                )
 
             elif text:
-                result.append(schedule.render(
+                result[temp["Date"]] = schedule.render(
                     Day=calendar.day_name[weekday - 1].title(),
                     Date=temp["Date"],
                     Lessons=[f"{index}) {lesson}" for index, lesson in
                              enumerate(temp["Lessons"].values(), 1)],
                     Comments=temp["Comments"],
                     ClassHour=False if weekday != 2 else True
-                ))
+                )
 
             else:
-                result.append(temp)
+                result[temp["Date"]] = temp
+        
+        content = []
+        for key in sorted(list(result.keys())):
+            content.append(result[key])
 
-        return JSONResponse(result, status_code=status.HTTP_200_OK)
+        return JSONResponse(content, status_code=status.HTTP_200_OK)
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
