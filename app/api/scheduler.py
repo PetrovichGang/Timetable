@@ -65,8 +65,6 @@ async def check_changes(url: str = Schedule_URL):
             logger.info("Terminate check_changes job")
             logger.info(f"Next schedule check: {(date + timedelta(days=1, hours=10)).strftime('%d.%m.%Y %H:%M')}")
 
-            await start_send_changes()
-
         elif not diff and time > datetime.strptime("14:00", "%H:%M"):
             scheduler.get_job("check_changes").remove()
             logger.info("Terminate check_changes job")

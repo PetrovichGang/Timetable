@@ -1,6 +1,7 @@
 from fastapi import Request, APIRouter, BackgroundTasks
 from starlette.responses import JSONResponse, Response
 from templates import schedule, schedule_markdown
+from config import TIMEZONE, API_URL, AUTH_HEADER
 from databases.models import ChangeModel, DAYS
 from app.parser import start_parse_changes
 from .scheduler import start_send_changes
@@ -8,10 +9,10 @@ from pydantic import ValidationError
 from .tools import db, TimeTableDB
 from datetime import datetime
 from starlette import status
-from config import TIMEZONE
 import platform
 import calendar
 import locale
+import httpx
 import json
 
 routerPublicChanges = APIRouter()
@@ -51,25 +52,6 @@ async def change_groups():
         return JSONResponse(result, status_code=status.HTTP_200_OK)
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
-
-
-@routerPrivateChanges.get("/api/parse_changes",
-                  summary="Запуск парсинга изменений",
-                  tags=["Изменения в расписание"])
-async def parse_changes(background_tasks: BackgroundTasks, force: bool = False):
-    global PARSER_BLOCK
-    if PARSER_BLOCK and not force:
-        return Response(status_code=status.HTTP_423_LOCKED)
-
-    background_tasks.add_task(__parse_changes)
-    PARSER_BLOCK = True
-    return Response(status_code=status.HTTP_202_ACCEPTED)
-
-
-def __parse_changes():
-    global PARSER_BLOCK
-
-    start_parse_changes()
     PARSER_BLOCK = False
 
 
@@ -212,6 +194,28 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
         return JSONResponse(result, status_code=status.HTTP_200_OK)
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@routerPrivateChanges.get("/api/parse_changes",
+                  summary="Запуск парсинга изменений",
+                  tags=["Изменения в расписание"])
+async def parse_changes(background_tasks: BackgroundTasks, force: bool = False):
+    global PARSER_BLOCK
+    if PARSER_BLOCK and not force:
+        return Response(status_code=status.HTTP_423_LOCKED)
+
+    background_tasks.add_task(__parse_changes)
+    PARSER_BLOCK = True
+    return Response(status_code=status.HTTP_202_ACCEPTED)
+
+
+def __parse_changes():
+    global PARSER_BLOCK
+
+    start_parse_changes()
+    PARSER_BLOCK = False
+    
+    httpx.get(f"{API_URL}/start_send_changes", headers=AUTH_HEADER)
 
 
 @routerPrivateChanges.get("/api/start_send_changes",
