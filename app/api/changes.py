@@ -208,17 +208,20 @@ async def parse_changes(background_tasks: BackgroundTasks, force: bool = False):
         return Response(status_code=status.HTTP_423_LOCKED)
 
     background_tasks.add_task(__parse_changes)
-    PARSER_BLOCK = True
+    __switch_block()
     return Response(status_code=status.HTTP_202_ACCEPTED)
 
 
 def __parse_changes():
-    global PARSER_BLOCK
-
     start_parse_changes()
-    PARSER_BLOCK = False
+    __switch_block()
     
     httpx.get(f"{API_URL}/start_send_changes", headers=AUTH_HEADER)
+
+
+def __switch_block():
+    global PARSER_BLOCK
+    PARSER_BLOCK = not PARSER_BLOCK
 
 
 @routerPrivateChanges.get("/api/start_send_changes",
