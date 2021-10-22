@@ -25,8 +25,8 @@ routerPrivate.include_router(routerPrivateChanges)
 async def startup():
     content = await TimeTableDB.async_find(db.DLCollection, {}, {"_id": 0, "Group": 1})
     db.groups = [group.get("Group") for group in content]
-    scheduler.start()
     await prod.start()
+    scheduler.start()
 
 
 @routerPublic.on_event("shutdown")

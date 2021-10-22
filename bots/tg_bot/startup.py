@@ -1,6 +1,6 @@
-from aiogram.utils import executor
 from aiogram.utils.executor import start_webhook
 from config import TG_DOMAIN, TG_PATH
+from aiogram.utils import executor
 from .bot import bot, dp, httpx
 
 

@@ -1,5 +1,6 @@
 from config import TG_TOKEN, AUTH_HEADER, API_URL
 from databases.models import TGChatModel, TGState
+from .consumer import start as start_consumer
 from aiogram.dispatcher import Dispatcher
 from bots.common.strings import strings
 from aiogram.types import ContentType
@@ -7,12 +8,12 @@ from pydantic import ValidationError
 import bots.tg_bot.keyboards as kb
 from aiogram import Bot, types
 from typing import Optional
-from .consumer import start
 import httpx as httpxlib
+import asyncio
 
 bot = Bot(token=TG_TOKEN)
-bot.loop.run_until_complete(start(bot))
 dp = Dispatcher(bot)
+asyncio.get_event_loop().run_until_complete(start_consumer(dp))
 httpx = httpxlib.AsyncClient(headers=AUTH_HEADER)
 
 
@@ -93,7 +94,7 @@ async def timetable(message: types.Message):
 @dp.message_handler(content_types=ContentType.TEXT)
 async def default_msg_handler(message: types.Message):
     prefs = await get_chat_prefs(message)
-    print("globsl")
+
     if await prefs_error(message, prefs):
         pass
     elif prefs.state == TGState.spec_select:
