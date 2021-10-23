@@ -7,7 +7,7 @@
     <code><b>1)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["MON"] and "p1" in tt["Days"]["MON"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["MON"]["a"]["p1"] }}
+    <code><b>--</b></code> {{ tt["Days"]["MON"]["b"]["p1"] }}
 {% endif %}
 {% if "a" in tt["Days"]["MON"] and "p2" in tt["Days"]["MON"]["a"] %}
     <code><b>2)</b></code> {{ tt["Days"]["MON"]["a"]["p2"] }}
@@ -15,7 +15,7 @@
     <code><b>2)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["MON"] and "p2" in tt["Days"]["MON"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["MON"]["a"]["p2"] }}
+    <code><b>--</b></code> {{ tt["Days"]["MON"]["b"]["p2"] }}
 {% endif %}
 {% if "a" in tt["Days"]["MON"] and "p3" in tt["Days"]["MON"]["a"] %}
     <code><b>3)</b></code> {{ tt["Days"]["MON"]["a"]["p3"] }}
@@ -23,7 +23,7 @@
     <code><b>3)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["MON"] and "p3" in tt["Days"]["MON"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["MON"]["a"]["p3"] }}
+    <code><b>--</b></code> {{ tt["Days"]["MON"]["b"]["p3"] }}
 {% endif %}
 {% if "a" in tt["Days"]["MON"] and "p4" in tt["Days"]["MON"]["a"] %}
     <code><b>4)</b></code> {{ tt["Days"]["MON"]["a"]["p4"] }}
@@ -31,7 +31,7 @@
     <code><b>4)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["MON"] and "p4" in tt["Days"]["MON"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["MON"]["a"]["p4"] }}
+    <code><b>--</b></code> {{ tt["Days"]["MON"]["b"]["p4"] }}
 {% endif %}
 
 📅 <b>Вторник</b>
@@ -41,7 +41,7 @@
     <code><b>1)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["TUE"] and "p1" in tt["Days"]["TUE"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["TUE"]["a"]["p1"] }}
+    <code><b>--</b></code> {{ tt["Days"]["TUE"]["b"]["p1"] }}
 {% endif %}
 {% if "a" in tt["Days"]["TUE"] and "p2" in tt["Days"]["TUE"]["a"] %}
     <code><b>2)</b></code> {{ tt["Days"]["TUE"]["a"]["p2"] }}
@@ -49,7 +49,7 @@
     <code><b>2)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["TUE"] and "p2" in tt["Days"]["TUE"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["TUE"]["a"]["p2"] }}
+    <code><b>--</b></code> {{ tt["Days"]["TUE"]["b"]["p2"] }}
 {% endif %}
 {% if "a" in tt["Days"]["TUE"] and "p3" in tt["Days"]["TUE"]["a"] %}
     <code><b>3)</b></code> {{ tt["Days"]["TUE"]["a"]["p3"] }}
@@ -57,7 +57,7 @@
     <code><b>3)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["TUE"] and "p3" in tt["Days"]["TUE"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["TUE"]["a"]["p3"] }}
+    <code><b>--</b></code> {{ tt["Days"]["TUE"]["b"]["p3"] }}
 {% endif %}
 {% if "a" in tt["Days"]["TUE"] and "p4" in tt["Days"]["TUE"]["a"] %}
     <code><b>4)</b></code> {{ tt["Days"]["TUE"]["a"]["p4"] }}
@@ -65,7 +65,7 @@
     <code><b>4)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["TUE"] and "p4" in tt["Days"]["TUE"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["TUE"]["a"]["p4"] }}
+    <code><b>--</b></code> {{ tt["Days"]["TUE"]["b"]["p4"] }}
 {% endif %}
 
 📅 <b>Среда</b>
@@ -75,7 +75,7 @@
     <code><b>1)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["WED"] and "p1" in tt["Days"]["WED"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["WED"]["a"]["p1"] }}
+    <code><b>--</b></code> {{ tt["Days"]["WED"]["b"]["p1"] }}
 {% endif %}
 {% if "a" in tt["Days"]["WED"] and "p2" in tt["Days"]["WED"]["a"] %}
     <code><b>2)</b></code> {{ tt["Days"]["WED"]["a"]["p2"] }}
@@ -83,7 +83,7 @@
     <code><b>2)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["WED"] and "p2" in tt["Days"]["WED"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["WED"]["a"]["p2"] }}
+    <code><b>--</b></code> {{ tt["Days"]["WED"]["b"]["p2"] }}
 {% endif %}
 {% if "a" in tt["Days"]["WED"] and "p3" in tt["Days"]["WED"]["a"] %}
     <code><b>3)</b></code> {{ tt["Days"]["WED"]["a"]["p3"] }}
@@ -91,7 +91,7 @@
     <code><b>3)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["WED"] and "p3" in tt["Days"]["WED"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["WED"]["a"]["p3"] }}
+    <code><b>--</b></code> {{ tt["Days"]["WED"]["b"]["p3"] }}
 {% endif %}
 {% if "a" in tt["Days"]["WED"] and "p4" in tt["Days"]["WED"]["a"] %}
     <code><b>4)</b></code> {{ tt["Days"]["WED"]["a"]["p4"] }}
@@ -99,7 +99,7 @@
     <code><b>4)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["WED"] and "p4" in tt["Days"]["WED"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["WED"]["a"]["p4"] }}
+    <code><b>--</b></code> {{ tt["Days"]["WED"]["b"]["p4"] }}
 {% endif %}
 
 📅 <b>Четверг</b>
@@ -109,7 +109,7 @@
     <code><b>1)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["THU"] and "p1" in tt["Days"]["THU"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["THU"]["a"]["p1"] }}
+    <code><b>--</b></code> {{ tt["Days"]["THU"]["b"]["p1"] }}
 {% endif %}
 {% if "a" in tt["Days"]["THU"] and "p2" in tt["Days"]["THU"]["a"] %}
     <code><b>2)</b></code> {{ tt["Days"]["THU"]["a"]["p2"] }}
@@ -117,7 +117,7 @@
     <code><b>2)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["THU"] and "p2" in tt["Days"]["THU"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["THU"]["a"]["p2"] }}
+    <code><b>--</b></code> {{ tt["Days"]["THU"]["b"]["p2"] }}
 {% endif %}
 {% if "a" in tt["Days"]["THU"] and "p3" in tt["Days"]["THU"]["a"] %}
     <code><b>3)</b></code> {{ tt["Days"]["THU"]["a"]["p3"] }}
@@ -125,7 +125,7 @@
     <code><b>3)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["THU"] and "p3" in tt["Days"]["THU"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["THU"]["a"]["p3"] }}
+    <code><b>--</b></code> {{ tt["Days"]["THU"]["b"]["p3"] }}
 {% endif %}
 {% if "a" in tt["Days"]["THU"] and "p4" in tt["Days"]["THU"]["a"] %}
     <code><b>4)</b></code> {{ tt["Days"]["THU"]["a"]["p4"] }}
@@ -133,7 +133,7 @@
     <code><b>4)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["THU"] and "p4" in tt["Days"]["THU"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["THU"]["a"]["p4"] }}
+    <code><b>--</b></code> {{ tt["Days"]["THU"]["b"]["p4"] }}
 {% endif %}
 
 📅 <b>Пятница</b>
@@ -143,7 +143,7 @@
     <code><b>1)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["FRI"] and "p1" in tt["Days"]["FRI"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["FRI"]["a"]["p1"] }}
+    <code><b>--</b></code> {{ tt["Days"]["FRI"]["b"]["p1"] }}
 {% endif %}
 {% if "a" in tt["Days"]["FRI"] and "p2" in tt["Days"]["FRI"]["a"] %}
     <code><b>2)</b></code> {{ tt["Days"]["FRI"]["a"]["p2"] }}
@@ -151,7 +151,7 @@
     <code><b>2)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["FRI"] and "p2" in tt["Days"]["FRI"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["FRI"]["a"]["p2"] }}
+    <code><b>--</b></code> {{ tt["Days"]["FRI"]["b"]["p2"] }}
 {% endif %}
 {% if "a" in tt["Days"]["FRI"] and "p3" in tt["Days"]["FRI"]["a"] %}
     <code><b>3)</b></code> {{ tt["Days"]["FRI"]["a"]["p3"] }}
@@ -159,7 +159,7 @@
     <code><b>3)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["FRI"] and "p3" in tt["Days"]["FRI"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["FRI"]["a"]["p3"] }}
+    <code><b>--</b></code> {{ tt["Days"]["FRI"]["b"]["p3"] }}
 {% endif %}
 {% if "a" in tt["Days"]["FRI"] and "p4" in tt["Days"]["FRI"]["a"] %}
     <code><b>4)</b></code> {{ tt["Days"]["FRI"]["a"]["p4"] }}
@@ -167,7 +167,7 @@
     <code><b>4)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["FRI"] and "p4" in tt["Days"]["FRI"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["FRI"]["a"]["p4"] }}
+    <code><b>--</b></code> {{ tt["Days"]["FRI"]["b"]["p4"] }}
 {% endif %}
 
 📅 <b>Суббота</b>
@@ -177,7 +177,7 @@
     <code><b>1)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["SAT"] and "p1" in tt["Days"]["SAT"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["SAT"]["a"]["p1"] }}
+    <code><b>--</b></code> {{ tt["Days"]["SAT"]["b"]["p1"] }}
 {% endif %}
 {% if "a" in tt["Days"]["SAT"] and "p2" in tt["Days"]["SAT"]["a"] %}
     <code><b>2)</b></code> {{ tt["Days"]["SAT"]["a"]["p2"] }}
@@ -185,7 +185,7 @@
     <code><b>2)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["SAT"] and "p2" in tt["Days"]["SAT"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["SAT"]["a"]["p2"] }}
+    <code><b>--</b></code> {{ tt["Days"]["SAT"]["b"]["p2"] }}
 {% endif %}
 {% if "a" in tt["Days"]["SAT"] and "p3" in tt["Days"]["SAT"]["a"] %}
     <code><b>3)</b></code> {{ tt["Days"]["SAT"]["a"]["p3"] }}
@@ -193,7 +193,7 @@
     <code><b>3)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["SAT"] and "p3" in tt["Days"]["SAT"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["SAT"]["a"]["p3"] }}
+    <code><b>--</b></code> {{ tt["Days"]["SAT"]["b"]["p3"] }}
 {% endif %}
 {% if "a" in tt["Days"]["SAT"] and "p4" in tt["Days"]["SAT"]["a"] %}
     <code><b>4)</b></code> {{ tt["Days"]["SAT"]["a"]["p4"] }}
@@ -201,5 +201,5 @@
     <code><b>4)</b></code> НЕТ
 {% endif %}
 {% if "b" in tt["Days"]["SAT"] and "p4" in tt["Days"]["SAT"]["b"] %}
-    <code><b>--</b></code> {{ tt["Days"]["SAT"]["a"]["p4"] }}
+    <code><b>--</b></code> {{ tt["Days"]["SAT"]["b"]["p4"] }}
 {% endif %}
