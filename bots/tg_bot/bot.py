@@ -51,8 +51,8 @@ async def notify(message: types.Message):
         res = await httpx.post(
             f"{API_URL}/tg/set/notify?chat_id={message.chat.id}&value={'false' if prefs.notify else 'true'}")
         if await no_errors(res, message):
-            await message.answer(strings.info.notify_on if prefs.notify else strings.info.notify_off,
-                                 reply_markup=prefs.to_keyboard())
+            await message.answer(strings.info.notify_off if prefs.notify else strings.info.notify_on,
+                                 reply_markup=prefs.to_keyboard(notify = not prefs.notify))
 
 
 @dp.message_handler(regexp=f'^{strings.button.alarm.format(".*")}$')
@@ -81,7 +81,7 @@ async def back_spec(message: types.Message):
             await message.answer(strings.input.spec, reply_markup=kb.specialities)
 
 @dp.message_handler(regexp=f'^{strings.button.group_short.format(".*")}$')
-async def changes(message: types.Message):
+async def group_change(message: types.Message):
     res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.spec_select}")
     if await no_errors(res, message):
         await message.answer(strings.input.spec, reply_markup=kb.specialities)

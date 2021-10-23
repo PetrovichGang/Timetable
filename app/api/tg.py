@@ -50,9 +50,15 @@ async def set_tg_group(chat_id: int, group: str):
                     summary="Изменение настроек для чата",
                     tags=["TG"])
 async def set_tg_pref(chat_id: int, pref: str, value):
+    if value.lower() == "true":
+        value = True
+    elif value.lower() == "false":
+        value = False
+
     update_result: UpdateResult = await db.TGChatsCollection.update_one(
                                                 {'chat_id': chat_id},
                                                 {"$set": {pref: value}})
+
     if update_result.matched_count == 0:
         return Response(strings.error.not_started, status_code=status.HTTP_400_BAD_REQUEST)
     return Response(status_code=status.HTTP_200_OK)

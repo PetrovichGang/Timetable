@@ -117,11 +117,17 @@ class TGChatModel(BaseModel):
     alarm: int = Field(alias="alarm")
     state: TGState = Field(alias="state")
 
-    def to_keyboard(self, group = None) -> ReplyKeyboardMarkup:
+    def to_keyboard(self, group = None, notify = None) -> ReplyKeyboardMarkup:
+        checked = '✅'
+        if notify is None:
+            if not self.notify:
+                checked = '⬜'
+        elif not notify:
+            checked = '⬜'
         return ReplyKeyboardMarkup(resize_keyboard=True) \
             .row(KeyboardButton(strings.button.changes)) \
             .row(KeyboardButton(strings.button.timetable)) \
-            .row(KeyboardButton(strings.button.notify.format('✅' if self.notify else '⬜')), KeyboardButton(strings.button.group_short.format(self.group if group is None else group)))
+            .row(KeyboardButton(strings.button.notify.format(checked)), KeyboardButton(strings.button.group_short.format(self.group if group is None else group)))
 
 
 class TGChatExtendedModel(TGChatModel):
