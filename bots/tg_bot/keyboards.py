@@ -31,4 +31,6 @@ for index, spec in enumerate(GroupNames):
             groups_keyboard.add(KeyboardButton(group))
         last_year = group[2:4]
 
-    groups[spec] = groups_keyboard
+    groups[spec] = groups_keyboard.add(strings.button.back_spec)
+
+specialities.add(strings.button.cancel)

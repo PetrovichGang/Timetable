@@ -72,7 +72,15 @@ async def cancel(message: types.Message):
             await message.answer(strings.menu, reply_markup=prefs.to_keyboard())
 
 
-@dp.message_handler(regexp=f'^{strings.button.group.format(".*")}$')
+@dp.message_handler(regexp=f'^{strings.button.back_spec}$')
+async def back_spec(message: types.Message):
+    prefs = await get_chat_prefs(message)
+    if not await prefs_error(message, prefs):
+        res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.spec_select}")
+        if await no_errors(res, message):
+            await message.answer(strings.input.spec, reply_markup=kb.specialities)
+
+@dp.message_handler(regexp=f'^{strings.button.group_short.format(".*")}$')
 async def changes(message: types.Message):
     res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.spec_select}")
     if await no_errors(res, message):
@@ -108,7 +116,7 @@ async def default_msg_handler(message: types.Message):
         if res.status_code == 200:
             res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.default}")
             if await no_errors(res, message):
-                await message.answer(strings.menu, reply_markup=prefs.to_keyboard())
+                await message.answer(strings.menu, reply_markup=prefs.to_keyboard(message.text))
     elif prefs.state == TGState.alarm:
         res = await httpx.post(f"{API_URL}/tg/set/alarm?chat_id={message.chat.id}&value={message.text}")
         if res.status_code == 200:
