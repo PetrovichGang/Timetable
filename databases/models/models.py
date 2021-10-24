@@ -103,21 +103,7 @@ class DictIdAndGroup(TypedDict):
     users_id: List[int]
 
 
-class TGState(str, Enum):
-    default = 'default'
-    spec_select = 'spec_select'
-    group_select = 'group_select'
-    alarm = 'alarm'
-
-
 class TGChatModel(BaseModel):
     chat_id: int = Field(alias="chat_id")
     group: Optional[str] = Field(alias="group")
     notify: bool = Field(alias="notify")
-
-
-class TGChatExtendedModel(TGChatModel):
-    user_id: Optional[int] = Field(alias="user_id")
-    chat_title: Optional[str] = Field(alias="group_title")
-    user_username: Optional[str] = Field(alias="user_username")
-    chat_username: Optional[str] = Field(alias="group_username")

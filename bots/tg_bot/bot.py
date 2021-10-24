@@ -1,6 +1,8 @@
 from config import TG_TOKEN, AUTH_HEADER, API_URL, TG_DOMAIN, TG_PATH
 from aiogram.utils.executor import start_webhook, start_polling
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from .consumer import start as start_consumer
+from .throttle import ThrottlingMiddleware
 from aiogram import Bot, types, Dispatcher
 from databases.models import TGChatModel
 from bots.common.strings import strings
@@ -9,7 +11,8 @@ import httpx as httpxlib
 import asyncio
 
 bot = Bot(token=TG_TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher(bot, storage=MemoryStorage())
+dp.middleware.setup(ThrottlingMiddleware(dp))
 asyncio.get_event_loop().run_until_complete(start_consumer(dp))
 httpx = httpxlib.AsyncClient(headers=AUTH_HEADER)
 
@@ -58,7 +61,7 @@ async def button_set_spec(message: types.Message):
     await message.answer(strings.input.group, reply_markup=kb.groups[message.text])
 
 
-@dp.message_handler(regexp=f'^({strings.button.back_spec}|{strings.button.group_short.format(".*")})$')
+@dp.message_handler(regexp=f'^({strings.button.back_spec}|{strings.button.group.format(".*")})$')
 async def back_spec(message: types.Message):
     await message.answer(strings.input.spec, reply_markup=kb.specialities.add(strings.button.cancel))
 

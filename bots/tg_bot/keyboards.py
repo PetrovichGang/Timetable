@@ -31,4 +31,4 @@ def to_keyboard(prefs: TGChatModel) -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(resize_keyboard=True) \
         .row(KeyboardButton(strings.button.changes)).row(KeyboardButton(strings.button.timetable)) \
         .row(KeyboardButton(strings.button.notify.format('✅' if prefs.notify else '⬜')),
-             KeyboardButton(strings.button.group_short.format(prefs.group)))
+             KeyboardButton(strings.button.group.format(prefs.group)))
