@@ -30,7 +30,7 @@ async def start(message: types.Message):
     elif prefs.state == TGState.spec_select:
         await message.answer(f"{strings.welcome}\n\n{strings.input.spec}", reply_markup=kb.specialities)
     else:
-        await message.answer(strings.menu, reply_markup=prefs.to_keyboard())
+        await message.answer(strings.menu, reply_markup=kb.to_keyboard(prefs))
 
 
 @dp.message_handler(commands=['set_group', 'группа'])
@@ -51,15 +51,9 @@ async def notify(message: types.Message):
         res = await httpx.post(
             f"{API_URL}/tg/set/notify?chat_id={message.chat.id}&value={'false' if prefs.notify else 'true'}")
         if await no_errors(res, message):
-            await message.answer(strings.info.notify_off if prefs.notify else strings.info.notify_on,
-                                 reply_markup=prefs.to_keyboard(notify = not prefs.notify))
-
-
-@dp.message_handler(regexp=f'^{strings.button.alarm.format(".*")}$')
-async def alarm(message: types.Message):
-    res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.alarm}")
-    if await no_errors(res, message):
-        await message.answer(strings.input.alarm, reply_markup=kb.alarm)
+            prefs.notify = not prefs.notify
+            await message.answer(strings.info.notify_on if prefs.notify else strings.info.notify_off,
+                                 reply_markup=kb.to_keyboard(prefs))
 
 
 @dp.message_handler(regexp=f'^{strings.button.cancel}$')
@@ -69,7 +63,7 @@ async def cancel(message: types.Message):
     if not await prefs_error(message, prefs):
         res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.default}")
         if await no_errors(res, message):
-            await message.answer(strings.menu, reply_markup=prefs.to_keyboard())
+            await message.answer(strings.menu, reply_markup=kb.to_keyboard(prefs))
 
 
 @dp.message_handler(regexp=f'^{strings.button.back_spec}$')
@@ -79,6 +73,7 @@ async def back_spec(message: types.Message):
         res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.spec_select}")
         if await no_errors(res, message):
             await message.answer(strings.input.spec, reply_markup=kb.specialities)
+
 
 @dp.message_handler(regexp=f'^{strings.button.group_short.format(".*")}$')
 async def group_change(message: types.Message):
@@ -116,13 +111,14 @@ async def default_msg_handler(message: types.Message):
         if res.status_code == 200:
             res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.default}")
             if await no_errors(res, message):
-                await message.answer(strings.menu, reply_markup=prefs.to_keyboard(message.text))
+                prefs.group = message.text
+                await message.answer(strings.menu, reply_markup=kb.to_keyboard(prefs))
     elif prefs.state == TGState.alarm:
         res = await httpx.post(f"{API_URL}/tg/set/alarm?chat_id={message.chat.id}&value={message.text}")
         if res.status_code == 200:
             res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.default}")
             if await no_errors(res, message):
-                await message.answer(strings.menu, reply_markup=prefs.to_keyboard())
+                await message.answer(strings.menu, reply_markup=kb.to_keyboard(prefs))
 
     else:
         text = message.text[2:-4]
@@ -155,15 +151,11 @@ async def no_errors(res, message: types.Message) -> bool:
 
 async def get_chat_prefs(message: types.Message) -> Optional[TGChatModel]:
     res = await httpx.get(f"{API_URL}/tg/chat/{message.chat.id}")
-    print(res.json())
     try:
         return TGChatModel.parse_obj(res.json()) if res.status_code == 200 else None
-    except ValidationError as e:
+    except ValidationError or IndexError as e:
         print(e)
-        return None
-    except IndexError as e:
-        print(e)
-        return None
+    return None
 
 
 async def prefs_error(message: types.Message, prefs: TGChatModel) -> bool:

@@ -2,7 +2,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from bots.common.strings import strings
 from config import API_URL
-from databases.models import GroupNames
+from databases.models import GroupNames, TGChatModel
 import httpx
 
 
@@ -34,3 +34,11 @@ for index, spec in enumerate(GroupNames):
     groups[spec] = groups_keyboard.add(strings.button.back_spec)
 
 specialities.add(strings.button.cancel)
+
+
+def to_keyboard(prefs: TGChatModel) -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(resize_keyboard=True) \
+        .row(KeyboardButton(strings.button.changes)) \
+        .row(KeyboardButton(strings.button.timetable)) \
+        .row(KeyboardButton(strings.button.notify.format('✅' if prefs.notify else '⬜')),
+             KeyboardButton(strings.button.group_short.format(prefs.group)))
