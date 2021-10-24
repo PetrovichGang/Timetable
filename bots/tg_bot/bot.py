@@ -83,8 +83,7 @@ async def get_timetable(message: types.Message, api_call: str):
         else:
             res = await httpx.get(f'{API_URL}/{api_call}/{prefs.group}?html=true')
             if res.status_code == 200:
-                for change in res.json():
-                    await message.answer(change, parse_mode=types.ParseMode.HTML)
+                [await message.answer(change, parse_mode=types.ParseMode.HTML) for change in res.json()]
             else:
                 await message.answer(strings.error.ise)
 
@@ -97,10 +96,17 @@ async def get_chat_prefs(message: types.Message, route='chat'):
         await message.answer(strings.error.db.format('vnukov10'))
 
 
+async def on_startup(dispatcher):
+    await bot.set_webhook(f"{TG_DOMAIN}{TG_PATH}")
+
+
+async def on_shutdown(dispatcher):
+    await bot.delete_webhook()
+
+
 def start_bot(webhook=False):
     if webhook:
-        bot.set_webhook(f'{TG_DOMAIN}{TG_PATH}')
-        start_webhook(dispatcher=dp, webhook_path=TG_PATH, skip_updates=True, host='localhost', port=3001)
-        bot.delete_webhook()
+        start_webhook(dispatcher=dp, webhook_path=TG_PATH, skip_updates=True,
+                      host='localhost', port=3001, on_startup=on_startup, on_shutdown=on_shutdown)
     else:
         start_polling(dispatcher=dp)
