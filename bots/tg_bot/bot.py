@@ -1,13 +1,10 @@
-from config import TG_TOKEN, AUTH_HEADER, API_URL
-from databases.models import TGChatModel, TGState
+from config import TG_TOKEN, AUTH_HEADER, API_URL, TG_DOMAIN, TG_PATH
+from aiogram.utils.executor import start_webhook, start_polling
 from .consumer import start as start_consumer
-from aiogram.dispatcher import Dispatcher
+from aiogram import Bot, types, Dispatcher
+from databases.models import TGChatModel
 from bots.common.strings import strings
-from aiogram.types import ContentType
-from pydantic import ValidationError
 import bots.tg_bot.keyboards as kb
-from aiogram import Bot, types
-from typing import Optional
 import httpx as httpxlib
 import asyncio
 
@@ -17,149 +14,93 @@ asyncio.get_event_loop().run_until_complete(start_consumer(dp))
 httpx = httpxlib.AsyncClient(headers=AUTH_HEADER)
 
 
+@dp.message_handler(regexp=f'^{strings.button.cancel}$')
+@dp.message_handler(commands=['start', 'cancel'])
+async def start(message: types.Message):
+    prefs = await get_chat_prefs(message)
+    if prefs is not None:
+        if prefs.group is None:
+            await message.answer(f'{strings.welcome}\n\n{strings.input.spec}', reply_markup=kb.specialities)
+        else:
+            await message.answer(strings.menu, reply_markup=kb.to_keyboard(prefs))
+
+
+@dp.message_handler(regexp='^[А-Я]-[0-9]{2}-[1-9]([А-я]|)$')
+@dp.message_handler(commands=['set_group'])
+async def set_group(message: types.Message):
+    group = message.get_args() if message.is_command() else message.text
+    if group == '':
+        await message.answer(strings.error.group_not_specified)
+    else:
+        prefs = await get_chat_prefs(message)
+        if prefs is not None:
+            res = await httpx.post(f'{API_URL}/tg/set_group?chat_id={message.chat.id}&group={group}')
+            await message.answer(res.text if res.status_code in [200, 400, 404] else strings.error.ise,
+                                 reply_markup=kb.to_keyboard(prefs))
+
+
+@dp.message_handler(regexp=f'^{strings.button.notify.format(".")}$')
+@dp.message_handler(commands=['notify'])
+async def notify(message: types.Message):
+    prefs = await get_chat_prefs(message, 'notify')
+    if prefs is not None:
+        await message.answer(strings.info.notify_on if prefs.notify else strings.info.notify_off,
+                             reply_markup=kb.to_keyboard(prefs))
+
+
 @dp.message_handler(commands=['help'])
 async def help_text(message: types.Message):
     await message.answer(strings.help)
 
 
-@dp.message_handler(commands=['start'])
-async def start(message: types.Message):
-    prefs = await get_chat_prefs(message)
-    if await prefs_error(message, prefs):
-        pass
-    elif prefs.state == TGState.spec_select:
-        await message.answer(f"{strings.welcome}\n\n{strings.input.spec}", reply_markup=kb.specialities)
-    else:
-        await message.answer(strings.menu, reply_markup=kb.to_keyboard(prefs))
+@dp.message_handler(regexp=f'^({str.join("|", kb.groups.keys())})$')
+async def button_set_spec(message: types.Message):
+    await message.answer(strings.input.group, reply_markup=kb.groups[message.text])
 
 
-@dp.message_handler(commands=['set_group', 'группа'])
-async def set_group(message: types.Message):
-    group = message.get_args()
-    if group is None:
-        await message.answer(strings.error.group_not_specified)
-    else:
-        res = await httpx.post(f"{API_URL}/tg/set_group?chat_id={message.chat.id}&group={group}")
-        await check_errors(res, message)
-
-
-@dp.message_handler(regexp=f'^{strings.button.notify.format(".")}$')
-@dp.message_handler(commands=['notify', 'уведомлять'])
-async def notify(message: types.Message):
-    prefs = await get_chat_prefs(message)
-    if not await prefs_error(message, prefs):
-        res = await httpx.post(
-            f"{API_URL}/tg/set/notify?chat_id={message.chat.id}&value={'false' if prefs.notify else 'true'}")
-        if await no_errors(res, message):
-            prefs.notify = not prefs.notify
-            await message.answer(strings.info.notify_on if prefs.notify else strings.info.notify_off,
-                                 reply_markup=kb.to_keyboard(prefs))
-
-
-@dp.message_handler(regexp=f'^{strings.button.cancel}$')
-@dp.message_handler(commands=['cancel', 'отмена'])
-async def cancel(message: types.Message):
-    prefs = await get_chat_prefs(message)
-    if not await prefs_error(message, prefs):
-        res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.default}")
-        if await no_errors(res, message):
-            await message.answer(strings.menu, reply_markup=kb.to_keyboard(prefs))
-
-
-@dp.message_handler(regexp=f'^{strings.button.back_spec}$')
+@dp.message_handler(regexp=f'^({strings.button.back_spec}|{strings.button.group_short.format(".*")})$')
 async def back_spec(message: types.Message):
-    prefs = await get_chat_prefs(message)
-    if not await prefs_error(message, prefs):
-        res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.spec_select}")
-        if await no_errors(res, message):
-            await message.answer(strings.input.spec, reply_markup=kb.specialities)
-
-
-@dp.message_handler(regexp=f'^{strings.button.group_short.format(".*")}$')
-async def group_change(message: types.Message):
-    res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.spec_select}")
-    if await no_errors(res, message):
-        await message.answer(strings.input.spec, reply_markup=kb.specialities)
+    await message.answer(strings.input.spec, reply_markup=kb.specialities.add(strings.button.cancel))
 
 
 @dp.message_handler(regexp=f'^{strings.button.changes}$')
-@dp.message_handler(commands=['changes', 'изменения'])
+@dp.message_handler(commands=['changes'])
 async def changes(message: types.Message):
-    await get_timetable(message, "changes/finalize_schedule/{}?html=true")
+    await get_timetable(message, 'changes/finalize_schedule')
 
 
 @dp.message_handler(regexp=f'^{strings.button.timetable}$')
-@dp.message_handler(commands=['timetable', 'расписание'])
+@dp.message_handler(commands=['timetable'])
 async def timetable(message: types.Message):
-    await get_timetable(message, "timetable/{}?html=true")
-
-
-@dp.message_handler(content_types=ContentType.TEXT)
-async def default_msg_handler(message: types.Message):
-    prefs = await get_chat_prefs(message)
-
-    if await prefs_error(message, prefs):
-        pass
-    elif prefs.state == TGState.spec_select:
-        if message.text in kb.groups:
-            res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.group_select}")
-            if await no_errors(res, message):
-                await message.answer(strings.input.group, reply_markup=kb.groups[message.text])
-    elif prefs.state == TGState.group_select:
-        res = await httpx.post(f"{API_URL}/tg/set_group?chat_id={message.chat.id}&group={message.text}")
-        await check_errors(res, message)
-        if res.status_code == 200:
-            res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.default}")
-            if await no_errors(res, message):
-                prefs.group = message.text
-                await message.answer(strings.menu, reply_markup=kb.to_keyboard(prefs))
-    elif prefs.state == TGState.alarm:
-        res = await httpx.post(f"{API_URL}/tg/set/alarm?chat_id={message.chat.id}&value={message.text}")
-        if res.status_code == 200:
-            res = await httpx.post(f"{API_URL}/tg/set/state?chat_id={message.chat.id}&value={TGState.default}")
-            if await no_errors(res, message):
-                await message.answer(strings.menu, reply_markup=kb.to_keyboard(prefs))
-
-    else:
-        text = message.text[2:-4]
+    await get_timetable(message, 'timetable')
 
 
 async def get_timetable(message: types.Message, api_call: str):
     prefs = await get_chat_prefs(message)
-    if await prefs_error(message, prefs):
-        pass
-    elif prefs.group is None:
-        await message.answer(strings.error.group_not_set)
-    else:
-        res = await httpx.get(f"{API_URL}/{api_call.format(prefs.group)}")
-        if await no_errors(res, message):
-            for change in res.json():
-                await bot.send_message(message.chat.id, change, parse_mode=types.ParseMode.HTML)
+    if prefs is not None:
+        if prefs.group is None:
+            await message.answer(strings.error.group_not_set)
+        else:
+            res = await httpx.get(f'{API_URL}/{api_call}/{prefs.group}?html=true')
+            if res.status_code == 200:
+                for change in res.json():
+                    await message.answer(change, parse_mode=types.ParseMode.HTML)
+            else:
+                await message.answer(strings.error.ise)
 
 
-async def check_errors(res, message: types.Message):
-    await message.answer(res.text if res.status_code in [200, 400, 404] else strings.error.ise)
-
-
-async def no_errors(res, message: types.Message) -> bool:
-    if res.status_code == 200:
-        return True
-    else:
-        await message.answer(strings.error.ise)
-        return False
-
-
-async def get_chat_prefs(message: types.Message) -> Optional[TGChatModel]:
-    res = await httpx.get(f"{API_URL}/tg/chat/{message.chat.id}")
+async def get_chat_prefs(message: types.Message, route='chat'):
+    res = await httpx.get(f'{API_URL}/tg/{route}/{message.chat.id}')
     try:
         return TGChatModel.parse_obj(res.json()) if res.status_code == 200 else None
-    except ValidationError or IndexError as e:
-        print(e)
-    return None
+    except ValueError or IndexError:
+        await message.answer(strings.error.db.format('vnukov10'))
 
 
-async def prefs_error(message: types.Message, prefs: TGChatModel) -> bool:
-    if prefs is None:
-        await message.answer(strings.error.db.format("vnukov10"))
-        return True
-    return False
+def start_bot(webhook=False):
+    if webhook:
+        bot.set_webhook(f'{TG_DOMAIN}{TG_PATH}')
+        start_webhook(dispatcher=dp, webhook_path=TG_PATH, skip_updates=True, host='localhost', port=3001)
+        bot.delete_webhook()
+    else:
+        start_polling(dispatcher=dp)

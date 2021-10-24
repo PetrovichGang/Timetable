@@ -10,35 +10,40 @@ from .tools import db
 routerPrivateTG = APIRouter()
 
 
-@routerPrivateTG.get("/api/tg/chat/{chat_id}",
-                   summary="Получение информации о чате или создание новой записи о чате",
-                   tags=["TG"])
-async def get_tg_chat(chat_id: int):
+async def find_chat(chat_id: int):
     content = await db.async_find(db.TGChatsCollection, {"chat_id": chat_id}, {"_id": 0})
     if content:
-        return JSONResponse(content[0], status_code=status.HTTP_200_OK)
+        return content[0]
 
     try:
-        new_chat = TGChatModel(chat_id=chat_id,
-                               state=TGState.spec_select,
-                               group=None, notify=True, alarm=0)
+        new_chat = TGChatModel(chat_id=chat_id, group=None, notify=True)
         await db.TGChatsCollection.insert_one(new_chat.dict())
-        return JSONResponse(new_chat.dict(), status_code=status.HTTP_200_OK)
+        return new_chat.dict()
     except ValidationError as e:
-        return Response(e.json(), status_code=status.HTTP_400_BAD_REQUEST)
+        return None
+
+
+@routerPrivateTG.get("/api/tg/chat/{chat_id}",
+                     summary="Получение информации о чате или создание новой записи о чате",
+                     tags=["TG"])
+async def get_tg_chat(chat_id: int):
+    chat = await find_chat(chat_id)
+    if chat is None:
+        return Response(status_code=status.HTTP_400_BAD_REQUEST)
+    else:
+        return JSONResponse(chat, status_code=status.HTTP_200_OK)
 
 
 @routerPrivateTG.post("/api/tg/set_group",
-                    summary="Изменение группы в чата",
-                    tags=["TG"])
+                      summary="Изменение группы в чата",
+                      tags=["TG"])
 async def set_tg_group(chat_id: int, group: str):
     if group not in db.groups:
         return Response(strings.error.no_group.format(group),
                         status_code=status.HTTP_404_NOT_FOUND)
 
     update_result: UpdateResult = await db.TGChatsCollection.update_one(
-                                                {'chat_id': chat_id},
-                                                {"$set": {'group': group}})
+        {'chat_id': chat_id}, {"$set": {'group': group}})
     if update_result.modified_count == 0:
         return Response(strings.error.group_not_changed.format(group), status_code=status.HTTP_200_OK)
     elif update_result.matched_count == 0:
@@ -46,27 +51,27 @@ async def set_tg_group(chat_id: int, group: str):
     return Response(strings.info.group_set.format(group), status_code=status.HTTP_200_OK)
 
 
-@routerPrivateTG.post("/api/tg/set/{pref}/",
-                    summary="Изменение настроек для чата",
-                    tags=["TG"])
-async def set_tg_pref(chat_id: int, pref: str, value):
-    if value.lower() == "true":
-        value = True
-    elif value.lower() == "false":
-        value = False
+@routerPrivateTG.get("/api/tg/notify/{chat_id}",
+                     summary="Изменение статуса авторассылки для чата",
+                     tags=["TG"])
+async def set_tg_pref(chat_id: int):
+    chat = await find_chat(chat_id)
+    if chat is None:
+        return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
+    chat["notify"] = not chat["notify"]
     update_result: UpdateResult = await db.TGChatsCollection.update_one(
-                                                {'chat_id': chat_id},
-                                                {"$set": {pref: value}})
+        {'chat_id': chat_id}, {"$set": {'notify': chat["notify"]}})
 
     if update_result.matched_count == 0:
         return Response(strings.error.not_started, status_code=status.HTTP_400_BAD_REQUEST)
-    return Response(status_code=status.HTTP_200_OK)
+
+    return JSONResponse(chat, status_code=status.HTTP_200_OK)
 
 
 @routerPrivateTG.get("/api/tg/chats/{lesson_group}",
-                   summary="Получение всех чатов с определенной учебной группой",
-                   tags=["TG"])
+                     summary="Получение всех чатов с определенной учебной группой",
+                     tags=["TG"])
 async def get_chats_with_group(lesson_group: str = None):
     chats = await db.async_find(db.TGChatsCollection, {"lesson_group": lesson_group}, {"_id": 0})
     if chats:

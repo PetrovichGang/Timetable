@@ -114,8 +114,6 @@ class TGChatModel(BaseModel):
     chat_id: int = Field(alias="chat_id")
     group: Optional[str] = Field(alias="group")
     notify: bool = Field(alias="notify")
-    alarm: int = Field(alias="alarm")
-    state: TGState = Field(alias="state")
 
 
 class TGChatExtendedModel(TGChatModel):
