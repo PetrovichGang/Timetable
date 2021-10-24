@@ -21,11 +21,10 @@ httpx = httpxlib.AsyncClient(headers=AUTH_HEADER)
 @dp.message_handler(commands=['start', 'cancel'])
 async def start(message: types.Message):
     prefs = await get_chat_prefs(message)
-    if prefs is not None:
-        if prefs.group is None:
-            await message.answer(f'{strings.welcome}\n\n{strings.input.spec}', reply_markup=kb.specialities)
-        else:
-            await message.answer(strings.menu, reply_markup=kb.to_keyboard(prefs))
+    if prefs.group is None:
+        await message.answer(f'{strings.welcome}\n\n{strings.input.spec}', reply_markup=kb.specialities)
+    else:
+        await message.answer(strings.menu, reply_markup=kb.make_menu(prefs))
 
 
 @dp.message_handler(regexp='^[А-Я]-[0-9]{2}-[1-9]([А-я]|)$')
@@ -35,20 +34,17 @@ async def set_group(message: types.Message):
     if group == '':
         await message.answer(strings.error.group_not_specified)
     else:
-        prefs = await get_chat_prefs(message)
-        if prefs is not None:
-            res = await httpx.post(f'{API_URL}/tg/set_group?chat_id={message.chat.id}&group={group}')
-            await message.answer(res.text if res.status_code in [200, 400, 404] else strings.error.ise,
-                                 reply_markup=kb.to_keyboard(prefs))
+        res = await httpx.post(f'{API_URL}/tg/set_group?chat_id={message.chat.id}&group={group}')
+        await message.answer(res.text if res.status_code in [200, 400, 404] else strings.error.ise,
+                             reply_markup=kb.make_menu(await get_chat_prefs(message)))
 
 
 @dp.message_handler(regexp=f'^{strings.button.notify.format(".")}$')
 @dp.message_handler(commands=['notify'])
 async def notify(message: types.Message):
     prefs = await get_chat_prefs(message, 'notify')
-    if prefs is not None:
-        await message.answer(strings.info.notify_on if prefs.notify else strings.info.notify_off,
-                             reply_markup=kb.to_keyboard(prefs))
+    await message.answer(strings.info.notify_on if prefs.notify else strings.info.notify_off,
+                         reply_markup=kb.make_menu(prefs))
 
 
 @dp.message_handler(commands=['help'])
@@ -57,13 +53,13 @@ async def help_text(message: types.Message):
 
 
 @dp.message_handler(regexp=f'^({str.join("|", kb.groups.keys())})$')
-async def button_set_spec(message: types.Message):
+async def input_group(message: types.Message):
     await message.answer(strings.input.group, reply_markup=kb.groups[message.text])
 
 
 @dp.message_handler(regexp=f'^({strings.button.back_spec}|{strings.button.group.format(".*")})$')
-async def back_spec(message: types.Message):
-    await message.answer(strings.input.spec, reply_markup=kb.specialities.add(strings.button.cancel))
+async def input_spec(message: types.Message):
+    await message.answer(strings.input.spec, reply_markup=kb.specialities)
 
 
 @dp.message_handler(regexp=f'^{strings.button.changes}$')
@@ -80,23 +76,25 @@ async def timetable(message: types.Message):
 
 async def get_timetable(message: types.Message, api_call: str):
     prefs = await get_chat_prefs(message)
-    if prefs is not None:
-        if prefs.group is None:
-            await message.answer(strings.error.group_not_set)
+    if prefs.group is None:
+        await message.answer(strings.error.group_not_set)
+    else:
+        res = await httpx.get(f'{API_URL}/{api_call}/{prefs.group}?html=true')
+        if res.status_code == 200:
+            [await message.answer(change, parse_mode=types.ParseMode.HTML) for change in res.json()]
         else:
-            res = await httpx.get(f'{API_URL}/{api_call}/{prefs.group}?html=true')
-            if res.status_code == 200:
-                [await message.answer(change, parse_mode=types.ParseMode.HTML) for change in res.json()]
-            else:
-                await message.answer(strings.error.ise)
+            await message.answer(strings.error.ise)
 
 
 async def get_chat_prefs(message: types.Message, route='chat'):
     res = await httpx.get(f'{API_URL}/tg/{route}/{message.chat.id}')
     try:
-        return TGChatModel.parse_obj(res.json()) if res.status_code == 200 else None
+        if res.status_code == 200:
+            return TGChatModel.parse_obj(res.json())
     except ValueError or IndexError:
-        await message.answer(strings.error.db.format('vnukov10'))
+        pass
+    await message.answer(strings.error.db.format('vnukov10'))
+    raise RuntimeWarning(f"Bad API response {res.status_code}: {res.text}")
 
 
 async def on_startup(dispatcher):
@@ -109,7 +107,6 @@ async def on_shutdown(dispatcher):
 
 def start_bot(webhook=False):
     if webhook:
-        start_webhook(dispatcher=dp, webhook_path=TG_PATH, skip_updates=True,
-                      host='localhost', port=3001, on_startup=on_startup, on_shutdown=on_shutdown)
+        start_webhook(dp, TG_PATH, host='localhost', port=3001, on_startup=on_startup, on_shutdown=on_shutdown)
     else:
-        start_polling(dispatcher=dp)
+        start_polling(dp)
