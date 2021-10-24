@@ -1,5 +1,5 @@
 from starlette.responses import JSONResponse, Response
-from databases.models import TGChatModel, TGState
+from databases.models import TGChatModel
 from pymongo.results import UpdateResult
 from bots.common.strings import strings
 from pydantic import ValidationError
