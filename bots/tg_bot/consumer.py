@@ -1,6 +1,6 @@
 from databases.rabbitmq import Consumer, RoutingKey, Message
 from aio_pika import IncomingMessage
-from aiogram import Dispatcher
+from aiogram import Dispatcher, types
 from functools import partial
 import loguru
 
@@ -14,8 +14,7 @@ async def on_tg_message(message: IncomingMessage, dp: Dispatcher):
 
     if message.routing_key == 'TG':
         for chat_id in message_body.recipient_ids:
-            await dp.bot.send_message(text=message_body.text, chat_id=chat_id)
-
+            await dp.bot.send_message(text=message_body.text, chat_id=chat_id, parse_mode=types.ParseMode.HTML)
 
 async def start(dp: Dispatcher):
     on_message = partial(on_tg_message, dp=dp)

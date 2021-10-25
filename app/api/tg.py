@@ -73,7 +73,7 @@ async def set_tg_pref(chat_id: int):
                      summary="Получение всех чатов с определенной учебной группой",
                      tags=["TG"])
 async def get_chats_with_group(lesson_group: str = None):
-    chats = await db.async_find(db.TGChatsCollection, {"lesson_group": lesson_group}, {"_id": 0})
+    chats = await db.async_find(db.TGChatsCollection, {"group": lesson_group}, {"_id": 0})
     if chats:
         return JSONResponse(chats, status_code=status.HTTP_200_OK)
 

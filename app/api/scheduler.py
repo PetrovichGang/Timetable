@@ -116,6 +116,6 @@ async def get_social_ids(lesson_group: str) -> dict:
             social["VK"].extend([chat["peer_id"] for chat in vk_chats.json()])
 
         if tg_chats.status_code == 200:
-            social["TG"].extend([chat["peer_id"] for chat in tg_chats.json() if chat["notify"]])
+            social["TG"].extend([chat["chat_id"] for chat in tg_chats.json() if chat["notify"]])
 
     return social
