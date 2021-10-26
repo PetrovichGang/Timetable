@@ -94,11 +94,11 @@ async def get_chat_prefs(message: types.Message, route='chat'):
     except ValueError or IndexError:
         pass
     await message.answer(strings.error.db.format('vnukov10'))
-    raise RuntimeWarning(f"Bad API response {res.status_code}: {res.text}")
+    raise RuntimeWarning(f'Bad API response {res.status_code}: {res.text}')
 
 
 async def on_startup(dispatcher):
-    await bot.set_webhook(f"{TG_DOMAIN}{TG_PATH}")
+    await bot.set_webhook(f'{TG_DOMAIN}{TG_PATH}')
 
 
 async def on_shutdown(dispatcher):
