@@ -12,7 +12,7 @@ import asyncio
 
 bot = Bot(token=TG_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
-dp.middleware.setup(ThrottlingMiddleware(dp))
+dp.middleware.setup(ThrottlingMiddleware())
 asyncio.get_event_loop().run_until_complete(start_consumer(dp))
 httpx = httpxlib.AsyncClient(headers=AUTH_HEADER)
 
