@@ -4,7 +4,7 @@ from templates import schedule, schedule_markdown
 from config import TIMEZONE, API_URL, AUTH_HEADER
 from databases.models import ChangeModel, DAYS
 from app.parser import start_parse_changes
-from .scheduler import start_send_changes
+from fastapi_cache.decorator import cache
 from pydantic import ValidationError
 from .tools import db, TimeTableDB
 from datetime import datetime
@@ -15,9 +15,8 @@ import locale
 import httpx
 import json
 
-routerPublicChanges = APIRouter()
-routerPrivateChanges = APIRouter()
-PARSER_BLOCK = False
+routerPublicChanges = APIRouter(prefix="/api/changes")
+routerPrivateChanges = APIRouter(prefix="/api/changes")
 
 if platform.system() == "Windows":
     locale.setlocale(locale.LC_ALL, 'ru_RU')
@@ -25,7 +24,7 @@ elif platform.system() == "Linux":
     locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 
 
-@routerPublicChanges.get("/api/changes",
+@routerPublicChanges.get("",
                   summary="Получение всех изменений в расписании",
                   tags=["Изменения в расписание"])
 async def get_changes():
@@ -37,7 +36,7 @@ async def get_changes():
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@routerPublicChanges.get("/api/changes/groups",
+@routerPublicChanges.get("/groups",
                   summary="Получение всех учебных групп у которых есть изменения в расписании",
                   tags=["Изменения в расписание"])
 async def change_groups():
@@ -52,10 +51,9 @@ async def change_groups():
         return JSONResponse(result, status_code=status.HTTP_200_OK)
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
-    PARSER_BLOCK = False
 
 
-@routerPublicChanges.get("/api/changes/{group}",
+@routerPublicChanges.get("/groups/{group}",
                   summary="Получение изменения в расписании у указанной группы",
                   tags=["Изменения в расписание"])
 async def change_group(group: str):
@@ -73,7 +71,7 @@ async def change_group(group: str):
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@routerPrivateChanges.post("/api/changes",
+@routerPrivateChanges.post("",
                     summary="Загрузка в базу данных новых изменений в расписании",
                     tags=["Изменения в расписание"])
 async def upload_new_changes(request: Request):
@@ -95,7 +93,7 @@ async def upload_new_changes(request: Request):
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@routerPrivateChanges.delete("/api/changes",
+@routerPrivateChanges.delete("",
                       summary="Удаление всех или определенного изменения в расписании",
                       tags=["Изменения в расписание"])
 async def delete_changes(date: str = None):
@@ -115,9 +113,10 @@ async def delete_changes(date: str = None):
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@routerPublicChanges.get("/api/changes/finalize_schedule/{group}",
+@routerPublicChanges.get("/finalize_schedule/{group}",
                   summary="Получение расписания с изменениями для группы",
                   tags=["Изменения в расписание"])
+@cache(expire=60)
 async def get_finalize_schedule(group: str, text: bool = False, html: bool = False):
     result = {}
     today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
@@ -199,34 +198,14 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@routerPrivateChanges.get("/api/parse_changes",
+@routerPrivateChanges.get("/parse_changes",
                   summary="Запуск парсинга изменений",
                   tags=["Изменения в расписание"])
-async def parse_changes(background_tasks: BackgroundTasks, force: bool = False):
-    global PARSER_BLOCK
-    if PARSER_BLOCK and not force:
-        return Response(status_code=status.HTTP_423_LOCKED)
-
+async def parse_changes(background_tasks: BackgroundTasks):
     background_tasks.add_task(__parse_changes)
-    __switch_block()
     return Response(status_code=status.HTTP_202_ACCEPTED)
 
 
 def __parse_changes():
     start_parse_changes()
-    __switch_block()
-    
-    httpx.get(f"{API_URL}/start_send_changes", headers=AUTH_HEADER)
-
-
-def __switch_block():
-    global PARSER_BLOCK
-    PARSER_BLOCK = not PARSER_BLOCK
-
-
-@routerPrivateChanges.get("/api/start_send_changes",
-                  summary="Запуск отправки изменений",
-                  tags=["Изменения в расписание"])
-async def parse_changes(force: bool = False):
-    await start_send_changes(force)
-    return Response(status_code=status.HTTP_200_OK)
+    httpx.get(f"{API_URL}/producer/start_send_changes", headers=AUTH_HEADER)

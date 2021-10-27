@@ -7,7 +7,7 @@ from fastapi import APIRouter
 from starlette import status
 from .tools import db
 
-routerPrivateTG = APIRouter()
+routerPrivateTG = APIRouter(prefix="/api/tg")
 
 
 async def find_chat(chat_id: int):
@@ -23,7 +23,7 @@ async def find_chat(chat_id: int):
         return None
 
 
-@routerPrivateTG.get("/api/tg/chat/{chat_id}",
+@routerPrivateTG.get("/chat/{chat_id}",
                      summary="Получение информации о чате или создание новой записи о чате",
                      tags=["TG"])
 async def get_tg_chat(chat_id: int):
@@ -34,7 +34,7 @@ async def get_tg_chat(chat_id: int):
         return JSONResponse(chat, status_code=status.HTTP_200_OK)
 
 
-@routerPrivateTG.post("/api/tg/set_group",
+@routerPrivateTG.post("/set_group",
                       summary="Изменение группы в чата",
                       tags=["TG"])
 async def set_tg_group(chat_id: int, group: str):
@@ -51,7 +51,7 @@ async def set_tg_group(chat_id: int, group: str):
     return Response(strings.info.group_set.format(group), status_code=status.HTTP_200_OK)
 
 
-@routerPrivateTG.get("/api/tg/notify/{chat_id}",
+@routerPrivateTG.get("/notify/{chat_id}",
                      summary="Изменение статуса авторассылки для чата",
                      tags=["TG"])
 async def set_tg_pref(chat_id: int):
@@ -69,7 +69,7 @@ async def set_tg_pref(chat_id: int):
     return JSONResponse(chat, status_code=status.HTTP_200_OK)
 
 
-@routerPrivateTG.get("/api/tg/chats/{lesson_group}",
+@routerPrivateTG.get("/chats/{lesson_group}",
                      summary="Получение всех чатов с определенной учебной группой",
                      tags=["TG"])
 async def get_chats_with_group(lesson_group: str = None):

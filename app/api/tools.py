@@ -14,6 +14,10 @@ tags_metadata = [
         "description": "Методы работы с коллекцией: Изменения в расписание."
     },
     {
+        "name": "Producer",
+        "description": "Отправка сообщений в RabbitMQ."
+    },
+    {
         "name": "VK",
         "description": "Методы работы с коллекциями: VKGroups и VKUsers."
     },

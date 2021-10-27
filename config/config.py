@@ -18,6 +18,9 @@ RABBITMQ_PASS = env.str("RABBITMQ_PASS")
 RABBITMQ_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASS}@{RABBITMQ_IP}/"
 RABBITMQ_ENABLE = env.bool("RABBITMQ_ENABLE")
 
+REDIS_HOST = env.str("REDIS_HOST")
+REDIS_PORT = env.int("REDIS_PORT")
+
 API_IP = env.str('TimeTable_API_IP')
 API_PORT = env.int('TimeTable_API_PORT')
 API_URL = f"http://{API_IP}:{API_PORT}/api"

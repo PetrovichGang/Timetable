@@ -6,10 +6,10 @@ from fastapi import APIRouter
 from starlette import status
 from .tools import db
 
-routerPrivateVK = APIRouter()
+routerPrivateVK = APIRouter(prefix="/api/vk")
 
 
-@routerPrivateVK.post("/api/vk/users",
+@routerPrivateVK.post("/users",
                     summary="Загрузка в базу данных новых пользователей",
                     tags=["VK"])
 async def load_new_users(users: Union[VKUserModel, List[VKUserModel]]):
@@ -31,7 +31,7 @@ async def load_new_users(users: Union[VKUserModel, List[VKUserModel]]):
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@routerPrivateVK.post("/api/vk/users/set_group",
+@routerPrivateVK.post("/users/set_group",
                     summary="Изменение учебной группы пользователей",
                     tags=["VK"])
 async def set_users_lesson_group(users: DictIdAndGroup):
@@ -43,7 +43,7 @@ async def set_users_lesson_group(users: DictIdAndGroup):
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
     
-@routerPrivateVK.post("/api/vk/users/set/{pref}/",
+@routerPrivateVK.post("/users/set/{pref}/",
                     summary="Изменение настроек для чата",
                     tags=["VK"])
 async def set_vk_pref(id: int, pref: str, value: bool):
@@ -55,7 +55,7 @@ async def set_vk_pref(id: int, pref: str, value: bool):
     return Response(status_code=status.HTTP_200_OK)
 
 
-@routerPrivateVK.get("/api/vk/users",
+@routerPrivateVK.get("/users",
                    summary="Получение всех пользователей VK из базы данных",
                    tags=["VK"])
 async def get_users(id: int = None):
@@ -69,7 +69,7 @@ async def get_users(id: int = None):
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@routerPrivateVK.post("/api/vk/chats",
+@routerPrivateVK.post("/chats",
                     summary="Загрузка в базу данных новой группы",
                     tags=["VK"])
 async def load_new_group(chat: VKChatModel):
@@ -81,7 +81,7 @@ async def load_new_group(chat: VKChatModel):
     return Response("Группа существует", status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@routerPrivateVK.get("/api/vk/chats/set_group",
+@routerPrivateVK.get("/chats/set_group",
                    summary="Изменение учебной группы у чата",
                    tags=["VK"])
 async def set_group_lesson_group(peer_id: int, lesson_group: str):
@@ -93,7 +93,7 @@ async def set_group_lesson_group(peer_id: int, lesson_group: str):
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@routerPrivateVK.get("/api/vk/chats",
+@routerPrivateVK.get("/chats",
                    summary="Получение всех бесед VK из базы данных",
                    tags=["VK"])
 async def get_groups(peer_id: int = None):
@@ -108,7 +108,7 @@ async def get_groups(peer_id: int = None):
     return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@routerPrivateVK.get("/api/vk/chats/{lesson_group}",
+@routerPrivateVK.get("/chats/{lesson_group}",
                    summary="Получение всех бесед VK с определенной учебной группой из базы данных",
                    tags=["VK"])
 async def get_chats_with_group(lesson_group: str = None):
@@ -119,7 +119,7 @@ async def get_chats_with_group(lesson_group: str = None):
     return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@routerPrivateVK.get("/api/vk/users/{lesson_group}",
+@routerPrivateVK.get("/users/{lesson_group}",
                    summary="Получение всех пользователей VK с определенной учебной группой из базы данных",
                    tags=["VK"])
 async def get_users_with_group(lesson_group: str = None):
