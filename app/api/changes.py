@@ -15,6 +15,8 @@ import locale
 import httpx
 import json
 
+from fastapi_cache.coder import Coder
+
 routerPublicChanges = APIRouter(prefix="/api/changes")
 routerPrivateChanges = APIRouter(prefix="/api/changes")
 
@@ -116,7 +118,7 @@ async def delete_changes(date: str = None):
 @routerPublicChanges.get("/finalize_schedule/{group}",
                   summary="Получение расписания с изменениями для группы",
                   tags=["Изменения в расписание"])
-@cache(expire=60)
+# @cache(expire=60)
 async def get_finalize_schedule(group: str, text: bool = False, html: bool = False):
     result = {}
     today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
