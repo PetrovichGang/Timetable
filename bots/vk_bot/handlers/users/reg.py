@@ -22,8 +22,8 @@ bp = Blueprint("UserBot")
 bp.labeler.vbml_ignore_case = True
 
 #### СОЗДАНИЕ КНОПКИ ДЛЯ ОПОВЕЩЕНИЙ ####
-keyboards.main_keyboard.row()
-keyboards.main_keyboard.add(Callback("Оповещения (откл.)", {"cmd": "auto"}), color=KeyboardButtonColor.NEGATIVE)
+#keyboards.main_keyboard.row()
+keyboards.main_keyboard.add(Callback(strings.button.notify_texted.format("откл"), {"cmd": "auto"}), color=KeyboardButtonColor.NEGATIVE)
 
 
 ##### ОБРАБОТКА СООБЩЕНИЙ #####
@@ -40,7 +40,7 @@ async def start(message: Message, group: str = "Не задана"):  #### ОТ�
 async def start(event: GroupEventType.MESSAGE_EVENT):
     if event.object.payload["cmd"] == "spec":
         #### ВЫВОД РАСПИСАНИЯ ####
-        if event.object.payload["spec"] == "Timetable":
+        if event.object.payload["spec"] == "Changes":
             async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
                 group = await client.get(f"{API_URL}/vk/users?id={event.object.peer_id}")
                 if group.status_code == 200:
@@ -52,12 +52,33 @@ async def start(event: GroupEventType.MESSAGE_EVENT):
                     else:
                         await bp.api.messages.send(random_id=0, message=strings.error.group_not_set.format(""), event_id=event.object.event_id,
                                                        peer_id=event.object.peer_id,
-                                                       user_id=event.object.user_id, keyboard=keyboards.specialities)
+                                                       user_id=event.object.user_id)
                 else:
                     await bp.api.messages.send(random_id=0, message=strings.error.group_not_set.format(""),
                                                        event_id=event.object.event_id,
                                                        peer_id=event.object.peer_id,
-                                                       user_id=event.object.user_id, keyboard=keyboards.specialities)
+                                                       user_id=event.object.user_id)
+
+
+        elif event.object.payload["spec"] == "Timetable":
+                async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
+                    group = await client.get(f"{API_URL}/vk/users?id={event.object.peer_id}")
+                    if group.status_code == 200:
+                        group = group.json()[0]
+                        if group["lesson_group"]:
+                            sucktion1 = await client.get(f"{API_URL}/timetable/{group['lesson_group']}?text=true")
+                            await bp.api.messages.send(random_id=0, message=sucktion1.json()[0], event_id=event.object.event_id, peer_id=event.object.peer_id, user_id=event.object.user_id)
+                        else:
+                            await bp.api.messages.send(random_id=0, message=strings.error.group_not_set.format(""), event_id=event.object.event_id,
+                                                        peer_id=event.object.peer_id,
+                                                        user_id=event.object.user_id)
+                    else:
+                        await bp.api.messages.send(random_id=0, message=strings.error.group_not_set.format(""),
+                                                        event_id=event.object.event_id,
+                                                        peer_id=event.object.peer_id,
+                                                        user_id=event.object.user_id)
+
+
         else: 
             #### ВЫБЕРИТЕ СПЕЦИАЛЬНОСТЬ ####
             if event.object.payload["spec"] == "Started":
@@ -73,6 +94,8 @@ async def start(event: GroupEventType.MESSAGE_EVENT):
                 await bp.api.messages.send(random_id=0, message=strings.input.group, keyboard=keyboards.groups[event.object.payload["spec"]],
                                     event_id=event.object.event_id, peer_id=event.object.peer_id,
                                     user_id=event.object.user_id)
+
+            
 
     elif event.object.payload["cmd"] == "auto": #### ОБРАБОТКА НАЖАТИЯ НА "ОПОВЕЩЕНИЯ" ####
         await change_notify(event.object.user_id, event)
@@ -157,14 +180,14 @@ async def change_notify(user_id: int, event):
             user =  await client.get(f"{API_URL}/vk/users?id={user_id}")
             await client.post(f"{API_URL}/vk/users/set/notify?id={user_id}&value={not user.json()[0]['notify']}")
             if not user.json()[0]["notify"]:
-                keyboards.main_keyboard.buttons[2][0].color=KeyboardButtonColor.POSITIVE
-                keyboards.main_keyboard.buttons[2][0].action.label = strings.button.notify_texted.format("вкл")
+                keyboards.main_keyboard.buttons[2][1].color=KeyboardButtonColor.POSITIVE
+                keyboards.main_keyboard.buttons[2][1].action.label = strings.button.notify_texted.format("вкл")
                 
                 await bp.api.messages.send(random_id=0, message=strings.info.notify_on, event_id=event.object.event_id,
                                         peer_id=event.object.peer_id, user_id=event.object.user_id, keyboard=keyboards.main_keyboard)
             else: 
-                keyboards.main_keyboard.buttons[2][0].color=KeyboardButtonColor.NEGATIVE
-                keyboards.main_keyboard.buttons[2][0].action.label = strings.button.notify_texted.format("откл")
+                keyboards.main_keyboard.buttons[2][1].color=KeyboardButtonColor.NEGATIVE
+                keyboards.main_keyboard.buttons[2][1].action.label = strings.button.notify_texted.format("откл")
                 await bp.api.messages.send(random_id=0, message=strings.info.notify_off, event_id=event.object.event_id,
                                         peer_id=event.object.peer_id, user_id=event.object.user_id, keyboard=keyboards.main_keyboard)
         else:

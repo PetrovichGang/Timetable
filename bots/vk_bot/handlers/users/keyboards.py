@@ -12,9 +12,11 @@ groups = {}
 
 
 main_keyboard = Keyboard(one_time=False, inline=False)
-main_keyboard.add(Callback("Назначить группу", {"cmd": "spec", "spec": "Started"}), color=KeyboardButtonColor.PRIMARY)
+main_keyboard.add(Callback(strings.button.changes, {"cmd": "spec", "spec": "Changes"}), color=KeyboardButtonColor.SECONDARY)
 main_keyboard.row()
-main_keyboard.add(Callback("Расписание", {"cmd": "spec", "spec": "Timetable"}), color=KeyboardButtonColor.PRIMARY)
+main_keyboard.add(Callback(strings.button.timetable, {"cmd": "spec", "spec": "Timetable"}), color=KeyboardButtonColor.SECONDARY)
+main_keyboard.row()
+main_keyboard.add(Callback(strings.button.vk_group, {"cmd": "spec", "spec": "Started"}), color=KeyboardButtonColor.PRIMARY)
 
 
 
