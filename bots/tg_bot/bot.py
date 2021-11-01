@@ -34,7 +34,7 @@ async def set_group(message: types.Message):
     if group == '':
         await message.answer(strings.error.group_not_specified)
     else:
-        res = await httpx.post(f'{API_URL}/tg/set_group?chat_id={message.chat.id}&group={group}')
+        res = await httpx.get(f'{API_URL}/tg/set_group?chat_id={message.chat.id}&group={group}')
         await message.answer(res.text if res.status_code in [200, 400, 404] else strings.error.ise,
                              reply_markup=kb.make_menu(await get_chat_prefs(message)))
 

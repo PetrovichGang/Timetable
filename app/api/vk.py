@@ -43,7 +43,7 @@ async def set_users_lesson_group(users: DictIdAndGroup):
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
     
-@routerPrivateVK.post("/users/set/{pref}/",
+@routerPrivateVK.get("/users/set/{pref}",
                     summary="Изменение настроек для чата",
                     tags=["VK"])
 async def set_vk_pref(id: int, pref: str, value: bool):

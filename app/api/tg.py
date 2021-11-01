@@ -34,7 +34,7 @@ async def get_tg_chat(chat_id: int):
         return JSONResponse(chat, status_code=status.HTTP_200_OK)
 
 
-@routerPrivateTG.post("/set_group",
+@routerPrivateTG.get("/set_group",
                       summary="Изменение группы в чата",
                       tags=["TG"])
 async def set_tg_group(chat_id: int, group: str):

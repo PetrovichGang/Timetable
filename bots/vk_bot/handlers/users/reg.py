@@ -178,7 +178,7 @@ async def change_notify(user_id: int, event):
         user_info = await client.get(f"{API_URL}/vk/users?id={user_id}")
         if user_info.status_code == 200:
             user =  await client.get(f"{API_URL}/vk/users?id={user_id}")
-            await client.post(f"{API_URL}/vk/users/set/notify?id={user_id}&value={not user.json()[0]['notify']}")
+            await client.get(f"{API_URL}/vk/users/set/notify?id={user_id}&value={not user.json()[0]['notify']}")
             if not user.json()[0]["notify"]:
                 keyboards.main_keyboard.buttons[2][1].color=KeyboardButtonColor.POSITIVE
                 keyboards.main_keyboard.buttons[2][1].action.label = strings.button.notify_texted.format("вкл")

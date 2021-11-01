@@ -1,10 +1,11 @@
-from fastapi import Request, APIRouter, BackgroundTasks
+from fastapi import Request, APIRouter, BackgroundTasks, HTTPException
 from starlette.responses import JSONResponse, Response
 from templates import schedule, schedule_markdown
 from config import TIMEZONE, API_URL, AUTH_HEADER
 from databases.models import ChangeModel, DAYS
 from app.parser import start_parse_changes
 from fastapi_cache.decorator import cache
+from databases.rabbitmq import Message
 from pydantic import ValidationError
 from .tools import db, TimeTableDB
 from datetime import datetime
@@ -14,8 +15,6 @@ import calendar
 import locale
 import httpx
 import json
-
-from fastapi_cache.coder import Coder
 
 routerPublicChanges = APIRouter(prefix="/api/changes")
 routerPrivateChanges = APIRouter(prefix="/api/changes")
@@ -27,8 +26,8 @@ elif platform.system() == "Linux":
 
 
 @routerPublicChanges.get("",
-                  summary="Получение всех изменений в расписании",
-                  tags=["Изменения в расписание"])
+                         summary="Получение всех изменений в расписании",
+                         tags=["Изменения в расписание"])
 async def get_changes():
     content = await TimeTableDB.async_find(db.CLCollection, {}, {"_id": 0})
 
@@ -39,8 +38,8 @@ async def get_changes():
 
 
 @routerPublicChanges.get("/groups",
-                  summary="Получение всех учебных групп у которых есть изменения в расписании",
-                  tags=["Изменения в расписание"])
+                         summary="Получение всех учебных групп у которых есть изменения в расписании",
+                         tags=["Изменения в расписание"])
 async def change_groups():
     content = await TimeTableDB.async_find(db.CLCollection, {}, {"_id": 0, "Date": 1, "Groups": 1})
     result = []
@@ -56,8 +55,8 @@ async def change_groups():
 
 
 @routerPublicChanges.get("/groups/{group}",
-                  summary="Получение изменения в расписании у указанной группы",
-                  tags=["Изменения в расписание"])
+                         summary="Получение изменения в расписании у указанной группы",
+                         tags=["Изменения в расписание"])
 async def change_group(group: str):
     if group in db.groups:
         content = await TimeTableDB.async_find(db.CLCollection, {},
@@ -74,8 +73,8 @@ async def change_group(group: str):
 
 
 @routerPrivateChanges.post("",
-                    summary="Загрузка в базу данных новых изменений в расписании",
-                    tags=["Изменения в расписание"])
+                           summary="Загрузка в базу данных новых изменений в расписании",
+                           tags=["Изменения в расписание"])
 async def upload_new_changes(request: Request):
     data = await request.json()
 
@@ -96,8 +95,8 @@ async def upload_new_changes(request: Request):
 
 
 @routerPrivateChanges.delete("",
-                      summary="Удаление всех или определенного изменения в расписании",
-                      tags=["Изменения в расписание"])
+                             summary="Удаление всех или определенного изменения в расписании",
+                             tags=["Изменения в расписание"])
 async def delete_changes(date: str = None):
     """
         Аргументы:
@@ -116,9 +115,9 @@ async def delete_changes(date: str = None):
 
 
 @routerPublicChanges.get("/finalize_schedule/{group}",
-                  summary="Получение расписания с изменениями для группы",
-                  tags=["Изменения в расписание"])
-# @cache(expire=60)
+                         summary="Получение расписания с изменениями для группы",
+                         tags=["Изменения в расписание"])
+@cache(expire=60)
 async def get_finalize_schedule(group: str, text: bool = False, html: bool = False):
     result = {}
     today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
@@ -130,79 +129,78 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
         "Comments": []
     }
 
-    if group in db.groups:
-        content = await TimeTableDB.async_find(db.CLCollection, {},
-                                               {"_id": 0, "Date": 1, "Lessons": f"$Groups.{group}"})
+    if group not in db.groups:
+        raise HTTPException(status_code=404)
 
-        for data in filter(lambda data: datetime.strptime(data.get("Date"), "%d.%m.%Y") >= today, content):
-            if time > datetime.strptime("15:20", "%H:%M") and today == datetime.strptime(data.get("Date"), "%d.%m.%Y"):
-                continue
+    content = await TimeTableDB.async_find(db.CLCollection, {},
+                                           {"_id": 0, "Date": 1, "Lessons": f"$Groups.{group}"})
 
-            day = datetime.strptime(data.get("Date"), "%d.%m.%Y")
-            num_week = day.isocalendar()[1]
-            weekday = day.isocalendar()[2]
-            default_lessons = await TimeTableDB.async_find(db.DLCollection, {"Group": group},
-                                                           {"_id": 0,
-                                                            "Lessons": DAYS[list(DAYS.keys())[day.weekday()]]})
-            temp = template()
-            temp["Date"] = data.get("Date")
+    for data in filter(lambda data: datetime.strptime(data.get("Date"), "%d.%m.%Y") >= today, content):
+        if time > datetime.strptime("15:20", "%H:%M") and today == datetime.strptime(data.get("Date"), "%d.%m.%Y"):
+            continue
 
-            lessons = {}
-            changes = data.get("Lessons")
-            lessons = default_lessons[0]["Lessons"]["a"]
+        day = datetime.strptime(data.get("Date"), "%d.%m.%Y")
+        num_week = day.isocalendar()[1]
+        weekday = day.isocalendar()[2]
+        default_lessons = await TimeTableDB.async_find(db.DLCollection, {"Group": group},
+                                                       {"_id": 0,
+                                                        "Lessons": DAYS[list(DAYS.keys())[day.weekday()]]})
+        temp = template()
+        temp["Date"] = data.get("Date")
 
-            if num_week % 2 == 1 and "b" in default_lessons[0]["Lessons"].keys():
-                lessons.update(default_lessons[0]["Lessons"]["b"])
+        changes = data.get("Lessons")
+        lessons = default_lessons[0]["Lessons"]["a"]
 
-            if len(data) > 1:
-                lessons.update(changes["ChangeLessons"]) if changes["ChangeLessons"] else None
-                lessons.update({str(num): "Нет" for num in changes["SkipLessons"]}) if changes["SkipLessons"] else None
+        if num_week % 2 == 1 and "b" in default_lessons[0]["Lessons"].keys():
+            lessons.update(default_lessons[0]["Lessons"]["b"])
 
-                temp["Comments"] = changes["Comments"]
+        if len(data) > 1:
+            lessons.update(changes["ChangeLessons"]) if changes["ChangeLessons"] else None
+            lessons.update({str(num): "Нет" for num in changes["SkipLessons"]}) if changes["SkipLessons"] else None
 
-                changes_with_emoji = {}
-                for key, item in changes["ChangeLessons"].items():
-                    changes_with_emoji[key] = item + " ✏️"
+            temp["Comments"] = changes["Comments"]
 
-                lessons.update(changes_with_emoji)
+            changes_with_emoji = {}
+            for key, item in changes["ChangeLessons"].items():
+                changes_with_emoji[key] = item + " ✏️"
 
-            temp["Lessons"].update(lessons)
+            lessons.update(changes_with_emoji)
 
-            if html:
-                result[temp["Date"]] = schedule_markdown.render(
-                    Day=calendar.day_name[weekday - 1].title(),
-                    Date=temp["Date"],
-                    Lessons=[f"<code><b>{index})</b></code> {lesson}" for index, lesson in
-                             enumerate(temp["Lessons"].values(), 1)],
-                    Comments=temp["Comments"],
-                    ClassHour=False if weekday != 2 else True
-                )
+        temp["Lessons"].update(lessons)
 
-            elif text:
-                result[temp["Date"]] = schedule.render(
-                    Day=calendar.day_name[weekday - 1].title(),
-                    Date=temp["Date"],
-                    Lessons=[f"{index}) {lesson}" for index, lesson in
-                             enumerate(temp["Lessons"].values(), 1)],
-                    Comments=temp["Comments"],
-                    ClassHour=False if weekday != 2 else True
-                )
+        if html:
+            result[temp["Date"]] = schedule_markdown.render(
+                Day=calendar.day_name[weekday - 1].title(),
+                Date=temp["Date"],
+                Lessons=[f"<code><b>{index})</b></code> {lesson}" for index, lesson in
+                         enumerate(temp["Lessons"].values(), 1)],
+                Comments=temp["Comments"],
+                ClassHour=False if weekday != 2 else True
+            )
 
-            else:
-                result[temp["Date"]] = temp
-        
-        content = []
-        for key in sorted(list(result.keys())):
-            content.append(result[key])
+        elif text:
+            result[temp["Date"]] = schedule.render(
+                Day=calendar.day_name[weekday - 1].title(),
+                Date=temp["Date"],
+                Lessons=[f"{index}) {lesson}" for index, lesson in
+                         enumerate(temp["Lessons"].values(), 1)],
+                Comments=temp["Comments"],
+                ClassHour=False if weekday != 2 else True
+            )
 
-        return JSONResponse(content, status_code=status.HTTP_200_OK)
-    else:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        else:
+            result[temp["Date"]] = temp
+
+    content = []
+    for key in sorted(result, key=lambda x: datetime.strptime(x, "%d.%m.%Y")):
+        content.append(result[key])
+
+    return content
 
 
 @routerPrivateChanges.get("/parse_changes",
-                  summary="Запуск парсинга изменений",
-                  tags=["Изменения в расписание"])
+                          summary="Запуск парсинга изменений",
+                          tags=["Изменения в расписание"])
 async def parse_changes(background_tasks: BackgroundTasks):
     background_tasks.add_task(__parse_changes)
     return Response(status_code=status.HTTP_202_ACCEPTED)
@@ -211,3 +209,55 @@ async def parse_changes(background_tasks: BackgroundTasks):
 def __parse_changes():
     start_parse_changes()
     httpx.get(f"{API_URL}/producer/start_send_changes", headers=AUTH_HEADER)
+
+
+async def send_changes():
+    async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
+        changes = await client.get(f"{API_URL}/changes/groups")
+        groups_with_changes = []
+
+        [groups_with_changes.extend(group) for group in [groups["Groups"] for groups in changes.json()]]
+        groups_with_changes = list(set(groups_with_changes))
+
+        groups: list = (await client.get(f"{API_URL}/groups")).json()["Groups"]
+        groups_without_changes = list(set(groups).difference(groups_with_changes))
+
+        sorted_groups = []
+        sorted_groups.extend(groups_with_changes)
+        sorted_groups.extend(groups_without_changes)
+
+        for group in sorted_groups:
+            social_ids = await get_social_ids(group)
+
+            for social_name in social_ids.keys():
+                if social_ids[social_name]:
+
+                    if social_name == "VK":
+                        lessons = await client.get(f"{API_URL}/changes/finalize_schedule/{group}?text=true")
+                    else:
+                        lessons = await client.get(f"{API_URL}/changes/finalize_schedule/{group}?html=true")
+
+                    if lessons.status_code == 200:
+                        for lesson in lessons.json():
+                            message = Message.parse_obj(
+                                {"routing_key": social_name, "recipient_ids": social_ids[social_name], "text": lesson})
+                            await client.post(f"{API_URL}/producer/send_message", json=message.dict())
+
+
+async def get_social_ids(lesson_group: str) -> dict:
+    social = {"VK": [], "TG": []}
+    async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
+        vk_users = await client.get(f"{API_URL}/vk/users/{lesson_group}")
+        vk_chats = await client.get(f"{API_URL}/vk/chats/{lesson_group}")
+        tg_chats = await client.get(f"{API_URL}/tg/chats/{lesson_group}")
+
+        if vk_users.status_code == 200:
+            social["VK"].extend([user["peer_id"] for user in vk_users.json() if user["notify"]])
+
+        if vk_chats.status_code == 200:
+            social["VK"].extend([chat["peer_id"] for chat in vk_chats.json()])
+
+        if tg_chats.status_code == 200:
+            social["TG"].extend([chat["chat_id"] for chat in tg_chats.json() if chat["notify"]])
+
+    return social

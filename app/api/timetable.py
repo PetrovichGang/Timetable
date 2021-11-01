@@ -111,25 +111,6 @@ async def groups():
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-@routerPrivateTT.post("/api/groups",
-                    summary="Загрузка в базу данных расписания для группы",
-                    tags=["Группы"])
-async def replace_group_timetable(request: Request):
-    data = await request.json()
-
-    if data:
-        print(data)
-
-        try:
-            await db.DLCollection.replace_one({'Group': data["Group"]}, data)
-
-            return Response(f"Новое расписание загруженно", status_code=status.HTTP_200_OK)
-        except ValidationError as e:
-            return Response(e.json(), status_code=status.HTTP_400_BAD_REQUEST)
-
-    return Response(status_code=status.HTTP_400_BAD_REQUEST)
-
-
 @routerPublicTT.get("/api/groups/{spec}",
                   summary="Получение всех учебных групп указанной специальности",
                   tags=["Группы"])
