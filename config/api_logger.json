@@ -1,0 +1,10 @@
+{
+  "logger": {
+    "path": "./logs/api",
+    "filename": "api.log",
+    "level": "info",
+    "rotation": "12:00",
+    "retention": "1 months",
+    "format": "<level>{level: <8}</level> <green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> - <cyan>{name}</cyan>:<cyan>{function}</cyan> - <level>{message}</level>"
+  }
+}

@@ -1,9 +1,11 @@
 from fastapi.security import HTTPBasicCredentials, HTTPBearer
 from fastapi import HTTPException, FastAPI, Depends
 from .api import routerPublic, routerPrivate
-from config import API_TOKEN
+from .logger import CustomizeLogger
+from config import API_TOKEN, CWD
 
 app = FastAPI()
+app.logger = CustomizeLogger.make_logger(CWD / "config" / "api_logger.json")
 security = HTTPBearer()
 
 

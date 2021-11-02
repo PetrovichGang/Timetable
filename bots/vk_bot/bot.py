@@ -1,14 +1,16 @@
+from ..common.logger import CustomizeLogger
 from .handlers.consumer import start
 from .handlers.chats import chat_bp
 from .handlers.users import user_bp
+from config import VK_TOKEN, CWD
 from vkbottle.bot import Bot
-from config import VK_TOKEN
+
 
 bot = Bot(token=VK_TOKEN)
 chat_bp.load(bot)
 user_bp.load(bot)
 
-
+CustomizeLogger.make_logger(CWD / "config" / "vk_logger.json")
 # bot.loop_wrapper.auto_reload = True
 
 

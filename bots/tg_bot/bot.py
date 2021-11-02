@@ -1,7 +1,8 @@
-from config import TG_TOKEN, AUTH_HEADER, API_URL, TG_DOMAIN, TG_PATH
+from config import TG_TOKEN, AUTH_HEADER, API_URL, TG_DOMAIN, TG_PATH, CWD
 from aiogram.utils.executor import start_webhook, start_polling
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from .consumer import start as start_consumer
+from ..common.logger import CustomizeLogger
 from .throttle import ThrottlingMiddleware
 from aiogram import Bot, types, Dispatcher
 from databases.models import TGChatModel
@@ -15,6 +16,7 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 dp.middleware.setup(ThrottlingMiddleware())
 asyncio.get_event_loop().run_until_complete(start_consumer(dp))
 httpx = httpxlib.AsyncClient(headers=AUTH_HEADER)
+logger = CustomizeLogger.make_logger(CWD / "config" / "tg_logger.json")
 
 
 @dp.message_handler(regexp=f'^{strings.button.cancel}$')

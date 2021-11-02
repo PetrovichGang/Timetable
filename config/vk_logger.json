@@ -1,0 +1,10 @@
+{
+  "logger": {
+    "path": "./logs/vk_bot",
+    "filename": "vk.log",
+    "level": "debug",
+    "rotation": "12:00",
+    "retention": "3 days",
+    "format": "<level>{level: <8}</level> <green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> - <cyan>{name}</cyan>:<cyan>{function}</cyan> - <level>{message}</level>"
+  }
+}

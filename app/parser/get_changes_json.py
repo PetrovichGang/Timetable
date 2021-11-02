@@ -1,5 +1,6 @@
 from config import API_URL, Schedule_URL, AUTH_HEADER, CWD
 from datetime import datetime
+from loguru import logger
 from pathlib import Path
 from typing import Union
 import camelot
@@ -7,7 +8,6 @@ import pandas
 import httpx
 import json
 import re
-
 
 URL = Schedule_URL
 
@@ -32,16 +32,19 @@ def get_schedule_links(url: str = URL) -> list:
 def download_schedule(url: str) -> None:
     file_name = url.split("/")[-1]
     path = Path(CWD, "schedule")
-    if not path.exists(): path.mkdir()
+    if not path.exists():
+        path.mkdir()
+        path.chmod(777)
 
     final_file_path = Path(path, file_name)
 
     if not final_file_path.exists():
-        print(f"Downloading: {url}")
+        logger.info(f"Downloading: {url}")
         res = httpx.get(url)
         if res.status_code == 200:
             with open(final_file_path, "wb") as file:
                 file.write(res.content)
+            final_file_path.chmod(666)
 
 
 def clear_schedule_dir():
