@@ -238,10 +238,9 @@ async def send_changes():
                         lessons = await client.get(f"{API_URL}/changes/finalize_schedule/{group}?html=true")
 
                     if lessons.status_code == 200:
-                        for lesson in lessons.json():
-                            message = Message.parse_obj(
-                                {"routing_key": social_name, "recipient_ids": social_ids[social_name], "text": lesson})
-                            await client.post(f"{API_URL}/producer/send_message", json=message.dict())
+                        message = Message.parse_obj(
+                            {"routing_key": social_name, "recipient_ids": social_ids[social_name], "text": lessons.json()})
+                        await client.post(f"{API_URL}/producer/send_message", json=message.dict())
 
 
 async def get_social_ids(lesson_group: str) -> dict:

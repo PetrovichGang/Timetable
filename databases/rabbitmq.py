@@ -18,7 +18,7 @@ class Message(BaseModel):
     routing_key: str = Field(alias="routing_key")
     recipient_ids: List[int] = Field(alias="recipient_ids")
 
-    text: str = Field(alias="text")
+    text: List[str] = Field(alias="text")
     images_url: Optional[List[str]] = Field(alias="images_url")
 
 
