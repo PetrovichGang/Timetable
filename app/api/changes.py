@@ -117,7 +117,7 @@ async def delete_changes(date: str = None):
 @routerPublicChanges.get("/finalize_schedule/{group}",
                          summary="Получение расписания с изменениями для группы",
                          tags=["Изменения в расписание"])
-@cache(expire=60)
+#@cache(expire=60)
 async def get_finalize_schedule(group: str, text: bool = False, html: bool = False):
     result = {}
     today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
@@ -172,8 +172,7 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
             result[temp["Date"]] = schedule_markdown.render(
                 Day=calendar.day_name[weekday - 1].title(),
                 Date=temp["Date"],
-                Lessons=[f"<code><b>{index})</b></code> {lesson}" for index, lesson in
-                         enumerate(temp["Lessons"].values(), 1)],
+                Lessons=enumerate(temp["Lessons"].values(), 1),
                 Comments=temp["Comments"],
                 ClassHour=False if weekday != 2 else True
             )
@@ -182,8 +181,7 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
             result[temp["Date"]] = schedule.render(
                 Day=calendar.day_name[weekday - 1].title(),
                 Date=temp["Date"],
-                Lessons=[f"{index}) {lesson}" for index, lesson in
-                         enumerate(temp["Lessons"].values(), 1)],
+                Lessons=enumerate(temp["Lessons"].values(), 1),
                 Comments=temp["Comments"],
                 ClassHour=False if weekday != 2 else True
             )

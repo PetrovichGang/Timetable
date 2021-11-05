@@ -1,13 +1,14 @@
-🕗 <b>Расписание на</b> <i>{{ Date }}</i>, {{ Day }}
+<code>🕗 </code><b>Расписание на</b> <i>{{ Day }}</i>
+<code>   </code>{{ Date }}
 
-{% if ClassHour %}Классный час{{ '\n' }}{% endif %}
-{% for lesson in Lessons %}
-{{ lesson }}
+{% if ClassHour %}<code>   </code>Классный час{{ '\n' }}{% endif %}
+{% for pair, lesson in Lessons %}
+<code>{{ pair }}) </code>{{ lesson | wordwrap(28) | replace('\n', '\n<code>   </code>') | replace(',', ' ') }}
 {% endfor %}
 
 {% if Comments %}
-📰 <b>Дополнительная информация:</b>
+<code>📰 </code><b>Информация:</b>
 {% for comment in Comments %}
-  {{ comment }}
+<code>   </code>{{ comment }}
 {%- endfor %}
 {% endif %}
