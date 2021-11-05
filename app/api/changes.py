@@ -160,7 +160,7 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
             if changes["ChangeLessons"]:
                 for p in changes["ChangeLessons"]:  # перемещает препода на вторую строку
                     changes["ChangeLessons"][p] = re.sub(' (([А-Я][а-я]+)(?!.*[А-Я][а-я]+) [А-Я](.|. )[А-Я](.|))',
-                                                         '\n<i>\\1</i>' if html else '\n\\1', changes["ChangeLessons"][p])
+                                                         '\n\\1', changes["ChangeLessons"][p])
                 lessons.update(changes["ChangeLessons"])
 
             if changes["SkipLessons"]:
@@ -177,13 +177,13 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
         temp["Lessons"].update(lessons)
 
         if html:
-            result[temp["Date"]] = schedule_markdown.render(
+            result[temp["Date"]] = re.sub(r'(<code>   <\/code>)(.*)', '\\1<i>\\2</i>', schedule_markdown.render(
                 Day=get_weekday_name(weekday),
                 Date=temp["Date"],
                 Lessons=enumerate(temp["Lessons"].values(), 1),
                 Comments=temp["Comments"],
                 ClassHour=False if weekday != 2 else True
-            )
+            ))
 
         elif text:
             result[temp["Date"]] = schedule.render(
