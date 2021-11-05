@@ -1,15 +1,15 @@
-from fastapi import Request, APIRouter, BackgroundTasks, HTTPException
+from fastapi import Request, APIRouter, BackgroundTasks, HTTPException, Query
+from databases.models import ChangeModel, DAYS_MONGA_SELECTOR
 from starlette.responses import JSONResponse, Response
-from templates import schedule, schedule_markdown
+from app.templates import schedule, schedule_markdown
 from config import TIMEZONE, API_URL, AUTH_HEADER
-from databases.models import ChangeModel, DAYS
 from app.parser import start_parse_changes
-from fastapi_cache.decorator import cache
 from databases.rabbitmq import Message
 from pydantic import ValidationError
-from .tools import db, TimeTableDB
+from ..utils import db, TimeTableDB
 from datetime import datetime
 from starlette import status
+from ..utils import caching
 import platform
 import calendar
 import locale
@@ -57,7 +57,7 @@ async def change_groups():
 @routerPublicChanges.get("/groups/{group}",
                          summary="Получение изменения в расписании у указанной группы",
                          tags=["Изменения в расписание"])
-async def change_group(group: str):
+async def change_group(group: str = Query(..., description="Любая учебная группа")):
     if group in db.groups:
         content = await TimeTableDB.async_find(db.CLCollection, {},
                                                {"_id": 0, "Date": 1, "Lessons": f"$Groups.{group}"})
@@ -97,12 +97,7 @@ async def upload_new_changes(request: Request):
 @routerPrivateChanges.delete("",
                              summary="Удаление всех или определенного изменения в расписании",
                              tags=["Изменения в расписание"])
-async def delete_changes(date: str = None):
-    """
-        Аргументы:
-
-        - **date**: Принимается дата в формате %d.%m.%Y (11.11.2011)
-    """
+async def delete_changes(date: str = Query(None, description="Принимается дата в формате %d.%m.%Y (11.11.2011)")):
     if date is None:
         content = await db.CLCollection.delete_many({})
     else:
@@ -115,12 +110,15 @@ async def delete_changes(date: str = None):
 
 
 @routerPublicChanges.get("/finalize_schedule/{group}",
-                         summary="Получение расписания с изменениями для группы",
+                         summary="Получение полного расписания с изменениями для группы",
                          tags=["Изменения в расписание"])
-#@cache(expire=60)
-async def get_finalize_schedule(group: str, text: bool = False, html: bool = False):
+@caching(expire=90)
+async def get_finalize_schedule(group: str = Query(..., description="Любая учебная группа"),
+                                today: bool = Query(None, description="Возращает расписание за сегодня"),
+                                text: bool = Query(None, description="возращает расписание в виде текста"),
+                                html: bool = Query(None, description="возращает расписание с html разметкой")):
     result = {}
-    today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
+    _today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
     time = datetime.strptime(datetime.now(TIMEZONE).strftime("%H:%M"), "%H:%M")
 
     template = lambda: {
@@ -135,8 +133,8 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
     content = await TimeTableDB.async_find(db.CLCollection, {},
                                            {"_id": 0, "Date": 1, "Lessons": f"$Groups.{group}"})
 
-    for data in filter(lambda data: datetime.strptime(data.get("Date"), "%d.%m.%Y") >= today, content):
-        if time > datetime.strptime("15:20", "%H:%M") and today == datetime.strptime(data.get("Date"), "%d.%m.%Y"):
+    for data in filter(lambda data: datetime.strptime(data.get("Date"), "%d.%m.%Y") >= _today, content):
+        if time > datetime.strptime("15:20", "%H:%M") and _today == datetime.strptime(data.get("Date"), "%d.%m.%Y"):
             continue
 
         day = datetime.strptime(data.get("Date"), "%d.%m.%Y")
@@ -144,7 +142,7 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
         weekday = day.isocalendar()[2]
         default_lessons = await TimeTableDB.async_find(db.DLCollection, {"Group": group},
                                                        {"_id": 0,
-                                                        "Lessons": DAYS[list(DAYS.keys())[day.weekday()]]})
+                                                        "Lessons": DAYS_MONGA_SELECTOR[list(DAYS_MONGA_SELECTOR.keys())[day.weekday()]]})
         temp = template()
         temp["Date"] = data.get("Date")
 
@@ -190,8 +188,12 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
             result[temp["Date"]] = temp
 
     content = []
-    for key in sorted(result, key=lambda x: datetime.strptime(x, "%d.%m.%Y")):
-        content.append(result[key])
+    if not today:
+        for key in sorted(result, key=lambda x: datetime.strptime(x, "%d.%m.%Y")):
+            content.append(result[key])
+
+    elif today and datetime.now(TIMEZONE).strftime("%d.%m.%Y") in result.keys():
+        content.append(result[datetime.now(TIMEZONE).strftime("%d.%m.%Y")])
 
     return content
 
@@ -209,7 +211,12 @@ def __parse_changes():
     httpx.get(f"{API_URL}/producer/start_send_changes", headers=AUTH_HEADER)
 
 
-async def send_changes():
+async def send_changes(force: bool = False, today: bool = False):
+    time = datetime.strptime(datetime.now(TIMEZONE).strftime("%H:%M"), "%H:%M")
+
+    if (datetime.strptime("20:00", "%H:%M") < time or time < datetime.strptime("6:00", "%H:%M")) and not force:
+        raise HTTPException(status_code=status.HTTP_423_LOCKED)
+
     async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
         changes = await client.get(f"{API_URL}/changes/groups")
         groups_with_changes = []
@@ -231,9 +238,9 @@ async def send_changes():
                 if social_ids[social_name]:
 
                     if social_name == "VK":
-                        lessons = await client.get(f"{API_URL}/changes/finalize_schedule/{group}?text=true")
+                        lessons = await client.get(f"{API_URL}/changes/finalize_schedule/{group}?today={today}&text=true")
                     else:
-                        lessons = await client.get(f"{API_URL}/changes/finalize_schedule/{group}?html=true")
+                        lessons = await client.get(f"{API_URL}/changes/finalize_schedule/{group}?today={today}&html=true")
 
                     if lessons.status_code == 200:
                         message = Message.parse_obj(
@@ -241,7 +248,7 @@ async def send_changes():
                         await client.post(f"{API_URL}/producer/send_message", json=message.dict())
 
 
-async def get_social_ids(lesson_group: str) -> dict:
+async def get_social_ids(lesson_group: str = Query(..., description="Любая учебная группа")) -> dict:
     social = {"VK": [], "TG": []}
     async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
         vk_users = await client.get(f"{API_URL}/vk/users/{lesson_group}")

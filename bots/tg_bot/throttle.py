@@ -1,10 +1,8 @@
-from aiogram.dispatcher import middlewares, handler
+from aiogram.dispatcher.handler import CancelHandler, current_handler
 from aiogram.dispatcher.dispatcher import DEFAULT_RATE_LIMIT
 from aiogram.utils.exceptions import Throttled
-from bots.common.strings import strings
-from aiogram.dispatcher.handler import CancelHandler, current_handler
+from aiogram.dispatcher import middlewares
 from aiogram import types, Dispatcher
-import asyncio
 
 
 class ThrottlingMiddleware(middlewares.BaseMiddleware):

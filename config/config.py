@@ -20,6 +20,7 @@ RABBITMQ_ENABLE = env.bool("RABBITMQ_ENABLE")
 
 REDIS_HOST = env.str("REDIS_HOST")
 REDIS_PORT = env.int("REDIS_PORT")
+REDIS_ENABLE = env.bool("REDIS_ENABLE")
 
 API_IP = env.str('TimeTable_API_IP')
 API_PORT = env.int('TimeTable_API_PORT')

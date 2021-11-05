@@ -3,7 +3,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.mongodb import MongoDBJobStore
 from datetime import datetime, timedelta
 from .changes import send_changes
-from .tools import logger
+from ..utils import logger
 import httpx
 import re
 
@@ -25,12 +25,8 @@ async def start_check_changes():
 
 
 @scheduler.scheduled_job('cron', day_of_week='mon-sat', hour="7", minute=0, second=0, id="send_changes")
-async def start_send_changes(force: bool = False):
-    logger.info("Started sending changes")
-    time = datetime.strptime(datetime.now(TIMEZONE).strftime("%H:%M"), "%H:%M")
-
-    if time < datetime.strptime("20:00", "%H:%M") or force:
-        await send_changes()
+async def start_send_morning_changes():
+    await send_changes(today=True)
 
 
 async def check_changes(url: str = Schedule_URL):

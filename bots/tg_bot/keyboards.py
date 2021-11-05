@@ -1,6 +1,6 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from databases.models import GroupNames, TGChatModel
-from bots.common.strings import strings
+from bots.utils.strings import strings
 from config import API_URL
 import httpx
 

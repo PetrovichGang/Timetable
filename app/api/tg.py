@@ -1,11 +1,11 @@
 from starlette.responses import JSONResponse, Response
 from databases.models import TGChatModel
 from pymongo.results import UpdateResult
-from bots.common.strings import strings
+from bots.utils.strings import strings
 from pydantic import ValidationError
 from fastapi import APIRouter
 from starlette import status
-from .tools import db
+from ..utils import db
 
 routerPrivateTG = APIRouter(prefix="/api/tg")
 

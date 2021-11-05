@@ -1,15 +1,11 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-
-from bots.common.strings import strings
 from pydantic import BaseModel, validator, Field
 from typing import Dict, List, Optional
 from typing_extensions import TypedDict
 from datetime import datetime
-from io import BytesIO
 from time import time
 from enum import Enum
 
-DAYS = {
+DAYS_MONGA_SELECTOR = {
     "MON": "$Days.MON",
     "TUE": "$Days.TUE",
     "WED": "$Days.WED",
@@ -26,6 +22,7 @@ DAYS_RU = {
     "FRI": "Пятница",
     "SAT": "Суббота"
 }
+
 
 class EnumDays(str, Enum):
     mon = "MON"

@@ -1,6 +1,6 @@
 from databases.rabbitmq import Consumer, RoutingKey, Message
-from aio_pika import IncomingMessage
 from aiogram import Dispatcher, types
+from aio_pika import IncomingMessage
 from functools import partial
 import loguru
 

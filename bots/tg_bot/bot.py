@@ -2,11 +2,11 @@ from config import TG_TOKEN, AUTH_HEADER, API_URL, TG_DOMAIN, TG_PATH, CWD
 from aiogram.utils.executor import start_webhook, start_polling
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from .consumer import start as start_consumer
-from ..common.logger import CustomizeLogger
+from bots.utils.logger import CustomizeLogger
 from .throttle import ThrottlingMiddleware
 from aiogram import Bot, types, Dispatcher
 from databases.models import TGChatModel
-from bots.common.strings import strings
+from bots.utils.strings import strings
 import bots.tg_bot.keyboards as kb
 import httpx as httpxlib
 import asyncio

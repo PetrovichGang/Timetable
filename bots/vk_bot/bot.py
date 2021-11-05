@@ -1,4 +1,4 @@
-from ..common.logger import CustomizeLogger
+from bots.utils.logger import CustomizeLogger
 from .handlers.consumer import start
 from .handlers.chats import chat_bp
 from .handlers.users import user_bp

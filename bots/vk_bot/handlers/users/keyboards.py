@@ -1,11 +1,9 @@
-from vkbottle.tools.dev_tools.keyboard import color
 from vkbottle.tools.dev_tools.keyboard.action import Callback
-from vkbottle_types.events.user_events import Call
-from databases.models import VKUserModel, GroupNames
-from config import API_URL, AUTH_HEADER
-from vkbottle import Keyboard, Text, TemplateElement, template_gen, keyboard, KeyboardButtonColor
+from vkbottle import Keyboard, KeyboardButtonColor
+from databases.models import GroupNames
+from bots.utils.strings import strings
+from config import API_URL
 import httpx
-from bots.common.strings import strings
 
 specialities = Keyboard(one_time=False, inline=False)
 groups = {}

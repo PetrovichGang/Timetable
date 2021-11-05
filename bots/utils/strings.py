@@ -1,4 +1,4 @@
-from utils.DotDict import DotDict
+from .DotDict import DotDict
 
 strings = DotDict({
     'input': DotDict({

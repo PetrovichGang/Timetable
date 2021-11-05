@@ -1,5 +1,5 @@
+from databases.models import DAYS_MONGA_SELECTOR
 from config import AUTH_HEADER, API_URL, CWD
-from databases.models import DAYS
 from typing import Union
 from pathlib import Path
 import pandas as pd
@@ -73,7 +73,7 @@ def finalize_dict(groups: dict) -> list:
                 if index % 2 == 0 and pair_index != 4:
                     pair_index += 1
 
-            day = list(DAYS.keys())[day_of_week]
+            day = list(DAYS_MONGA_SELECTOR.keys())[day_of_week]
             if len(b) == 0:
                 days[day] = {"a": a}
             else:

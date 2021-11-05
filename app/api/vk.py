@@ -4,7 +4,7 @@ from pydantic import parse_obj_as
 from typing import List, Union
 from fastapi import APIRouter
 from starlette import status
-from .tools import db
+from ..utils import db
 
 routerPrivateVK = APIRouter(prefix="/api/vk")
 

@@ -1,15 +1,11 @@
 from .changes import routerPublicChanges, routerPrivateChanges
 from .timetable import routerPublicTT, routerPrivateTT
-from fastapi_cache.backends.redis import RedisBackend
 from .producer import producer, routerPublicProducer
-from config import REDIS_HOST, REDIS_PORT
-from fastapi_cache import FastAPICache
-from .tools import db, TimeTableDB
+from ..utils import db, TimeTableDB
 from .scheduler import scheduler
 from .vk import routerPrivateVK
 from .tg import routerPrivateTG
 from fastapi import APIRouter
-import aioredis
 
 __all__ = ["routerPrivate", "routerPublic"]
 
@@ -24,12 +20,32 @@ routerPrivate.include_router(routerPrivateTG)
 routerPrivate.include_router(routerPrivateTT)
 routerPrivate.include_router(routerPrivateChanges)
 
+tags_metadata = [
+    {
+        "name": "Основное расписание",
+        "description": "Методы работы с коллекцией: Основное расписание.",
+    },
+    {
+        "name": "Изменения в расписание",
+        "description": "Методы работы с коллекцией: Изменения в расписание."
+    },
+    {
+        "name": "Producer",
+        "description": "Отправка сообщений в RabbitMQ."
+    },
+    {
+        "name": "VK",
+        "description": "Методы работы с коллекциями: VKGroups и VKUsers."
+    },
+    {
+        "name": "TG",
+        "description": "Методы работы с коллекциями: TGChat."
+    }
+]
+
 
 @routerPublic.on_event("startup")
 async def startup():
-    #redis = aioredis.Redis(host=REDIS_HOST, port=REDIS_PORT, encoding="utf8", decode_responses=True)
-    #FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
-
     await producer.start()
     scheduler.start()
 

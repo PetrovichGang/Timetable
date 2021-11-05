@@ -11,7 +11,7 @@ from config import API_URL, AUTH_HEADER, VK_ADMINS_ID
 from databases.models import VKUserModel, GroupNames
 from vkbottle.bot import Blueprint, Message, rules
 from vkbottle_types.methods import users
-from bots.common.strings import strings
+from bots.utils.strings import strings
 from typing import List
 import httpx
 import time
