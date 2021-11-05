@@ -27,8 +27,8 @@ routerPrivate.include_router(routerPrivateChanges)
 
 @routerPublic.on_event("startup")
 async def startup():
-    #redis = aioredis.Redis(host=REDIS_HOST, port=REDIS_PORT, encoding="utf8", decode_responses=True)
-    #FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+    redis = aioredis.Redis(host=REDIS_HOST, port=REDIS_PORT, encoding="utf8", decode_responses=True)
+    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
     await producer.start()
     scheduler.start()
