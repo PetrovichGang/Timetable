@@ -1,3 +1,5 @@
+import re
+
 from databases.models import DefaultModel, EnumDays, DAYS, GroupNames, DAYS_RU
 from templates import full_timetable_markdown, full_timetable
 from starlette.responses import JSONResponse, Response
@@ -51,11 +53,14 @@ async def get_timetable_for_group(group: str = None, day: EnumDays = None, text:
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
+    #regex убирает 'НЕТ (пары)' в конце
     if content:
         if html:
-            return JSONResponse([full_timetable_markdown.render(tt=content[0], days=DAYS_RU)], status_code=status.HTTP_200_OK)
+            render = full_timetable_markdown.render(tt=content[0], days=DAYS_RU)
+            return JSONResponse([re.sub(r'(\n<code>[2-4]\) <\/code>НЕТ)+\n\n', '', render)], status_code=status.HTTP_200_OK)
         elif text:
-            return JSONResponse([full_timetable.render(tt=content[0], days=DAYS_RU)], status_code=status.HTTP_200_OK)
+            render = full_timetable.render(tt=content[0], days=DAYS_RU)
+            return JSONResponse([re.sub(r'(\n[2-4]\) НЕТ)+\n\n', '', render)], status_code=status.HTTP_200_OK)
         else:
             return JSONResponse(content, status_code=status.HTTP_200_OK)
     else:
