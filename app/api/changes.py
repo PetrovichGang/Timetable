@@ -1,3 +1,5 @@
+import re
+
 from fastapi import Request, APIRouter, BackgroundTasks, HTTPException
 from starlette.responses import JSONResponse, Response
 from templates import schedule, schedule_markdown
@@ -117,7 +119,7 @@ async def delete_changes(date: str = None):
 @routerPublicChanges.get("/finalize_schedule/{group}",
                          summary="Получение расписания с изменениями для группы",
                          tags=["Изменения в расписание"])
-#@cache(expire=60)
+# @cache(expire=60)
 async def get_finalize_schedule(group: str, text: bool = False, html: bool = False):
     result = {}
     today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
@@ -155,8 +157,14 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
             lessons.update(default_lessons[0]["Lessons"]["b"])
 
         if len(data) > 1:
-            lessons.update(changes["ChangeLessons"]) if changes["ChangeLessons"] else None
-            lessons.update({str(num): "Нет" for num in changes["SkipLessons"]}) if changes["SkipLessons"] else None
+            if changes["ChangeLessons"]:
+                for p in changes["ChangeLessons"]:  # перемещает препода на вторую строку
+                    changes["ChangeLessons"][p] = re.sub(' (([А-Я][а-я]+)(?!.*[А-Я][а-я]+) [А-Я](.|. )[А-Я](.|))',
+                                                         '\n<i>\\1</i>' if html else '\n\\1', changes["ChangeLessons"][p])
+                lessons.update(changes["ChangeLessons"])
+
+            if changes["SkipLessons"]:
+                lessons.update({str(num): "НЕТ" for num in changes["SkipLessons"]})
 
             temp["Comments"] = changes["Comments"]
 
@@ -170,7 +178,7 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
 
         if html:
             result[temp["Date"]] = schedule_markdown.render(
-                Day=calendar.day_name[weekday - 1].title(),
+                Day=get_weekday_name(weekday),
                 Date=temp["Date"],
                 Lessons=enumerate(temp["Lessons"].values(), 1),
                 Comments=temp["Comments"],
@@ -179,7 +187,7 @@ async def get_finalize_schedule(group: str, text: bool = False, html: bool = Fal
 
         elif text:
             result[temp["Date"]] = schedule.render(
-                Day=calendar.day_name[weekday - 1].title(),
+                Day=get_weekday_name(weekday),
                 Date=temp["Date"],
                 Lessons=enumerate(temp["Lessons"].values(), 1),
                 Comments=temp["Comments"],
@@ -207,6 +215,13 @@ async def parse_changes(background_tasks: BackgroundTasks):
 def __parse_changes():
     start_parse_changes()
     httpx.get(f"{API_URL}/producer/start_send_changes", headers=AUTH_HEADER)
+
+
+def get_weekday_name(day_num: int):
+    name = calendar.day_name[day_num - 1].title().lower()
+    if name[-1] == 'а':
+        return name[:-1] + 'у'
+    return name
 
 
 async def send_changes():
@@ -237,7 +252,8 @@ async def send_changes():
 
                     if lessons.status_code == 200:
                         message = Message.parse_obj(
-                            {"routing_key": social_name, "recipient_ids": social_ids[social_name], "text": lessons.json()})
+                            {"routing_key": social_name, "recipient_ids": social_ids[social_name],
+                             "text": lessons.json()})
                         await client.post(f"{API_URL}/producer/send_message", json=message.dict())
 
 

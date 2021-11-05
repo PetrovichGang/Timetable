@@ -1,15 +1,15 @@
 <code>🕗 </code><b>Расписание для</b> <i>{{ tt["Group"] }}</i>
 
 {% for day_key, day in days.items() %}
-<code>📅 </code><b>{{ day }}</b>
+<code>📆 </code><b>{{ day }}</b>
 {% for pair in range(1, 5) %}
 {% if "a" in tt["Days"][day_key] and "p"~pair in tt["Days"][day_key]["a"] %}
-<code>{{ pair }}) </code>{{ tt["Days"][day_key]["a"]["p"~pair] | wordwrap(28) | replace('\n', '\n<code>   </code>') | replace(',', ' ') }}
+<code>{{ pair }}) </code>{{ tt["Days"][day_key]["a"]["p"~pair] | replace('\n', '\n<code>   </code><i>') | replace(',', ' ') }}</i>
 {% else %}
 <code>{{ pair }}) </code>НЕТ
 {% endif %}
 {% if "b" in tt["Days"][day_key] and "p"~pair in tt["Days"][day_key]["b"] %}
-<code> └ </code>{{ tt["Days"][day_key]["b"]["p"~pair] | wordwrap(28) | replace('\n', '\n<code>   </code>') | replace(',', ' ') }}
+<code> └ </code>{{ tt["Days"][day_key]["b"]["p"~pair] | replace('\n', '\n<code>   </code><i>') | replace(',', ' ') }}</i>
 {% endif %}
 {%- endfor %}
 

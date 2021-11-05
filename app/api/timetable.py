@@ -14,8 +14,8 @@ routerPrivateTT = APIRouter()
 
 
 @routerPublicTT.get("/api/timetable",
-                  summary="Получение основного расписания",
-                  tags=["Основное расписание"])
+                    summary="Получение основного расписания",
+                    tags=["Основное расписание"])
 async def get_timetable():
     content = await TimeTableDB.async_find(db.DLCollection, {}, {"_id": 0})
 
@@ -26,8 +26,8 @@ async def get_timetable():
 
 
 @routerPublicTT.get("/api/timetable/{group}",
-                  summary="Получение основного расписания для группы",
-                  tags=["Основное расписание"])
+                    summary="Получение основного расписания для группы",
+                    tags=["Основное расписание"])
 async def get_timetable_for_group(group: str = None, day: EnumDays = None, text: bool = False, html: bool = False):
     """
         Аргументы:
@@ -53,14 +53,14 @@ async def get_timetable_for_group(group: str = None, day: EnumDays = None, text:
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
-    #regex убирает 'НЕТ (пары)' в конце
+    # regex убирает 'НЕТ (пары)' в конце
     if content:
         if html:
             render = full_timetable_markdown.render(tt=content[0], days=DAYS_RU)
             return JSONResponse([re.sub(r'(\n<code>[2-4]\) <\/code>НЕТ)+\n\n', '\n\n', render)], status_code=status.HTTP_200_OK)
         elif text:
             render = full_timetable.render(tt=content[0], days=DAYS_RU)
-            return JSONResponse([re.sub(r'(\n[2-4]\)　НЕТ)+', '\n\n', render)], status_code=status.HTTP_200_OK)
+            return JSONResponse([re.sub(r'(\n[2-4]\)(.*?)НЕТ)+\n\n', '\n\n', render)], status_code=status.HTTP_200_OK)
         else:
             return JSONResponse(content, status_code=status.HTTP_200_OK)
     else:
@@ -68,8 +68,8 @@ async def get_timetable_for_group(group: str = None, day: EnumDays = None, text:
 
 
 @routerPrivateTT.post("/api/timetable",
-                    summary="Загрузка в базу данных основного расписания",
-                    tags=["Основное расписание"])
+                      summary="Загрузка в базу данных основного расписания",
+                      tags=["Основное расписание"])
 async def upload_new_timetable(request: Request):
     data = await request.json()
 
@@ -92,8 +92,8 @@ async def upload_new_timetable(request: Request):
 
 
 @routerPrivateTT.delete("/api/timetable",
-                      summary="Удаление основного расписания",
-                      tags=["Основное расписание"])
+                        summary="Удаление основного расписания",
+                        tags=["Основное расписание"])
 async def delete_timetable():
     content = await db.DLCollection.delete_many({})
 
@@ -104,8 +104,8 @@ async def delete_timetable():
 
 
 @routerPublicTT.get("/api/groups",
-                  summary="Получение всех имеющихся учебных групп",
-                  tags=["Группы"])
+                    summary="Получение всех имеющихся учебных групп",
+                    tags=["Группы"])
 async def groups():
     content = await TimeTableDB.async_find(db.DLCollection, {}, {"_id": 0, "Group": 1})
     content = {"Groups": [group.get("Group") for group in content]}
@@ -117,8 +117,8 @@ async def groups():
 
 
 @routerPublicTT.get("/api/groups/{spec}",
-                  summary="Получение всех учебных групп указанной специальности",
-                  tags=["Группы"])
+                    summary="Получение всех учебных групп указанной специальности",
+                    tags=["Группы"])
 async def groups(spec: GroupNames):
     content = await TimeTableDB.async_find(db.DLCollection, {"Group": {"$regex": f"{spec[0]}.*"}},
                                            {"_id": 0, "Group": 1})
