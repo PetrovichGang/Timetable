@@ -1,4 +1,4 @@
-<code>🕗 </code><b>Расписание на</b> <i>{{ Day }}</i>
+<code>🕗 </code><b>Расписание на</b> {{ Day }}
 <code>   </code>{{ Date }}
 
 {% if ClassHour %}<code>   </code>Классный час{{ '\n' }}{% endif %}

@@ -1,14 +1,14 @@
-🕗 Расписание на {{ Day }}
-　　{{ Date }}
+🕗  Расписание на {{ Day }}
+&#8195;&#8195;{{ Date }}
 
-{% if ClassHour %}　　Классный час{{ '\n' }}{% endif %}
+{% if ClassHour %}&#8195;&#8195;Классный час{{ '\n' }}{% endif %}
 {% for pair, lesson in Lessons %}
-{{ pair }})　{{ lesson | wordwrap(28) | replace('\n', '\n　　') | replace(',', ' ') }}
+{{ pair }})&#8195;{{ lesson | wordwrap(28) | replace('\n', '\n&#8195;&#8195;') | replace(',', ' ') }}
 {% endfor %}
 
 {% if Comments %}
-📰 Информация:
+📰  Информация:
 {% for comment in Comments %}
-　　{{ comment }}
+&#8195;&#8195;{{ comment }}
 {%- endfor %}
 {% endif %}

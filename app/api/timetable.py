@@ -1,5 +1,5 @@
-from databases.models import DefaultModel, EnumDays, DAYS_MONGA_SELECTOR, GroupNames, DAYS_RU
 from app.templates import full_timetable_markdown, full_timetable
+from databases.models import DefaultModel, GroupNames, DAYS_RU
 from fastapi import Request, APIRouter, HTTPException, Query
 from starlette.responses import JSONResponse, Response
 from pydantic import ValidationError
@@ -39,12 +39,12 @@ async def get_timetable_for_group(group: str = Query(..., description="Люба�
     if content:
         if html:
             render = full_timetable_markdown.render(tt=content[0], days=DAYS_RU)
-            return [re.sub(r'(\n<code>[2-4]\) <\/code>НЕТ)+\n\n', '\n\n', render)]
-
+            cleanup = re.sub(r'(\n<code>[2-4]\) <\/code>НЕТ)+\n\n', '\n\n', render)
+            italics = re.sub(r'(<code>   <\/code>)(.*)', '\\1<i>\\2</i>', cleanup)
+            return JSONResponse([italics], status_code=status.HTTP_200_OK)
         elif text:
             render = full_timetable.render(tt=content[0], days=DAYS_RU)
-            return [re.sub(r'(\n[2-4]\)　НЕТ)+', '\n\n', render)]
-
+            return [re.sub(r'(\n[2-4]\)(.*?)НЕТ)+\n\n', '\n\n', render)]
         else:
             return content
     else:

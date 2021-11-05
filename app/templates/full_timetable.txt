@@ -1,15 +1,15 @@
-🕗 Расписание для {{ tt["Group"] }}
+🕗  Расписание для {{ tt["Group"] }}
 
 {% for day_key, day in days.items() %}
-📅 {{ day }}
+📆  {{ day }}
 {% for pair in range(1, 5) %}
 {% if "a" in tt["Days"][day_key] and "p"~pair in tt["Days"][day_key]["a"] %}
-{{ pair }})　{{ tt["Days"][day_key]["a"]["p"~pair] | wordwrap(28) | replace('\n', '\n　　') | replace(',', ' ') }}
+{{ pair }})&#8195;{{ tt["Days"][day_key]["a"]["p"~pair] | wordwrap(28) | replace('\n', '\n&#8195;&#8195;') | replace(',', ' ') }}
 {% else %}
-{{ pair }})　НЕТ
+{{ pair }})&#8195;НЕТ
 {% endif %}
 {% if "b" in tt["Days"][day_key] and "p"~pair in tt["Days"][day_key]["b"] %}
- ∟　{{ tt["Days"][day_key]["b"]["p"~pair] | wordwrap(28) | replace('\n', '\n　　') | replace(',', ' ') }}
+ ∟&#8195;{{ tt["Days"][day_key]["b"]["p"~pair] | wordwrap(28) | replace('\n', '\n&#8195;&#8195;') | replace(',', ' ') }}
 {% endif %}
 {%- endfor %}
 

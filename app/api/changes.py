@@ -15,6 +15,7 @@ import calendar
 import locale
 import httpx
 import json
+import re
 
 routerPublicChanges = APIRouter(prefix="/api/changes")
 routerPrivateChanges = APIRouter(prefix="/api/changes")
@@ -153,8 +154,14 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
             lessons.update(default_lessons[0]["Lessons"]["b"])
 
         if len(data) > 1:
-            lessons.update(changes["ChangeLessons"]) if changes["ChangeLessons"] else None
-            lessons.update({str(num): "Нет" for num in changes["SkipLessons"]}) if changes["SkipLessons"] else None
+            if changes["ChangeLessons"]:
+                for p in changes["ChangeLessons"]:  # перемещает препода на вторую строку
+                    changes["ChangeLessons"][p] = re.sub(' (([А-Я][а-я]+)(?!.*[А-Я][а-я]+) [А-Я](.|. )[А-Я](.|))',
+                                                         '\n\\1', changes["ChangeLessons"][p])
+                lessons.update(changes["ChangeLessons"])
+
+            if changes["SkipLessons"]:
+                lessons.update({str(num): "НЕТ" for num in changes["SkipLessons"]})
 
             temp["Comments"] = changes["Comments"]
 
@@ -167,17 +174,17 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
         temp["Lessons"].update(lessons)
 
         if html:
-            result[temp["Date"]] = schedule_markdown.render(
-                Day=calendar.day_name[weekday - 1].title(),
+            result[temp["Date"]] = re.sub(r'(<code>   <\/code>)(.*)', '\\1<i>\\2</i>', schedule_markdown.render(
+                Day=get_weekday_name(weekday),
                 Date=temp["Date"],
                 Lessons=enumerate(temp["Lessons"].values(), 1),
                 Comments=temp["Comments"],
                 ClassHour=False if weekday != 2 else True
-            )
+            ))
 
         elif text:
             result[temp["Date"]] = schedule.render(
-                Day=calendar.day_name[weekday - 1].title(),
+                Day=get_weekday_name(weekday),
                 Date=temp["Date"],
                 Lessons=enumerate(temp["Lessons"].values(), 1),
                 Comments=temp["Comments"],
@@ -209,6 +216,13 @@ async def parse_changes(background_tasks: BackgroundTasks):
 def __parse_changes():
     start_parse_changes()
     httpx.get(f"{API_URL}/producer/start_send_changes", headers=AUTH_HEADER)
+
+
+def get_weekday_name(day_num: int):
+    name = calendar.day_name[day_num - 1].title().lower()
+    if name[-1] == 'а':
+        return name[:-1] + 'у'
+    return name
 
 
 async def send_changes(force: bool = False, today: bool = False):
@@ -244,7 +258,8 @@ async def send_changes(force: bool = False, today: bool = False):
 
                     if lessons.status_code == 200:
                         message = Message.parse_obj(
-                            {"routing_key": social_name, "recipient_ids": social_ids[social_name], "text": lessons.json()})
+                            {"routing_key": social_name, "recipient_ids": social_ids[social_name],
+                             "text": lessons.json()})
                         await client.post(f"{API_URL}/producer/send_message", json=message.dict())
 
 

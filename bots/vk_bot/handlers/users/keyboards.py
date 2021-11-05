@@ -8,19 +8,20 @@ import httpx
 specialities = Keyboard(one_time=False, inline=False)
 groups = {}
 
-
 main_keyboard = Keyboard(one_time=False, inline=False)
-main_keyboard.add(Callback(strings.button.changes, {"cmd": "spec", "spec": "Changes"}), color=KeyboardButtonColor.SECONDARY)
+main_keyboard.add(Callback(strings.button.changes, {"cmd": "spec", "spec": "Changes"}),
+                  color=KeyboardButtonColor.SECONDARY)
 main_keyboard.row()
-main_keyboard.add(Callback(strings.button.timetable, {"cmd": "spec", "spec": "Timetable"}), color=KeyboardButtonColor.SECONDARY)
+main_keyboard.add(Callback(strings.button.timetable, {"cmd": "spec", "spec": "Timetable"}),
+                  color=KeyboardButtonColor.SECONDARY)
 main_keyboard.row()
-main_keyboard.add(Callback(strings.button.vk_group, {"cmd": "spec", "spec": "Started"}), color=KeyboardButtonColor.PRIMARY)
-
-
+main_keyboard.add(Callback(strings.button.vk_group, {"cmd": "spec", "spec": "Started"}),
+                  color=KeyboardButtonColor.PRIMARY)
 
 for index, spec in enumerate(GroupNames):
     specialities.add(Callback(spec.value, {'cmd': 'spec', "spec": spec}))
-    specialities.row() if index % 2 == 1 else None
+    if index % 2 == 1:
+        specialities.row()
     res = httpx.get(f"{API_URL}/groups/{spec}")
     if res.status_code != 200:
         print(f"При загрузке групп произошла ошибка: {res.text}")
@@ -39,4 +40,3 @@ for index, spec in enumerate(GroupNames):
     groups_keyboard.add(Callback("Назад", {"cmd": "spec", "spec": "Started"}), color=KeyboardButtonColor.NEGATIVE)
 
     groups[spec] = groups_keyboard
-
