@@ -18,6 +18,14 @@ DAYS = {
     "SAT": "$Days.SAT"
 }
 
+DAYS_RU = {
+    "MON": "Понедельник",
+    "TUE": "Вторник",
+    "WED": "Среда",
+    "THU": "Четверг",
+    "FRI": "Пятница",
+    "SAT": "Суббота"
+}
 
 class EnumDays(str, Enum):
     mon = "MON"

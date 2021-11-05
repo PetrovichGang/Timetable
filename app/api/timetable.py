@@ -1,4 +1,4 @@
-from databases.models import DefaultModel, EnumDays, DAYS, GroupNames
+from databases.models import DefaultModel, EnumDays, DAYS, GroupNames, DAYS_RU
 from templates import full_timetable_markdown, full_timetable
 from starlette.responses import JSONResponse, Response
 from fastapi import Request, APIRouter
@@ -53,9 +53,9 @@ async def get_timetable_for_group(group: str = None, day: EnumDays = None, text:
 
     if content:
         if html:
-            return JSONResponse([full_timetable_markdown.render(tt=content[0])], status_code=status.HTTP_200_OK)
+            return JSONResponse([full_timetable_markdown.render(tt=content[0], days=DAYS_RU)], status_code=status.HTTP_200_OK)
         elif text:
-            return JSONResponse([full_timetable.render(tt=content[0])], status_code=status.HTTP_200_OK)
+            return JSONResponse([full_timetable.render(tt=content[0], days=DAYS_RU)], status_code=status.HTTP_200_OK)
         else:
             return JSONResponse(content, status_code=status.HTTP_200_OK)
     else:
