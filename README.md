@@ -1,4 +1,4 @@
-![preview](https://github.com/PetrovichGang/Timetable/blob/master/images/ttprev.jpg?raw=true)
+![preview](https://github.com/PetrovichGang/Timetable/blob/master/images/preview.png?raw=true)
 
 # Расписание
 Схема для расписания/изменений, api, vk и telegram-бот.
