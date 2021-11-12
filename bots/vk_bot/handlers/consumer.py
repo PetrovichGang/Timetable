@@ -1,10 +1,8 @@
 from databases.rabbitmq import Consumer, RoutingKey, Message
 from aio_pika import IncomingMessage
 from functools import partial
+from loguru import logger
 from vkbottle import Bot
-import loguru
-
-logger = loguru.logger
 
 
 @logger.catch
