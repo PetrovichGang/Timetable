@@ -76,7 +76,7 @@ class GroupNames(str, Enum):
 class VKUserModel(BaseModel):
     id: int = Field(alias="id")
     peer_id: Optional[int] = Field(alias="peer_id")
-    lesson_group: str = Field(alias="lesson_group")
+    lesson_group: Optional[str] = Field(alias="lesson_group")
     join: Optional[int] = Field(alias="join")
     first_name: Optional[str] = Field(alias="first_name")
     last_name: Optional[str] = Field(alias="last_name")

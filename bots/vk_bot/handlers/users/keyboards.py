@@ -9,17 +9,20 @@ specialities = Keyboard(one_time=False, inline=False)
 groups = {}
 
 main_keyboard = Keyboard(one_time=False, inline=False)
-main_keyboard.add(Callback(strings.button.changes, {"cmd": "spec", "spec": "Changes"}),
+main_keyboard.add(Callback(strings.button.changes, {"cmd": "changes"}),
                   color=KeyboardButtonColor.SECONDARY)
 main_keyboard.row()
-main_keyboard.add(Callback(strings.button.timetable, {"cmd": "spec", "spec": "Timetable"}),
+main_keyboard.add(Callback(strings.button.timetable, {"cmd": "timetable"}),
                   color=KeyboardButtonColor.SECONDARY)
 main_keyboard.row()
-main_keyboard.add(Callback(strings.button.vk_group, {"cmd": "spec", "spec": "Started"}),
+main_keyboard.add(Callback(strings.button.vk_group, {"cmd": "spec"}),
                   color=KeyboardButtonColor.PRIMARY)
 
+main_keyboard.add(Callback(strings.button.notify_texted.format("откл"), {"cmd": "notify"}),
+                  color=KeyboardButtonColor.NEGATIVE)
+
 for index, spec in enumerate(GroupNames):
-    specialities.add(Callback(spec.value, {'cmd': 'spec', "spec": spec}))
+    specialities.add(Callback(spec.value, {'cmd': 'group', "spec": spec}))
     if index % 2 == 1:
         specialities.row()
     res = httpx.get(f"{API_URL}/groups/{spec}")
@@ -34,9 +37,9 @@ for index, spec in enumerate(GroupNames):
         if not (group[0] != 'Н' or last_year == group[2:4]):
             groups_keyboard.row()
 
-        groups_keyboard.add(Callback(group, {"cmd": "group", "group": group}))
+        groups_keyboard.add(Callback(group, {"cmd": "set_group", "group": group}))
         last_year = group[2:4]
     groups_keyboard.row()
-    groups_keyboard.add(Callback("Назад", {"cmd": "spec", "spec": "Started"}), color=KeyboardButtonColor.NEGATIVE)
+    groups_keyboard.add(Callback("Назад", {"cmd": "spec"}), color=KeyboardButtonColor.NEGATIVE)
 
     groups[spec] = groups_keyboard
