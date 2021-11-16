@@ -30,6 +30,7 @@ AUTH_HEADER={'Authorization': f'Bearer {API_TOKEN}'}
 
 Schedule_URL = env.str("Schedule_URL")
 
+MANUAL_LINK = env.str("MANUAL_LINK")
 VK_TOKEN = env.str("VK_TOKEN")
 VK_ADMINS_ID = [int(admin_id) for admin_id in env.list("VK_ADMINS_ID")]
 

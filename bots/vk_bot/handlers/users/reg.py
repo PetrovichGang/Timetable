@@ -27,12 +27,13 @@ keyboards.main_keyboard.add(Callback(strings.button.notify_texted.format("отк
 
 
 ##### ОБРАБОТКА СООБЩЕНИЙ #####
-@bp.on.private_message(text=["/start", "начать"]) #### ОБРАБОТКА /start начать ####
+@bp.on.private_message(text=["/start", "начать", "start"]) #### ОБРАБОТКА /start начать ####
 async def start(message: Message, group: str = "Не задана"):  #### ОТПРАВКА НЕ ЗАДАННОГО ПОЛЬЗОВАТЕЛЯ ####
     async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
         user = await get_user_info(message.peer_id, group)
 
         await client.post(f"{API_URL}/vk/users", json=user.dict())
+        await message.answer(strings.vk_manual)
         await message.answer(strings.input.spec, keyboard=keyboards.specialities)
 
 
