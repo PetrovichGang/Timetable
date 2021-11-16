@@ -1,6 +1,5 @@
 from vkbottle.tools.dev_tools.keyboard.color import KeyboardButtonColor
 from vkbottle_types.events.enums.group_events import GroupEventType
-from vkbottle.tools.dev_tools.keyboard.action import Callback
 from vkbottle_types.events.bot_events import MessageEvent
 import bots.vk_bot.handlers.users.keyboards as keyboards
 from vkbottle.bot import Blueprint, Message
@@ -10,6 +9,7 @@ from databases.models import VKUserModel
 from bots.utils.strings import strings
 import time
 import httpx
+import re
 
 bp = Blueprint("UserBot")
 bp.labeler.vbml_ignore_case = True
@@ -83,17 +83,7 @@ async def set_group(message: Message, group: str = None):
 # ОБРАБОТКА /timetable /расписание
 @bp.on.private_message(text=["/timetable", "/расписание"])
 async def send_changes(message: Message):
-    group = await client.get(f"{API_URL}/vk/users?id={message.peer_id}")
-    if group.status_code == 200:
-        group = group.json()[0]
-        if group["lesson_group"]:
-            request = await client.get(f"{API_URL}/changes/finalize_schedule/{group['lesson_group']}?text=true")
-            for msg in request.json():
-                await message.answer(msg)
-        else:
-            await message.answer(strings.error.group_not_set.format(""))
-    else:
-        await message.answer(strings.error.group_not_set.format(""))
+    await answer_api_call_msg(message, "timetable")
 
 
 # ОБРАБОТКА /help /помощь
@@ -102,9 +92,20 @@ async def help(message: Message):
     await message.answer(strings.help)
 
 
-# Отправка не обработанных сообщений админам
 @bp.on.private_message(text=["<msg>"])
 async def anti_troll_system(message: Message, msg):
+    if message.text == strings.button.changes:
+        await answer_api_call_msg(message, "changes/finalize_schedule")
+    elif message.text == strings.button.timetable:
+        await answer_api_call_msg(message, "timetable")
+    elif message.text == strings.button.vk_group:
+        await message.answer(strings.input.spec, keyboard=keyboards.specialities)
+    elif re.match(strings.button.notify_texted.format("(.*?)"), message.text):
+        await message.answer('Ведутся технические работы')
+    elif re.match("^[А-Я]-[0-9]{2}-[1-9]([А-я]|)$", message.text):
+        await set_group(message, group=message.text)
+    elif re.match(f'^({str.join("|", keyboards.groups.keys())})$', message.text):
+        await message.answer(strings.input.spec, keyboard=keyboards.groups[message.text])
     await bp.api.messages.send(random_id=0, message=f"{message.peer_id}: {msg}", peer_ids=VK_ADMINS_ID)
 
 
@@ -140,6 +141,20 @@ async def answer_api_call(event, method: str):
             await answer_event(event, strings.error.group_not_set.format(""))
     else:
         await answer_event(event, strings.error.group_not_set.format(""))
+
+
+async def answer_api_call_msg(message, method: str):
+    group = await client.get(f"{API_URL}/vk/users?id={message.peer_id}")
+    if group.status_code == 200:
+        group = group.json()[0]
+        if group["lesson_group"]:
+            request = await client.get(f"{API_URL}/{method}/{group['lesson_group']}?text=true")
+            for msg in request.json():
+                await message.answer(msg)
+        else:
+            await message.answer(strings.error.group_not_set.format(""))
+    else:
+        await message.answer(strings.error.group_not_set.format(""))
 
 
 async def change_notify(user_id: int, event):
