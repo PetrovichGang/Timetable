@@ -106,7 +106,8 @@ async def anti_troll_system(message: Message, msg):
         await set_group(message, group=message.text)
     elif re.match(f'^({str.join("|", keyboards.groups.keys())})$', message.text):
         await message.answer(strings.input.spec, keyboard=keyboards.groups[message.text])
-    await bp.api.messages.send(random_id=0, message=f"{message.peer_id}: {msg}", peer_ids=VK_ADMINS_ID)
+    else:
+        await bp.api.messages.send(random_id=0, message=f"@id{message.peer_id}: {msg}", peer_ids=VK_ADMINS_ID)
 
 
 # Функции
