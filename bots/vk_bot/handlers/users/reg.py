@@ -30,7 +30,6 @@ async def start(message: Message, group: str = None):
 # ОБРАБОТКА НАЖАТИЯ КНОПОК
 @bp.on.raw_event(GroupEventType.MESSAGE_EVENT, dataclass=MessageEvent)
 async def start(event: GroupEventType.MESSAGE_EVENT):
-    print(event)
     if event.object.payload["cmd"] == "spec":
         await answer_event(event, strings.input.spec, keyboards.specialities)
 
@@ -67,10 +66,15 @@ async def set_group(message: Message, group: str = None):
     if group is None or group.title() not in groups:
         await message.answer(strings.error.no_group.format(group))
         return
-    group = group[0].upper() + group[1 : ].lower()
+    group = group[0].upper() + group[1:].lower()
+
+    user_exists = await client.get(f"{API_URL}/vk/users?{message.peer_id}")
     user = await get_user_info(message.peer_id, group)
-    await client.post(f"{API_URL}/vk/users", json=user.dict())
-    await client.post(f"{API_URL}/vk/users/set_group", json={"lesson_group": group.title(), "users_id": [user.id]})
+
+    if user_exists.status_code == 200:
+        await client.post(f"{API_URL}/vk/users/set_group", json={"lesson_group": group.title(), "users_id": [user.id]})
+    else:
+        await client.post(f"{API_URL}/vk/users", json=user.dict())
 
     #### ГРУППА НАЗНАЧЕНА ####
     await message.answer(strings.info.group_set.format(group), keyboard=keyboards.main_keyboard)

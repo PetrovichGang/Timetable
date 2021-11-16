@@ -41,7 +41,7 @@ class RawMessageAntiFloodMiddleware(BaseMiddleware):
 
             except Throttled as t:
                 if t.exceeded_count <= 2:
-                    logger.info(t)
+                    logger.debug(t)
                 return False
 
             return True

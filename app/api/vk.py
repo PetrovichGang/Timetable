@@ -1,8 +1,8 @@
 from databases.models import VKUserModel, VKChatModel, DictIdAndGroup
 from starlette.responses import JSONResponse, Response
+from fastapi import APIRouter, HTTPException
 from pydantic import parse_obj_as
 from typing import List, Union
-from fastapi import APIRouter
 from starlette import status
 from ..utils import db
 
@@ -66,7 +66,7 @@ async def get_users(id: int = None):
     if users:
         return JSONResponse(users, status_code=status.HTTP_200_OK)
 
-    return Response(status_code=status.HTTP_400_BAD_REQUEST)
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
 @routerPrivateVK.post("/chats",
