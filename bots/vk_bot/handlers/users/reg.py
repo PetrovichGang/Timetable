@@ -19,8 +19,8 @@ client = httpx.AsyncClient(headers=AUTH_HEADER)
 
 # ОБРАБОТКА /start начать
 @bp.on.private_message(text=["/start", "начать", "start"])
-async def start(message: Message, group: str = None):
-    user = await get_user_info(message.peer_id, group)  # не заданный пользователь
+async def start(message: Message):
+    user = await get_user_info(message.peer_id)  # не заданный пользователь
 
     await client.post(f"{API_URL}/vk/users", json=user.dict())
     await message.answer(strings.vk_manual)
@@ -29,7 +29,7 @@ async def start(message: Message, group: str = None):
 
 # ОБРАБОТКА НАЖАТИЯ КНОПОК
 @bp.on.raw_event(GroupEventType.MESSAGE_EVENT, dataclass=MessageEvent)
-async def start(event: GroupEventType.MESSAGE_EVENT):
+async def buttons(event: GroupEventType.MESSAGE_EVENT):
     if event.object.payload["cmd"] == "spec":
         await answer_event(event, strings.input.spec, keyboards.specialities)
 
@@ -37,7 +37,7 @@ async def start(event: GroupEventType.MESSAGE_EVENT):
         await answer_event(event, strings.input.group, keyboards.groups[event.object.payload["spec"]])
 
     elif event.object.payload["cmd"] == "set_group":
-        user = await get_user_info(event.object.peer_id, event.object.payload["group"])
+        user = await get_user_info(event.object.peer_id)
         await client.post(f"{API_URL}/vk/users", json=user.dict())
         await client.post(f"{API_URL}/vk/users/set_group",
                           json={"lesson_group": event.object.payload["group"], "users_id": [event.object.user_id]})
@@ -68,14 +68,11 @@ async def set_group(message: Message, group: str = None):
         return
     group = group[0].upper() + group[1:].lower()
 
-    user_exists = await client.get(f"{API_URL}/vk/users?{message.peer_id}")
-    user = await get_user_info(message.peer_id, group)
+    user = await get_user_info(message.peer_id)
 
-    if user_exists.status_code == 200:
-        await client.post(f"{API_URL}/vk/users/set_group", json={"lesson_group": group.title(), "users_id": [user.id]})
-    else:
-        await client.post(f"{API_URL}/vk/users", json=user.dict())
-
+    await client.post(f"{API_URL}/vk/users", json=user.dict())
+    await client.post(f"{API_URL}/vk/users/set_group", json={"lesson_group": group.title(), "users_id": [user.id]})
+    
     #### ГРУППА НАЗНАЧЕНА ####
     await message.answer(strings.info.group_set.format(group), keyboard=keyboards.main_keyboard)
 
@@ -101,7 +98,7 @@ async def anti_troll_system(message: Message, msg):
     elif message.text == strings.button.vk_group:
         await message.answer(strings.input.spec, keyboard=keyboards.specialities)
     elif re.match(strings.button.notify_texted.format("(.*?)"), message.text):
-        await message.answer('Ведутся технические работы')
+        await change_notify(message.peer_id, message)
     elif re.match("^[А-Я]-[0-9]{2}-[1-9]([А-я]|)$", message.text):
         await set_group(message, group=message.text)
     elif re.match(f'^({str.join("|", keyboards.groups.keys())})$', message.text):
@@ -111,12 +108,11 @@ async def anti_troll_system(message: Message, msg):
 
 
 # Функции
-async def get_user_info(id: int, lessons_group: str = None) -> VKUserModel:
+async def get_user_info(id: int) -> VKUserModel:
     user_info = await bp.api.users.get(id)
     # print(user_info)
     temp = user_info[0].dict()
 
-    temp.update({"lesson_group": lessons_group})
     user = VKUserModel.parse_obj(temp)
     user.join = int(time.time())
     user.peer_id = id
@@ -163,20 +159,21 @@ async def change_notify(user_id: int, event):
     if user_info.status_code == 200:
         user = await client.get(f"{API_URL}/vk/users?id={user_id}")
         await client.get(f"{API_URL}/vk/users/set/notify?id={user_id}&value={not user.json()[0]['notify']}")
-        if not user.json()[0]["notify"]:
-            keyboards.main_keyboard.buttons[2][1].color = KeyboardButtonColor.POSITIVE
-            keyboards.main_keyboard.buttons[2][1].action.label = strings.button.notify_texted.format("вкл")
+        params = None
 
-            await bp.api.messages.send(random_id=0, message=strings.info.notify_on, event_id=event.object.event_id,
-                                       peer_id=event.object.peer_id, user_id=event.object.user_id,
-                                       keyboard=keyboards.main_keyboard)
+        if not user.json()[0]["notify"]:
+            params = (KeyboardButtonColor.POSITIVE, "вкл", strings.info.notify_on) 
         else:
-            keyboards.main_keyboard.buttons[2][1].color = KeyboardButtonColor.NEGATIVE
-            keyboards.main_keyboard.buttons[2][1].action.label = strings.button.notify_texted.format("откл")
-            await bp.api.messages.send(random_id=0, message=strings.info.notify_off, event_id=event.object.event_id,
-                                       peer_id=event.object.peer_id, user_id=event.object.user_id,
-                                       keyboard=keyboards.main_keyboard)
+            params = (KeyboardButtonColor.NEGATIVE, "откл", strings.info.notify_off)
+
+        keyboards.main_keyboard.buttons[2][1].color = params[0]
+        keyboards.main_keyboard.buttons[2][1].action.label = strings.button.notify_texted.format(params[1])
+        if type(event) == Message:
+            await event.answer(params[2], keyboard=keyboards.main_keyboard)
+        else:
+            await answer_event(event, params[2], keyboards.main_keyboard)
     else:
-        await bp.api.messages.send(random_id=0, message=strings.error.group_not_set, event_id=event.object.event_id,
-                                   peer_id=event.object.peer_id, user_id=event.object.user_id,
-                                   keyboard=keyboards.specialities)
+        if type(event) == Message:
+            await event.answer(strings.error.group_not_set, keyboard=keyboards.specialities)
+        else:
+            await answer_event(event, strings.error.group_not_set, keyboards.specialities)
