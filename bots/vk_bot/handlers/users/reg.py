@@ -1,3 +1,4 @@
+from typing import Text
 from vkbottle.tools.dev_tools.keyboard.color import KeyboardButtonColor
 from vkbottle_types.events.enums.group_events import GroupEventType
 from vkbottle_types.events.bot_events import MessageEvent
@@ -41,7 +42,8 @@ async def buttons(event: GroupEventType.MESSAGE_EVENT):
         await client.post(f"{API_URL}/vk/users", json=user.dict())
         await client.post(f"{API_URL}/vk/users/set_group",
                           json={"lesson_group": event.object.payload["group"], "users_id": [event.object.user_id]})
-        await answer_event(event, strings.info.group_set.format(event.object.payload["group"]), keyboards.main_keyboard)
+        user = await client.get(f"{API_URL}/vk/users?id={event.object.peer_id}")
+        await answer_event(event, strings.info.group_set.format(event.object.payload["group"]), keyboards.new_keyboard(user.json()[0]["notify"]))
 
     elif event.object.payload["cmd"] == "changes":
         await answer_api_call(event, "changes/finalize_schedule")
@@ -72,9 +74,10 @@ async def set_group(message: Message, group: str = None):
 
     await client.post(f"{API_URL}/vk/users", json=user.dict())
     await client.post(f"{API_URL}/vk/users/set_group", json={"lesson_group": group.title(), "users_id": [user.id]})
+    user = await client.get(f"{API_URL}/vk/users?id={message.peer_id}")
     
     #### ГРУППА НАЗНАЧЕНА ####
-    await message.answer(strings.info.group_set.format(group), keyboard=keyboards.main_keyboard)
+    await message.answer(strings.info.group_set.format(group), keyboard=keyboards.new_keyboard(user.json()[0]["notify"]))
 
 
 # ОБРАБОТКА /timetable /расписание
@@ -87,6 +90,16 @@ async def send_changes(message: Message):
 @bp.on.private_message(text=["/help", "/помощь"])
 async def help(message: Message):
     await message.answer(strings.help)
+
+
+@bp.on.private_message(text=["/keyboard"]) #### ОТПРАВКА ОБНОВЛЕНИЯ КЛАВИАТУРЫ ####
+async def send_new_keyboard(message: Message):
+    if message.peer_id in VK_ADMINS_ID:
+        users = await client.get(f"{API_URL}/vk/users")
+        for user in users.json():
+            await bp.api.messages.send(random_id=0, message=f"У нас были технические неполадки. Теперь мы все исправили 🛠", peer_id=user["peer_id"],
+                                       keyboard=keyboards.new_keyboard(user["notify"]))
+
 
 
 @bp.on.private_message(text=["<msg>"])
@@ -159,19 +172,12 @@ async def change_notify(user_id: int, event):
     if user_info.status_code == 200:
         user = await client.get(f"{API_URL}/vk/users?id={user_id}")
         await client.get(f"{API_URL}/vk/users/set/notify?id={user_id}&value={not user.json()[0]['notify']}")
-        params = None
+        msg = strings.info.notify_off if user.json()[0]["notify"] else strings.info.notify_on
 
-        if not user.json()[0]["notify"]:
-            params = (KeyboardButtonColor.SECONDARY, "🔔", strings.info.notify_on) 
-        else:
-            params = (KeyboardButtonColor.SECONDARY, "🔔", strings.info.notify_off)
-
-        keyboards.main_keyboard.buttons[2][1].color = params[0]
-        keyboards.main_keyboard.buttons[2][1].action.label = strings.button.notify_texted.format(params[1])
         if type(event) == Message:
-            await event.answer(params[2], keyboard=keyboards.main_keyboard)
+            await event.answer(msg, keyboard=keyboards.new_keyboard(not user.json()[0]["notify"]))
         else:
-            await answer_event(event, params[2], keyboards.main_keyboard)
+            await answer_event(event, msg, keyboards.new_keyboard(not user.json()[0]["notify"]))
     else:
         if type(event) == Message:
             await event.answer(strings.error.group_not_set, keyboard=keyboards.specialities)

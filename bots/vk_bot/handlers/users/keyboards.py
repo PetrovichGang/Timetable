@@ -21,6 +21,21 @@ main_keyboard.add(Callback(strings.button.vk_group, {"cmd": "spec"}),
 main_keyboard.add(Callback(strings.button.notify_texted.format("🔔"), {"cmd": "notify"}),
                   color=KeyboardButtonColor.SECONDARY)
 
+def new_keyboard(notify: bool):
+    main_keyboard = Keyboard(one_time=False, inline=False)
+    main_keyboard.add(Callback(strings.button.changes, {"cmd": "changes"}),
+                      color=KeyboardButtonColor.SECONDARY)
+    main_keyboard.row()
+    main_keyboard.add(Callback(strings.button.timetable, {"cmd": "timetable"}),
+                      color=KeyboardButtonColor.SECONDARY)
+    main_keyboard.row()
+    main_keyboard.add(Callback(strings.button.vk_group, {"cmd": "spec"}),
+                      color=KeyboardButtonColor.PRIMARY)
+
+    main_keyboard.add(Callback(strings.button.notify_texted.format("вкл" if notify else "выкл"), {"cmd": "notify"}),
+                      color=KeyboardButtonColor.POSITIVE if notify else KeyboardButtonColor.NEGATIVE)
+    return main_keyboard
+
 for index, spec in enumerate(GroupNames):
     specialities.add(Callback(spec.value, {'cmd': 'group', "spec": spec}))
     if index % 2 == 1:
