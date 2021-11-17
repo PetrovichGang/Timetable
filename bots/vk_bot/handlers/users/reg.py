@@ -162,9 +162,9 @@ async def change_notify(user_id: int, event):
         params = None
 
         if not user.json()[0]["notify"]:
-            params = (KeyboardButtonColor.POSITIVE, "вкл", strings.info.notify_on) 
+            params = (KeyboardButtonColor.SECONDARY, "🔔", strings.info.notify_on) 
         else:
-            params = (KeyboardButtonColor.NEGATIVE, "откл", strings.info.notify_off)
+            params = (KeyboardButtonColor.SECONDARY, "🔔", strings.info.notify_off)
 
         keyboards.main_keyboard.buttons[2][1].color = params[0]
         keyboards.main_keyboard.buttons[2][1].action.label = strings.button.notify_texted.format(params[1])

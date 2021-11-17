@@ -18,8 +18,8 @@ main_keyboard.row()
 main_keyboard.add(Callback(strings.button.vk_group, {"cmd": "spec"}),
                   color=KeyboardButtonColor.PRIMARY)
 
-main_keyboard.add(Callback(strings.button.notify_texted.format("откл"), {"cmd": "notify"}),
-                  color=KeyboardButtonColor.NEGATIVE)
+main_keyboard.add(Callback(strings.button.notify_texted.format("🔔"), {"cmd": "notify"}),
+                  color=KeyboardButtonColor.SECONDARY)
 
 for index, spec in enumerate(GroupNames):
     specialities.add(Callback(spec.value, {'cmd': 'group', "spec": spec}))
