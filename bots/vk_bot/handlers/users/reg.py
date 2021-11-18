@@ -92,12 +92,16 @@ async def help(message: Message):
     await message.answer(strings.help)
 
 
-@bp.on.private_message(text=["/keyboard"]) #### ОТПРАВКА ОБНОВЛЕНИЯ КЛАВИАТУРЫ ####
-async def send_new_keyboard(message: Message):
+@bp.on.private_message(text="/service_msg <msg>") #### ОТПРАВКА ОБНОВЛЕНИЯ КЛАВИАТУРЫ ####
+async def send_new_keyboard(message: Message, msg: str = None):
     if message.peer_id in VK_ADMINS_ID:
         users = await client.get(f"{API_URL}/vk/users")
         for user in users.json():
-            await bp.api.messages.send(random_id=0, message=f"У нас были технические неполадки. Теперь мы все исправили 🛠", peer_id=user["peer_id"],
+            if msg is None:
+                await bp.api.messages.send(random_id=0, message=f"У нас были технические неполадки. Все исправили 🛠", peer_id=user["peer_id"],
+                                       keyboard=keyboards.new_keyboard(user["notify"]))
+            else:
+                await bp.api.messages.send(random_id=0, message=msg, peer_id=user["peer_id"],
                                        keyboard=keyboards.new_keyboard(user["notify"]))
 
 
