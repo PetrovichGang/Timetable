@@ -8,19 +8,6 @@ import httpx
 specialities = Keyboard(one_time=False, inline=False)
 groups = {}
 
-main_keyboard = Keyboard(one_time=False, inline=False)
-main_keyboard.add(Callback(strings.button.changes, {"cmd": "changes"}),
-                  color=KeyboardButtonColor.SECONDARY)
-main_keyboard.row()
-main_keyboard.add(Callback(strings.button.timetable, {"cmd": "timetable"}),
-                  color=KeyboardButtonColor.SECONDARY)
-main_keyboard.row()
-main_keyboard.add(Callback(strings.button.vk_group, {"cmd": "spec"}),
-                  color=KeyboardButtonColor.PRIMARY)
-
-main_keyboard.add(Callback(strings.button.notify_texted.format("🔔"), {"cmd": "notify"}),
-                  color=KeyboardButtonColor.SECONDARY)
-
 def new_keyboard(notify: bool):
     main_keyboard = Keyboard(one_time=False, inline=False)
     main_keyboard.add(Callback(strings.button.changes, {"cmd": "changes"}),
