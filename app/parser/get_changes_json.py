@@ -21,7 +21,11 @@ def get_schedule_links(url: str = URL) -> list:
         raw_links = re.findall('<a href=".*">Замена.*</a>', data)
 
         for link in raw_links:
-            links.append(link.replace('<a href="', "").split('"')[0])
+            date = re.search("\d\d.\d\d.\d\d\d\d", link)
+
+            if date is not None:
+                download_link = link.replace('<a href="', "").split('"')[0]
+                links.append({"filename": date.group(0) + ".pdf", "url": download_link})
 
         return links
 
@@ -29,8 +33,9 @@ def get_schedule_links(url: str = URL) -> list:
         return []
 
 
-def download_schedule(url: str) -> None:
-    file_name = url.split("/")[-1]
+def download_schedule(download_info: dict) -> None:
+    file_name = download_info["filename"]
+    url = download_info["url"]
     path = Path(CWD, "schedule")
     if not path.exists():
         path.mkdir()
@@ -83,7 +88,8 @@ def parse_schedule(tables: pandas.DataFrame) -> dict:
 
                     if nums is None:
                         if last_num:
-                            template["ChangeLessons"][last_num] = f"{template['ChangeLessons'][last_num]} {lesson.strip()}"
+                            template["ChangeLessons"][
+                                last_num] = f"{template['ChangeLessons'][last_num]} {lesson.strip()}"
                         continue
 
                     nums = set([int(num) for num in nums.group(0) if num.isdigit()])
@@ -98,7 +104,7 @@ def parse_schedule(tables: pandas.DataFrame) -> dict:
                     else:
                         try:
                             lesson = " ".join(filter(lambda text: text != '',
-                                                lesson.split("п.", 1)[1].split(" ")))  # Удаление всех ''
+                                                     lesson.split("п.", 1)[1].split(" ")))  # Удаление всех ''
                             for num in nums:
                                 template["ChangeLessons"][f"p{num}"] = lesson
 
@@ -117,9 +123,10 @@ def start(clear_dir: bool = False):
         download_schedule(link)
 
     httpx.delete(f"{API_URL}/changes", headers=AUTH_HEADER)
-    for pdf in filter(lambda data: datetime.strptime(data.name.split("-")[-2], "%d.%m.%Y") >= today, Path(CWD, "schedule").glob("*.pdf")):
+    for pdf in filter(lambda data: datetime.strptime(data.name.rsplit(".", 1)[0], "%d.%m.%Y") >= today,
+                      Path(CWD, "schedule").glob("*.pdf")):
         data_frame = parse_pdf(pdf)
-        data = json.dumps({"Date": pdf.name.split('-')[2], "Groups": parse_schedule(data_frame)}, ensure_ascii=False)
+        data = json.dumps({"Date": pdf.name.rsplit(".", 1)[0], "Groups": parse_schedule(data_frame)}, ensure_ascii=False)
         httpx.post(f"{API_URL}/changes", json=data, headers=AUTH_HEADER)
 
     if clear_dir:

@@ -47,7 +47,10 @@ async def check_changes(url: str = Schedule_URL):
         raw_links = re.findall('<a href=".*">Замена.*</a>', data)
 
         for link in raw_links:
-            links.add(link.split('-')[-2])
+            url_date = re.search("\d\d.\d\d.\d\d\d\d", link)
+
+            if url_date is not None:
+                links.add(url_date.group(0))
 
         diff = links.difference(changes)
         diff = list(filter(lambda date_diff: datetime.strptime(date_diff, "%d.%m.%Y") >= date,
