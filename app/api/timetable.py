@@ -41,7 +41,7 @@ async def get_timetable_for_group(group: str = Query(..., description="Люба�
             render = full_timetable_markdown.render(tt=content[0], days=DAYS_RU)
             cleanup = re.sub(r'(\n<code>[2-4]\) <\/code>НЕТ)+\n\n', '\n\n', render)
             italics = re.sub(r'(<code>   <\/code>)(.*)', '\\1<i>\\2</i>', cleanup)
-            return JSONResponse([italics], status_code=status.HTTP_200_OK)
+            return [italics]
         elif text:
             render = full_timetable.render(tt=content[0], days=DAYS_RU)
             return [re.sub(r'(\n[2-4]\)(.*?)НЕТ)+\n\n', '\n\n', render)]
