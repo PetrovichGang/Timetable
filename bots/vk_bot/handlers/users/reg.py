@@ -5,7 +5,7 @@ from vkbottle_types.events.bot_events import MessageEvent
 import bots.vk_bot.handlers.users.keyboards as keyboards
 from vkbottle.bot import Blueprint, Message
 
-from config import API_URL, AUTH_HEADER, VK_ADMINS_ID
+from config import API_URL, AUTH_HEADER, VK_ADMINS_ID, VK_ID_UNHANDLED
 from databases.models import VKUserModel
 from bots.utils.strings import strings
 import time
@@ -107,6 +107,12 @@ async def c_service_msg(message: Message, msg: str = f"У нас были тех
                                        keyboard=keyboards.new_keyboard(user["notify"]))
 
 
+@bp.on.private_message(text=["/stat"])  # Статистика для админов
+async def c_stat(message: Message):
+    if message.peer_id in VK_ADMINS_ID:
+        await message.answer((await client.get(f"{API_URL}/vk/statistics")).text)
+
+
 # Клавиатура со специальностями
 @bp.on.private_message(text=["/spec", strings.button.vk_group])
 async def c_spec(message: Message):
@@ -122,7 +128,7 @@ async def message_handler(message: Message, msg: str):
     elif re.match("^[А-я]-[0-9]{2}-[1-9]([А-я]|)$", msg):
         await set_group(message, msg)
     else:
-        await bp.api.messages.send(random_id=0, message=f"@id{message.peer_id}: {msg}", peer_ids=VK_ADMINS_ID)
+        await bp.api.messages.send(random_id=0, message=f"@id{message.peer_id}: {msg}", peer_ids=VK_ID_UNHANDLED)
 
 
 # Функции

@@ -78,6 +78,14 @@ class TimeTableDB:
         cursor = collection.find(*args, *kwargs)
         return await TimeTableDB.async_iteration(cursor)
 
+    @staticmethod
+    async def aggregate(collection: AsyncIOMotorCollection, *args, **kwargs) :
+        if not isinstance(collection, AsyncIOMotorCollection):
+            raise
+
+        cursor = collection.aggregate(*args, *kwargs)
+        return await TimeTableDB.async_iteration(cursor)
+
 
 if __name__ == '__main__':
     from config import MONGODB_URL

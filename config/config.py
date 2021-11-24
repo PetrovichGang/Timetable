@@ -33,6 +33,7 @@ Schedule_URL = env.str("Schedule_URL")
 MANUAL_LINK = env.str("MANUAL_LINK")
 VK_TOKEN = env.str("VK_TOKEN")
 VK_ADMINS_ID = [int(admin_id) for admin_id in env.list("VK_ADMINS_ID")]
+VK_ID_UNHANDLED = [int(admin_id) for admin_id in env.list("VK_ID_UNHANDLED")]
 
 TG_TOKEN = env.str("TG_TOKEN")
 TG_DOMAIN = env.str("TG_DOMAIN")
