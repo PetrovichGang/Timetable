@@ -140,13 +140,13 @@ async def get_users_with_group(lesson_group: str = None):
                      tags=["VK"])
 async def get_statistics():
     stat = await db.aggregate(db.VKUsersCollection, [{'$group': {'_id': '$lesson_group', 'users': {'$sum': 1}}}])
-    last_10_cur = db.VKUsersCollection.find().sort('join', 1).limit(10)
+    last_10_cur = db.VKUsersCollection.find().sort('join', -1).limit(10)
     last_10 = await TimeTableDB.async_iteration(last_10_cur)
 
-    response = f"🧑‍🎓 Всего в базе: {reduce(lambda x, y: x + y['users'], stat, 0)}\n\n"
+    response = f"🧑‍ Всего в базе: {reduce(lambda x, y: x + y['users'], stat, 0)}\n\n"
     response += "📈 Статистика по группам\n"
     response += "\n".join([f"{s['_id']}: {s['users']}" for s in stat])
     response += "\n\n➕ Последние вступившие пользователи\n"
-    response += "\n".join([f"{i+1}. @id{u['peer_id']} {u['last_name']} {u['first_name']} ({unix_to_date(u['join'])})"
+    response += "\n".join([f"{i+1}. @id{u['peer_id']} {u['last_name']} {u['first_name']}\n {unix_to_date(u['join'])} {u['lesson_group']}"
                            for i, u in enumerate(last_10)])
     return Response(response, status_code=status.HTTP_200_OK)
