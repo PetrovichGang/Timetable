@@ -44,7 +44,7 @@ async def check_changes(url: str = Schedule_URL):
 
     if res.status_code == 200:
         data = res.content.decode("utf-8")
-        raw_links = re.findall('<a href=".*">Замена.*</a>', data)
+        raw_links = re.findall('<a href=".*\.pdf">.*\d\d.\d\d.\d\d\d\d.*</a>', data)
 
         for link in raw_links:
             url_date = re.search("\d\d.\d\d.\d\d\d\d", link)
