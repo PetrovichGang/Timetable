@@ -1,29 +1,22 @@
-from fastapi import Request, APIRouter, BackgroundTasks, HTTPException, Query
-from databases.models import ChangeModel, DAYS_MONGA_SELECTOR
-from starlette.responses import JSONResponse, Response
-from app.templates import schedule, schedule_markdown
-from config import TIMEZONE, API_URL, AUTH_HEADER
-from app.parser import start_parse_changes
-from databases.rabbitmq import Message
-from pydantic import ValidationError
-from ..utils import db, TimeTableDB
 from datetime import datetime
-from starlette import status
-from ..utils import caching
-import platform
-import calendar
-import locale
-import httpx
 import json
 import re
 
+from fastapi import Request, APIRouter, BackgroundTasks, HTTPException, Query
+from starlette.responses import JSONResponse, Response
+from pydantic import ValidationError
+from starlette import status
+import httpx
+
+from databases.models import ChangeModel, DAYS_MONGA_SELECTOR
+from app.templates import schedule, schedule_markdown
+from config import TIMEZONE, API_URL, AUTH_HEADER
+from ..utils import caching, db, TimeTableDB
+from app.parser import start_parse_changes
+from databases.rabbitmq import Message
+
 routerPublicChanges = APIRouter(prefix="/api/changes")
 routerPrivateChanges = APIRouter(prefix="/api/changes")
-
-if platform.system() == "Windows":
-    locale.setlocale(locale.LC_ALL, 'ru_RU')
-elif platform.system() == "Linux":
-    locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 
 
 @routerPublicChanges.get("",
@@ -119,6 +112,14 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
                                 text: bool = Query(None, description="возращает расписание в виде текста"),
                                 html: bool = Query(None, description="возращает расписание с html разметкой")):
     result = {}
+    days = [
+        "Понедельник",
+        "Вторник",
+        "Среду",
+        "Четверг",
+        "Пятницу",
+        "Субботу"
+    ]
     _today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
     time = datetime.strptime(datetime.now(TIMEZONE).strftime("%H:%M"), "%H:%M")
 
@@ -143,9 +144,10 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
         weekday = day.isocalendar()[2]
         default_lessons = await TimeTableDB.async_find(db.DLCollection, {"Group": group},
                                                        {"_id": 0,
-                                                        "Lessons": DAYS_MONGA_SELECTOR[list(DAYS_MONGA_SELECTOR.keys())[day.weekday()]]})
-        temp = template()
-        temp["Date"] = data.get("Date")
+                                                        "Lessons": DAYS_MONGA_SELECTOR[
+                                                            list(DAYS_MONGA_SELECTOR.keys())[day.weekday()]]})
+        _schedule = template()
+        _schedule["Date"] = data.get("Date")
 
         changes = data.get("Lessons")
         lessons = default_lessons[0]["Lessons"]["a"]
@@ -163,7 +165,7 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
             if changes["SkipLessons"]:
                 lessons.update({str(num): "НЕТ" for num in changes["SkipLessons"]})
 
-            temp["Comments"] = changes["Comments"]
+            _schedule["Comments"] = changes["Comments"]
 
             changes_with_emoji = {}
             for key, item in changes["ChangeLessons"].items():
@@ -171,28 +173,28 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
 
             lessons.update(changes_with_emoji)
 
-        temp["Lessons"].update(lessons)
+        _schedule["Lessons"].update(lessons)
 
         if html:
-            result[temp["Date"]] = re.sub(r'(<code>   <\/code>)(.*)', '\\1<i>\\2</i>', schedule_markdown.render(
-                Day=get_weekday_name(weekday),
-                Date=temp["Date"],
-                Lessons=enumerate(temp["Lessons"].values(), 1),
-                Comments=temp["Comments"],
+            result[_schedule["Date"]] = re.sub(r'(<code>   <\/code>)(.*)', '\\1<i>\\2</i>', schedule_markdown.render(
+                Day=days[weekday],
+                Date=_schedule["Date"],
+                Lessons=enumerate(_schedule["Lessons"].values(), 1),
+                Comments=_schedule["Comments"],
                 ClassHour=False if weekday != 2 else True
             ))
 
         elif text:
-            result[temp["Date"]] = schedule.render(
-                Day=get_weekday_name(weekday),
-                Date=temp["Date"],
-                Lessons=enumerate(temp["Lessons"].values(), 1),
-                Comments=temp["Comments"],
+            result[_schedule["Date"]] = schedule.render(
+                Day=days[weekday],
+                Date=_schedule["Date"],
+                Lessons=enumerate(_schedule["Lessons"].values(), 1),
+                Comments=_schedule["Comments"],
                 ClassHour=False if weekday != 2 else True
             )
 
         else:
-            result[temp["Date"]] = temp
+            result[_schedule["Date"]] = _schedule
 
     content = []
     if not today:
@@ -216,13 +218,6 @@ async def parse_changes(background_tasks: BackgroundTasks):
 def __parse_changes():
     start_parse_changes()
     httpx.get(f"{API_URL}/producer/start_send_changes", headers=AUTH_HEADER)
-
-
-def get_weekday_name(day_num: int):
-    name = calendar.day_name[day_num - 1].title().lower()
-    if name[-1] == 'а':
-        return name[:-1] + 'у'
-    return name
 
 
 async def send_changes(force: bool = False, today: bool = False):
@@ -252,9 +247,11 @@ async def send_changes(force: bool = False, today: bool = False):
                 if social_ids[social_name]:
 
                     if social_name == "VK":
-                        lessons = await client.get(f"{API_URL}/changes/finalize_schedule/{group}?today={today}&text=true")
+                        lessons = await client.get(
+                            f"{API_URL}/changes/finalize_schedule/{group}?today={today}&text=true")
                     else:
-                        lessons = await client.get(f"{API_URL}/changes/finalize_schedule/{group}?today={today}&html=true")
+                        lessons = await client.get(
+                            f"{API_URL}/changes/finalize_schedule/{group}?today={today}&html=true")
 
                     if lessons.status_code == 200:
                         message = Message.parse_obj(
