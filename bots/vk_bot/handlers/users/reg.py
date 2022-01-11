@@ -44,16 +44,18 @@ async def start(message: Message):
 async def buttons(event: Union[MessageEventX, Message]):
     action = event.object.payload["cmd"]
 
-    if action == "notify":
-        await change_notify(event),
+    if action == "stat":
+        await c_stat(event)
+    elif action == "notify":
+        await change_notify(event)
     elif action == "changes":
-        await answer_api_call(event, "changes/finalize_schedule"),
+        await answer_api_call(event, "changes/finalize_schedule")
     elif action == "timetable":
-        await answer_api_call(event, "timetable"),
+        await answer_api_call(event, "timetable")
     elif action == "spec":
-        await event.answer(strings.input.spec, keyboards.specialities),
+        await event.answer(strings.input.spec, keyboards.specialities)
     elif action == "group":
-        await event.answer(strings.input.group, keyboards.groups[event.object.payload["spec"]]),
+        await event.answer(strings.input.group, keyboards.groups[event.object.payload["spec"]])
     elif action == "set_group":
         await set_group(event, event.object.payload["group"])
 
@@ -79,7 +81,7 @@ async def set_group(event: Union[MessageEventX, Message], group: str = None):
         await client.post(f"{API_URL}/vk/users", json=user.dict())
 
     await client.post(f"{API_URL}/vk/users/set_group", json={"lesson_group": group, "users_id": [event.peer_id]})
-    await event.answer(strings.info.group_set.format(group), keyboard=keyboards.new_keyboard(notify))
+    await event.answer(strings.info.group_set.format(group), keyboard=keyboards.new_keyboard(notify, event.peer_id in VK_ADMINS_ID))
 
 
 # ОБРАБОТКА /timetable /расписание
@@ -163,6 +165,6 @@ async def change_notify(event: Union[MessageEventX, Message]):
     if user.status_code == 200:
         await client.get(f"{API_URL}/vk/users/set/notify?id={event.peer_id}&value={not user.json()[0]['notify']}")
         msg = strings.info.notify_off if user.json()[0]["notify"] else strings.info.notify_on
-        await event.answer(msg, keyboards.new_keyboard(not user.json()[0]["notify"]))
+        await event.answer(msg, keyboards.new_keyboard(not user.json()[0]["notify"], event.peer_id in VK_ADMINS_ID))
     else:
         await event.answer(strings.error.group_not_set, keyboards.specialities)

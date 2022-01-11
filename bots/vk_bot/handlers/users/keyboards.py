@@ -2,13 +2,13 @@ from vkbottle.tools.dev_tools.keyboard.action import Callback
 from vkbottle import Keyboard, KeyboardButtonColor
 from databases.models import GroupNames
 from bots.utils.strings import strings
-from config import API_URL
+from config import API_URL, VK_ADMINS_ID
 import httpx
 
 specialities = Keyboard(one_time=False, inline=False)
 groups = {}
 
-def new_keyboard(notify: bool):
+def new_keyboard(notify: bool, admin: bool = False):
     main_keyboard = Keyboard(one_time=False, inline=False)
     main_keyboard.add(Callback(strings.button.changes, {"cmd": "changes"}),
                       color=KeyboardButtonColor.SECONDARY)
@@ -21,6 +21,11 @@ def new_keyboard(notify: bool):
 
     main_keyboard.add(Callback(strings.button.notify_texted.format("вкл" if notify else "выкл"), {"cmd": "notify"}),
                       color=KeyboardButtonColor.POSITIVE if notify else KeyboardButtonColor.NEGATIVE)
+
+    if admin:
+        main_keyboard.row()
+        main_keyboard.add(Callback("📈 Статистика", {"cmd": "stat"}),
+                      color=KeyboardButtonColor.PRIMARY)
     return main_keyboard
 
 for index, spec in enumerate(GroupNames):
