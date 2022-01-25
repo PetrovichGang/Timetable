@@ -11,28 +11,30 @@ async def on_vk_message(message: IncomingMessage, bot: Bot):
     message_body: Message = Message.parse_raw(message.body)
 
     if message.routing_key == "VK":
-        try:
-            for text in message_body.text:
-                if len(message_body.recipient_ids) < 100:
+        for text in message_body.text:
+            if len(message_body.recipient_ids) < 100:
+                try:
                     await bot.api.messages.send(
                         message=text,
                         peer_ids=message_body.recipient_ids,
                         random_id=0
                     )
+                except Exception as ex:
+                    logger.error(ex)
 
-                else:
-                    for step in range(ceil(len(message_body.recipient_ids) / 100)):
-                        step *= 100
+            else:
+                for step in range(ceil(len(message_body.recipient_ids) / 100)):
+                    step *= 100
+                    try:
                         await bot.api.messages.send(
                             message=text,
                             peer_ids=message_body.recipient_ids[step:step + 100],
                             random_id=0
                         )
+                    except Exception as ex:
+                        logger.error(ex)
 
-            await message.ack()
-
-        except Exception as ex:
-            logger.error(ex)
+        await message.ack()
 
 
 async def start(bot: Bot):
