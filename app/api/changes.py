@@ -1,3 +1,4 @@
+from typing import List, Optional
 from datetime import datetime
 import json
 import re
@@ -220,27 +221,17 @@ def __parse_changes():
     httpx.get(f"{API_URL}/producer/start_send_changes", headers=AUTH_HEADER)
 
 
-async def send_changes(force: bool = False, today: bool = False):
+async def send_changes(force: bool = False, today: bool = False, groups: Optional[List[str]] = None):
     time = datetime.strptime(datetime.now(TIMEZONE).strftime("%H:%M"), "%H:%M")
 
     if (datetime.strptime("20:00", "%H:%M") < time or time < datetime.strptime("6:00", "%H:%M")) and not force:
         raise HTTPException(status_code=status.HTTP_423_LOCKED)
 
     async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
-        changes = await client.get(f"{API_URL}/changes/groups")
-        groups_with_changes = []
+        if groups is None:
+            groups = (await client.get(f"{API_URL}/groups")).json()["Groups"]
 
-        [groups_with_changes.extend(group) for group in [groups["Groups"] for groups in changes.json()]]
-        groups_with_changes = list(set(groups_with_changes))
-
-        groups: list = (await client.get(f"{API_URL}/groups")).json()["Groups"]
-        groups_without_changes = list(set(groups).difference(groups_with_changes))
-
-        sorted_groups = []
-        sorted_groups.extend(groups_with_changes)
-        sorted_groups.extend(groups_without_changes)
-
-        for group in sorted_groups:
+        for group in groups:
             social_ids = await get_social_ids(group)
 
             for social_name in social_ids.keys():
@@ -260,7 +251,7 @@ async def send_changes(force: bool = False, today: bool = False):
                         await client.post(f"{API_URL}/producer/send_message", json=message.dict())
 
 
-async def get_social_ids(lesson_group: str = Query(..., description="Любая учебная группа")) -> dict:
+async def get_social_ids(lesson_group: str) -> dict:
     social = {"VK": [], "TG": []}
     async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
         vk_users = await client.get(f"{API_URL}/vk/users/{lesson_group}")

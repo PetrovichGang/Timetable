@@ -1,9 +1,10 @@
-from pydantic import BaseModel, validator, Field
 from typing import Dict, List, Optional
 from typing_extensions import TypedDict
 from datetime import datetime
 from time import time
 from enum import Enum
+
+from pydantic import BaseModel, validator, Field
 
 DAYS_MONGA_SELECTOR = {
     "MON": "$Days.MON",
@@ -22,15 +23,6 @@ DAYS_RU = {
     "FRI": "Пятница",
     "SAT": "Суббота"
 }
-
-
-class EnumDays(str, Enum):
-    mon = "MON"
-    tue = "TUE"
-    wed = "WED"
-    thu = "THU"
-    fri = "FRI"
-    sat = "SAT"
 
 
 class DefaultDaysList(BaseModel):
@@ -112,3 +104,8 @@ class TGChatModel(BaseModel):
     chat_id: int = Field(alias="chat_id")
     group: Optional[str] = Field(alias="group")
     notify: bool = Field(alias="notify")
+
+
+class SocialsEnum(Enum):
+    vk = "VK"
+    tg = "TG"
