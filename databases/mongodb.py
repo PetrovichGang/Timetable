@@ -21,11 +21,15 @@ class TimeTableDB:
         self.DLCollection = self.LessonsDB["DefaultLessons"]  # Collection DefaultLessons
         self.CLCollection = self.LessonsDB["ChangeLessons"]  # Collection ChangeLessons
 
+        self.AdminDB = self._connection["AdminPanel"]
+
         self.SocialDB = self._connection["Social"]
         self.VKGroupsCollection = self.SocialDB["VKGroups"]
         self.VKUsersCollection = self.SocialDB["VKUsers"]
 
         self.TGChatsCollection = self.SocialDB["TGChats"]
+
+        self.AdminUsersCollection = self.AdminDB["Users"]
 
     def connect(self):
         try:
@@ -62,6 +66,9 @@ class TimeTableDB:
         self.VKUsersCollection = self.SocialDB["VKUsers"]
 
         self.TGChatsCollection = self.SocialDB["TGChats"]
+
+        self.AdminDB = self._connection["AdminPanel"]
+        self.AdminUsersCollection = self.AdminDB["Users"]
 
     @staticmethod
     async def async_iteration(cursor: AsyncIOMotorCursor) -> list:

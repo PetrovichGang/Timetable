@@ -3,4 +3,4 @@ import uvicorn
 
 
 if __name__ == "__main__":
-    uvicorn.run("app.app:app", host=API_IP, port=API_PORT, log_level="info", reload=False, headers=[("Access-Control-Allow-Origin", "*")])
+    uvicorn.run("app.app:app", host=API_IP, port=API_PORT, log_level="info", reload=False)

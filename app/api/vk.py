@@ -1,9 +1,11 @@
 from functools import reduce
 
+from fastapi_jwt_auth import AuthJWT
+
 from databases import TimeTableDB
 from databases.models import VKUserModel, VKChatModel, DictIdAndGroup
 from starlette.responses import JSONResponse, Response
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import parse_obj_as
 from typing import List, Union
 from starlette import status
@@ -12,6 +14,7 @@ from ..utils.etc import unix_to_date
 from datetime import datetime
 
 routerPrivateVK = APIRouter(prefix="/api/vk")
+routerTokenVK = APIRouter(prefix="/api/vk")
 
 
 @routerPrivateVK.post("/users",
@@ -156,10 +159,11 @@ async def get_statistics():
 
 
 
-@routerPrivateVK.get("/statistics_all",
+@routerTokenVK.get("/statistics_all",
                      summary="Получение статистики VK в формате json",
                      tags=["VK"])
-async def get_statistics():
+async def get_statistics(authorize: AuthJWT = Depends()):
+    authorize.jwt_required()
     users = await TimeTableDB.async_iteration(db.VKUsersCollection.find({}, {
         "lesson_group": 1, "join": 1, "first_name": 1, "last_name": 1, "peer_id": 1, "_id": 0
     }).sort('join', 1))
