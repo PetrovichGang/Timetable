@@ -20,6 +20,7 @@ class TimeTableDB:
         self.LessonsDB = self._connection["TimeTable"]
         self.DLCollection = self.LessonsDB["DefaultLessons"]  # Collection DefaultLessons
         self.CLCollection = self.LessonsDB["ChangeLessons"]  # Collection ChangeLessons
+        self.CallsCollection = self.LessonsDB["Calls"]
 
         self.AdminDB = self._connection["AdminPanel"]
 
@@ -60,6 +61,7 @@ class TimeTableDB:
         self.LessonsDB = self._connection["TimeTable"]
         self.DLCollection = self.LessonsDB["DefaultLessons"]
         self.CLCollection = self.LessonsDB["ChangeLessons"]
+        self.CallsCollection = self.LessonsDB["Calls"]
 
         self.SocialDB = self._connection["Social"]
         self.VKGroupsCollection = self.SocialDB["VKGroups"]

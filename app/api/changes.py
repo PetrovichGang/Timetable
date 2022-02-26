@@ -176,13 +176,47 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
 
         _schedule["Lessons"].update(lessons)
 
+        if not (text or html):
+            result[_schedule["Date"]] = _schedule
+            continue
+
+        # переопределение звонков
+        custom_calls = await TimeTableDB.async_find(db.CallsCollection, {"Date": data.get("Date")}, {"_id": 0})
+        has_class_hour = custom_calls[0]["ClassHour"] if custom_calls else weekday == 2
+
+        calls = None
+        calls_edited_indicator = ""
+
+        if custom_calls:
+            try:
+                calls = custom_calls[0]["Calls"].items()
+                calls_edited_indicator = " (✏️)"
+            except KeyError:
+                pass
+        elif has_class_hour:
+            calls = {
+                "p0": "8:30 - 9:15",
+                "p1": "9:25 - 10:55",
+                "p2": "11:05 - 12:35",
+                "p3": "13:05 - 14:35",
+                "p4": "14:45 - 16:15"
+            }.items()
+            if weekday != 2:
+                calls_edited_indicator = " (✏️)"
+
+        ch_edited_indicator = " (✏️)" if custom_calls and weekday != 2 else ""
+
         if html:
             result[_schedule["Date"]] = re.sub(r'(<code>   <\/code>)(.*)', '\\1<i>\\2</i>', schedule_markdown.render(
                 Day=days[weekday - 1],
                 Date=_schedule["Date"],
                 Lessons=enumerate(_schedule["Lessons"].values(), 1),
                 Comments=_schedule["Comments"],
-                ClassHour=False if weekday != 2 else True
+                ClassHour=has_class_hour,
+                Calls=calls,
+                CallsEditedIndicator=calls_edited_indicator,
+                CHEditedIndicator=ch_edited_indicator,
+                NoClassHour=weekday == 2 and not has_class_hour
             ))
 
         elif text:
@@ -191,11 +225,12 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
                 Date=_schedule["Date"],
                 Lessons=enumerate(_schedule["Lessons"].values(), 1),
                 Comments=_schedule["Comments"],
-                ClassHour=False if weekday != 2 else True
+                ClassHour=has_class_hour,
+                Calls=calls,
+                CallsEditedIndicator=calls_edited_indicator,
+                CHEditedIndicator=ch_edited_indicator,
+                NoClassHour=weekday == 2 and not has_class_hour
             )
-
-        else:
-            result[_schedule["Date"]] = _schedule
 
     content = []
     if not today:

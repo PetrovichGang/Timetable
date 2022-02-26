@@ -1,18 +1,17 @@
 <code>🕗 </code><b>Расписание на</b> {{ Day }}
 <code>   </code>{{ Date }}
 
-{% if ClassHour %}<code>   </code>Классный час{{ '\n' }}{% endif %}
+{% if ClassHour %}<code>   </code>Классный час{{ CHEditedIndicator }}{{ '\n' }}{% endif %}
+{% if NoClassHour %}<code>⚠ </code>Классного часа НЕТ{{ '\n' }}{% endif %}
 {% for pair, lesson in Lessons %}
 <code>{{ pair }}) </code>{{ lesson | wordwrap(28) | replace('\n', '\n<code>   </code>') | replace(',', ' ') }}
 {% endfor %}
 
-{% if ClassHour %}
-<code>🔔 </code><b>Расписание звонков</b>
-<code>   </code>Классный час: <i>8:30-9:15</i>
-<code>   </code>1 пара: <i>9:25-10:55</i>
-<code>   </code>2 пара: <i>11:05-12:35</i>
-<code>   </code>3 пара: <i>13:05-14:35</i>
-<code>   </code>4 пара: <i>14:45-16:15</i>
+{% if Calls is not none %}
+<code>🔔 </code><b>Расписание звонков</b>{{ CallsEditedIndicator }}
+{% for pair, call in Calls %}
+<code>   </code>{% if pair == 'p0' %}Классный час{% else %}{{ pair | replace('p', '') }} пара{% endif %}: <i>{{ call }}</i>
+{% endfor %}
 {% endif %}
 
 {% if Comments %}
