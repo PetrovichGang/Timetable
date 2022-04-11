@@ -1,11 +1,12 @@
-from config import AUTH_HEADER, API_URL, Schedule_URL, TIMEZONE, MONGODB_URL
+from datetime import datetime, timedelta
+import re
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.mongodb import MongoDBJobStore
-from datetime import datetime, timedelta
-from .changes import send_changes
-from ..utils import logger
 import httpx
-import re
+
+from config import AUTH_HEADER, API_URL, Schedule_URL, TIMEZONE, MONGODB_URL
+from ..utils import logger
 
 scheduler = AsyncIOScheduler(timezone=TIMEZONE)
 
@@ -13,8 +14,7 @@ jobstore = MongoDBJobStore(host=MONGODB_URL)
 scheduler.add_jobstore(jobstore)
 
 
-@scheduler.scheduled_job('cron', day_of_week='mon-sat', hour="10-12", minute=0, second=0, id="start_check_changes",
-                         next_run_time=datetime.now(TIMEZONE) + timedelta(minutes=1))
+@scheduler.scheduled_job('cron', day_of_week='mon-sat', hour="10-13", minute=0, second=0, id="start_check_changes")
 async def start_check_changes():
     logger.info("Started checking for changes")
     if scheduler.get_job("check_changes") is None:
@@ -24,9 +24,13 @@ async def start_check_changes():
         scheduler.get_job("check_changes").modify(next_run_time=datetime.now(TIMEZONE))
 
 
-@scheduler.scheduled_job('cron', day_of_week='mon-sat', hour="7", minute=0, second=0, id="send_changes")
+@scheduler.scheduled_job('cron', day_of_week='mon-sat', hour="7", minute=0, second=0, id="send_morning_changes")
 async def start_send_morning_changes():
-    await send_changes(today=True)
+    start_date = datetime.now(TIMEZONE).strftime("%Y-%m-%d")
+    async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
+        await client.get(f"{API_URL}/producer/start_send_changes"
+                         f"?start_date={start_date}"
+                         f"&end_date={start_date}&force=true")
 
 
 async def check_changes(url: str = Schedule_URL):
@@ -60,7 +64,7 @@ async def check_changes(url: str = Schedule_URL):
             logger.info("Start parsing")
 
             async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
-                await client.get(f"{API_URL}/changes/parse_changes")
+                await client.get(f"{API_URL}/changes/parse_and_send_changes")
 
             scheduler.get_job("check_changes").remove()
             scheduler.get_job("start_check_changes").modify(next_run_time=date + timedelta(days=1, hours=10))

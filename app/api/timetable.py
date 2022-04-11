@@ -35,6 +35,8 @@ async def get_timetable_for_group(group: str = Query(..., description="Люба�
 
     content = await TimeTableDB.async_find(db.DLCollection, {"Group": group}, {"_id": 0})
 
+    days = DAYS_RU
+    days.pop("SUN")
     # regex убирает 'НЕТ (пары)' в конце
     if content:
         if html:

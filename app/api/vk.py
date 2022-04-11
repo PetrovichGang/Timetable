@@ -44,7 +44,8 @@ async def load_new_users(users: Union[VKUserModel, List[VKUserModel]]):
                       summary="Изменение учебной группы пользователей",
                       tags=["VK"])
 async def set_users_lesson_group(users: DictIdAndGroup):
-    if users["lesson_group"] in db.groups and all(isinstance(user_id, int) for user_id in users["users_id"]):
+    groups = await db.get_groups()
+    if users["lesson_group"] in groups and all(isinstance(user_id, int) for user_id in users["users_id"]):
         db.VKUsersCollection.update_many({'id': {"$in": users["users_id"]}},
                                          {"$set": {'lesson_group': users["lesson_group"]}})
         return Response("Учебная группа установлена", status_code=status.HTTP_200_OK)
@@ -95,7 +96,8 @@ async def load_new_group(chat: VKChatModel):
                      tags=["VK"])
 async def set_group_lesson_group(peer_id: int, lesson_group: str):
     chat_info = await db.async_find(db.VKGroupsCollection, {"peer_id": peer_id}, {"_id": 0})
-    if chat_info and lesson_group in db.groups:
+    groups = await db.get_groups()
+    if chat_info and lesson_group in groups:
         db.VKGroupsCollection.update_one({"peer_id": peer_id}, {"$set": {'lesson_group': lesson_group}})
         return Response(status_code=status.HTTP_200_OK)
 
@@ -156,7 +158,6 @@ async def get_statistics():
                            f" {unix_to_date(u['join'])}, {u['lesson_group']}"
                            for i, u in enumerate(last_10)])
     return Response(response, status_code=status.HTTP_200_OK)
-
 
 
 @routerTokenVK.get("/statistics_all",

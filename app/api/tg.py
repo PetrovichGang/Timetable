@@ -38,7 +38,8 @@ async def get_tg_chat(chat_id: int):
                       summary="Изменение группы в чата",
                       tags=["TG"])
 async def set_tg_group(chat_id: int, group: str):
-    if group not in db.groups:
+    groups = await db.get_groups()
+    if group not in groups:
         return Response(strings.error.no_group.format(group),
                         status_code=status.HTTP_404_NOT_FOUND)
 

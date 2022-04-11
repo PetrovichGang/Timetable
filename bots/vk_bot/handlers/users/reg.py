@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from typing import Union
 
 from vkbottle_types.events.enums.group_events import GroupEventType
@@ -5,7 +6,7 @@ from vkbottle_types.events.bot_events import MessageEvent
 import bots.vk_bot.handlers.users.keyboards as keyboards
 from vkbottle.bot import Blueprint, Message
 
-from config import API_URL, AUTH_HEADER, VK_ADMINS_ID, VK_ID_UNHANDLED
+from config import API_URL, AUTH_HEADER, VK_ADMINS_ID, VK_ID_UNHANDLED, TIMEZONE
 from databases.models import VKUserModel
 from bots.utils.strings import strings
 import time
@@ -81,7 +82,8 @@ async def set_group(event: Union[MessageEventX, Message], group: str = None):
         await client.post(f"{API_URL}/vk/users", json=user.dict())
 
     await client.post(f"{API_URL}/vk/users/set_group", json={"lesson_group": group, "users_id": [event.peer_id]})
-    await event.answer(strings.info.group_set.format(group), keyboard=keyboards.new_keyboard(notify, event.peer_id in VK_ADMINS_ID))
+    await event.answer(strings.info.group_set.format(group),
+                       keyboard=keyboards.new_keyboard(notify, event.peer_id in VK_ADMINS_ID))
 
 
 # ОБРАБОТКА /timetable /расписание
@@ -151,7 +153,13 @@ async def answer_api_call(event: Union[MessageEventX, Message], method: str):
     if group.status_code == 200:
         group = group.json()[0]
         if group["lesson_group"]:
-            request = await client.get(f"{API_URL}/{method}/{group['lesson_group']}?text=true")
+            start_date = datetime.now(TIMEZONE).strftime("%Y-%m-%d")
+            end_date = (datetime.now(TIMEZONE) + timedelta(days=7)).strftime("%Y-%m-%d")
+            request = await client.get(
+                f"{API_URL}/{method}/{group['lesson_group']}"
+                f"?text=true"
+                f"&start_date={start_date}"
+                f"&end_date={end_date}")
             for message in request.json():
                 await event.answer(message)
         else:

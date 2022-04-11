@@ -1,12 +1,12 @@
+from fastapi import APIRouter
+
 from .changes import routerPublicChanges, routerPrivateChanges
 from .timetable import routerPublicTT, routerPrivateTT
 from .producer import producer, routerPublicProducer
 from .auth import routerPublicAuth
-from ..utils import db, TimeTableDB
 from .scheduler import scheduler
 from .vk import routerPrivateVK, routerTokenVK
 from .tg import routerPrivateTG
-from fastapi import APIRouter
 
 __all__ = ["routerPrivate", "routerPublic"]
 
@@ -51,9 +51,6 @@ tags_metadata = [
 async def startup():
     await producer.start()
     scheduler.start()
-
-    content = await TimeTableDB.async_find(db.DLCollection, {}, {"_id": 0, "Group": 1})
-    db.groups = [group.get("Group") for group in content]
 
 
 @routerPublic.on_event("shutdown")

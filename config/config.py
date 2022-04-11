@@ -22,7 +22,7 @@ REDIS_HOST = env.str("REDIS_HOST")
 REDIS_PORT = env.int("REDIS_PORT")
 REDIS_ENABLE = env.bool("REDIS_ENABLE")
 
-CORS_DOMAIN = env.str('CORS_DOMAIN')
+CORS_DOMAIN = env.str('CORS_DOMAIN', "*")
 API_IP = env.str('TimeTable_API_IP')
 API_PORT = env.int('TimeTable_API_PORT')
 API_URL = f"http://{API_IP}:{API_PORT}/api"

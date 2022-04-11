@@ -12,7 +12,8 @@ DAYS_MONGA_SELECTOR = {
     "WED": "$Days.WED",
     "THU": "$Days.THU",
     "FRI": "$Days.FRI",
-    "SAT": "$Days.SAT"
+    "SAT": "$Days.SAT",
+    "SUN": "$Days.SUN"
 }
 
 DAYS_RU = {
@@ -21,7 +22,8 @@ DAYS_RU = {
     "WED": "Среда",
     "THU": "Четверг",
     "FRI": "Пятница",
-    "SAT": "Суббота"
+    "SAT": "Суббота",
+    "SUN": "Воскресенье"
 }
 
 

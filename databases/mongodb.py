@@ -12,7 +12,6 @@ class TimeTableDB:
         self.url = url
         self.certificate = certificate
 
-        self.groups = []
         self.reconnect_count = 0
 
         self.connect()
@@ -94,6 +93,10 @@ class TimeTableDB:
 
         cursor = collection.aggregate(*args, *kwargs)
         return await TimeTableDB.async_iteration(cursor)
+
+    async def get_groups(self):
+        content = await self.async_find(self.DLCollection, {}, {"_id": 0, "Group": 1})
+        return [group.get("Group") for group in content]
 
 
 if __name__ == '__main__':

@@ -1,15 +1,18 @@
-from config import TG_TOKEN, AUTH_HEADER, API_URL, TG_DOMAIN, TG_PATH, CWD
+from datetime import datetime, timedelta
+
 from aiogram.utils.executor import start_webhook, start_polling
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram import Bot, types, Dispatcher
+import httpx as httpxlib
+import asyncio
+
+from config import TG_TOKEN, AUTH_HEADER, API_URL, TG_DOMAIN, TG_PATH, CWD, TIMEZONE
 from .consumer import start as start_consumer
 from bots.utils.logger import CustomizeLogger
 from .throttle import ThrottlingMiddleware
-from aiogram import Bot, types, Dispatcher
 from databases.models import TGChatModel
 from bots.utils.strings import strings
 import bots.tg_bot.keyboards as kb
-import httpx as httpxlib
-import asyncio
 
 bot = Bot(token=TG_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
@@ -81,7 +84,13 @@ async def get_timetable(message: types.Message, api_call: str):
     if prefs.group is None:
         await message.answer(strings.error.group_not_set)
     else:
-        res = await httpx.get(f'{API_URL}/{api_call}/{prefs.group}?html=true')
+        start_date = datetime.now(TIMEZONE).strftime("%Y-%m-%d")
+        end_date = (datetime.now(TIMEZONE) + timedelta(days=7)).strftime("%Y-%m-%d")
+        res = await httpx.get(
+            f'{API_URL}/{api_call}/{prefs.group}'
+            f'?html=true'
+            f'&start_date={start_date}'
+            f'&end_date={end_date}')
         if res.status_code == 200:
             [await message.answer(change, parse_mode=types.ParseMode.HTML) for change in res.json()]
         else:
