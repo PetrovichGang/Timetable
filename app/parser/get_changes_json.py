@@ -1,13 +1,15 @@
-from config import API_URL, Schedule_URL, AUTH_HEADER, CWD
 from datetime import datetime
-from loguru import logger
 from pathlib import Path
 from typing import Union
-import camelot
-import pandas
-import httpx
 import json
 import re
+
+from camelot.core import TableList
+from loguru import logger
+import camelot
+import httpx
+
+from config import API_URL, Schedule_URL, AUTH_HEADER, CWD
 
 URL = Schedule_URL
 
@@ -56,63 +58,44 @@ def clear_schedule_dir():
         file.unlink()
 
 
-def parse_pdf(file_path: Union[Path, str]) -> pandas.DataFrame:
-    if isinstance(file_path, str): file_path = Path(file_path)
+def extract_table_from_pdf(path: Union[str, Path]) -> TableList:
+    if not isinstance(path, Path):
+        path = Path(path)
 
-    if file_path.exists():
-        return camelot.read_pdf(str(file_path), pages="1-end")[0].df
+    if not path.exists() or not path.suffix == ".pdf":
+        raise FileNotFoundError(f"File: {path} not exists or not pdf")
+
+    return camelot.read_pdf(str(path), pages="1-end")
 
 
-def parse_schedule(tables: pandas.DataFrame) -> dict:
-    groups = {}
-    for column in tables:
-        for cell in tables[column]:
-            if cell.strip() != "ГРУППА":
-                template = {
+def parse_lessons(tables: TableList) -> dict:
+    result = dict()
+
+    for table in tables:
+        rows_count = table.df.shape[0]
+        for index in range(1, rows_count):
+            template = {
                     "ChangeLessons": {},
                     "DefaultLessons": [],
                     "SkipLessons": [],
                     "Comments": []
                 }
 
-                data = cell.split("\n")
-                last_num = None
-                for lesson in data[1:]:
-                    if not re.match("^(\d,?)*п.(.*)$", lesson):
-                        template["Comments"].append(lesson)
-                        continue
+            data = table.df.iloc[index]
+            group = data[0]
+            lessons = {f"p{index}": lesson for index,
+                lesson in enumerate(data[1:], 1)}
 
-                    nums = re.search("(\d,?)*п.", lesson)
+            for index, lesson in lessons.items():
+                if "расписани" in lesson.lower():
+                    template["DefaultLessons"].append(index)
+                elif "НЕТ" in lesson:
+                    template["SkipLessons"].append(index)
+                else:
+                    template["ChangeLessons"][index] = lesson
+            result[group] = template
 
-                    if nums is None:
-                        if last_num:
-                            template["ChangeLessons"][
-                                last_num] = f"{template['ChangeLessons'][last_num]} {lesson.strip()}"
-                        continue
-
-                    nums = set([int(num) for num in nums.group(0) if num.isdigit()])
-                    last_num = next(iter(nums)) if len(nums) == 1 else last_num
-
-                    if "расписанию" in lesson:
-                        template["DefaultLessons"] = [f"p{num}" for num in list(nums)]
-
-                    elif "НЕТ" in lesson:
-                        template["SkipLessons"] = [f"p{num}" for num in list(nums)]
-
-                    else:
-                        try:
-                            lesson = " ".join(filter(lambda text: text != '',
-                                                     lesson.split("п.", 1)[1].split(" ")))  # Удаление всех ''
-                            for num in nums:
-                                template["ChangeLessons"][f"p{num}"] = lesson
-
-                        except IndexError:
-                            pass
-
-                group = data[0].replace(" ", "").replace("ГРУППА", "")
-                groups[group] = template
-
-    return groups
+    return result
 
 
 def start(clear_dir: bool = False):
@@ -123,8 +106,8 @@ def start(clear_dir: bool = False):
     httpx.delete(f"{API_URL}/changes", headers=AUTH_HEADER)
     for pdf in filter(lambda data: datetime.strptime(data.name.rsplit(".", 1)[0], "%d.%m.%Y") >= today,
                       Path(CWD, "schedule").glob("*.pdf")):
-        data_frame = parse_pdf(pdf)
-        data = json.dumps({"Date": pdf.name.rsplit(".", 1)[0], "Groups": parse_schedule(data_frame)}, ensure_ascii=False)
+        data_frame = extract_table_from_pdf(pdf)
+        data = json.dumps({"Date": pdf.name.rsplit(".", 1)[0], "Groups": parse_lessons(data_frame)}, ensure_ascii=False)
         httpx.post(f"{API_URL}/changes", json=data, headers=AUTH_HEADER)
 
     if clear_dir:
@@ -132,4 +115,15 @@ def start(clear_dir: bool = False):
 
 
 if __name__ == '__main__':
-    start()
+    # start()
+    from pprint import pprint
+    today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
+    for link in get_schedule_links():
+        download_schedule(link)
+
+    for pdf in filter(lambda data: datetime.strptime(data.name.rsplit(".", 1)[0], "%d.%m.%Y") > today,
+                      Path(CWD, "schedule").glob("*.pdf")):
+        data_frame = extract_table_from_pdf(pdf)
+        data = parse_lessons(data_frame)
+        print(len(data), pdf.name)
+        pprint(data)
