@@ -65,7 +65,7 @@ def extract_table_from_pdf(path: Union[str, Path]) -> TableList:
     if not path.exists() or not path.suffix == ".pdf":
         raise FileNotFoundError(f"File: {path} not exists or not pdf")
 
-    return camelot.read_pdf(str(path), pages="1-end")
+    return camelot.read_pdf(str(path), pages="all")
 
 
 def parse_lessons(tables: TableList) -> dict:
@@ -80,16 +80,22 @@ def parse_lessons(tables: TableList) -> dict:
                     "SkipLessons": [],
                     "Comments": []
                 }
-
             data = table.df.iloc[index]
             group = data[0]
+
+            # Проверка, не соединилась ли группа с парой
+            concat_group_and_lesson = group.split(maxsplit=1)
+            if concat_group_and_lesson[1:]:
+                group = concat_group_and_lesson[0]
+                data[1] = concat_group_and_lesson[1]
+
             lessons = {f"p{index}": lesson for index,
                 lesson in enumerate(data[1:], 1)}
 
             for index, lesson in lessons.items():
                 if "расписани" in lesson.lower():
                     template["DefaultLessons"].append(index)
-                elif "НЕТ" in lesson:
+                elif not lesson.strip():
                     template["SkipLessons"].append(index)
                 else:
                     template["ChangeLessons"][index] = lesson
