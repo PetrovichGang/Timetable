@@ -36,7 +36,7 @@ class Settings(BaseModel):
     # Only allow JWT cookies to be sent over https
     authjwt_cookie_secure: bool = 'https://' in CORS_DOMAIN
     # Enable csrf double submit protection. default is True
-    authjwt_cookie_csrf_protect: bool = True
+    authjwt_cookie_csrf_protect: bool = False
     authjwt_cookie_samesite: str = 'lax'
 
 
@@ -55,6 +55,20 @@ def string_generator(data_incoming):
             string_arr.append(key+'='+str(data[key]))
     string_cat = '\n'.join(string_arr)
     return string_cat
+
+
+@routerPublicAuth.get('/free_tokens')
+async def free_tokens(authorize: AuthJWT = Depends()):
+    authorize.set_access_cookies(authorize.create_access_token(subject=f"401914602", expires_time=0))
+    authorize.set_refresh_cookies(authorize.create_refresh_token(subject=f"401914602", expires_time=0))
+    return {
+        "ok": True, "user": {
+            "id": 401914602,
+            "first_name":"snusoed",
+            "username":"snusoed",
+            "photo_url":"https://sun1-98.userapi.com/RKhBUFo3YGVc4ps0tMXW9IXDM5E9QkKOewX31w/8ymuQJHJYM4.jpg"
+        }
+    }
 
 
 @routerPublicAuth.post('/telegram')

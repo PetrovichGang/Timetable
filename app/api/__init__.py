@@ -1,10 +1,11 @@
+from .admin import routerTokenAdmin
 from .changes import routerPublicChanges, routerPrivateChanges
 from .timetable import routerPublicTT, routerPrivateTT
 from .producer import producer, routerPublicProducer
 from .auth import routerPublicAuth
 from ..utils import db, TimeTableDB
 from .scheduler import scheduler
-from .vk import routerPrivateVK, routerTokenVK
+from .vk import routerPrivateVK
 from .tg import routerPrivateTG
 from fastapi import APIRouter
 
@@ -15,7 +16,7 @@ routerPublic.include_router(routerPublicTT)
 routerPublic.include_router(routerPublicChanges)
 routerPublic.include_router(routerPublicProducer)
 routerPublic.include_router(routerPublicAuth)
-routerPublic.include_router(routerTokenVK)
+routerPublic.include_router(routerTokenAdmin)
 
 routerPrivate = APIRouter()
 routerPrivate.include_router(routerPrivateVK)

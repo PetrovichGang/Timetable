@@ -109,3 +109,9 @@ class TGChatModel(BaseModel):
 class SocialsEnum(Enum):
     vk = "VK"
     tg = "TG"
+
+
+class CallModel(BaseModel):
+    date: str = Field(alias="date")
+    classHour: bool = Field(alias="classHour")
+    calls: Dict[str, str] = Field(alias="calls")
