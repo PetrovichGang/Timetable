@@ -35,17 +35,17 @@ async def get_timetable_for_group(group: str = Query(..., description="Люба�
 
     content = await TimeTableDB.async_find(db.DLCollection, {"Group": group}, {"_id": 0})
 
-    days = DAYS_RU
+    days = DAYS_RU.copy()
     days.pop("SUN")
     # regex убирает 'НЕТ (пары)' в конце
     if content:
         if html:
-            render = full_timetable_markdown.render(tt=content[0], days=DAYS_RU)
+            render = full_timetable_markdown.render(tt=content[0], days=days)
             cleanup = re.sub(r'(\n<code>[2-4]\) <\/code>НЕТ)+\n\n', '\n\n', render)
             italics = re.sub(r'(<code>   <\/code>)(.*)', '\\1<i>\\2</i>', cleanup)
             return [italics]
         elif text:
-            render = full_timetable.render(tt=content[0], days=DAYS_RU)
+            render = full_timetable.render(tt=content[0], days=days)
             return [re.sub(r'(\n[2-4]\)(.*?)НЕТ)+\n\n', '\n\n', render)]
         else:
             return content
