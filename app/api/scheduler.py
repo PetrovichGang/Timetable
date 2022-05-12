@@ -9,7 +9,6 @@ from config import AUTH_HEADER, API_URL, Schedule_URL, TIMEZONE, MONGODB_URL
 from ..utils import logger
 
 scheduler = AsyncIOScheduler(timezone=TIMEZONE)
-
 jobstore = MongoDBJobStore(host=MONGODB_URL)
 scheduler.add_jobstore(jobstore)
 
@@ -24,7 +23,8 @@ async def start_check_changes():
         scheduler.get_job("check_changes").modify(next_run_time=datetime.now(TIMEZONE))
 
 
-@scheduler.scheduled_job('cron', day_of_week='mon-sat', hour="7", minute=0, second=0, id="send_morning_changes")
+@scheduler.scheduled_job('cron', day_of_week='mon-sat', hour="7", minute=0, second=0, id="send_morning_changes",
+                         max_instances=1)
 async def start_send_morning_changes():
     start_date = datetime.now(TIMEZONE).strftime("%Y-%m-%d")
     async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
