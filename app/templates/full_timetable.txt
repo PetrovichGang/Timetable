@@ -1,7 +1,7 @@
 🕗  Расписание для {{ tt["Group"] }}
 
 {% for day_key, day in days.items() %}
-📆  {{ day }}
+📆  {{ day[0] }}
 {% for pair in range(1, 5) %}
 {% if "a" in tt["Days"][day_key] and "p"~pair in tt["Days"][day_key]["a"] %}
 {{ pair }})&#8195;{{ tt["Days"][day_key]["a"]["p"~pair] | wordwrap(28) | replace('\n', '\n&#8195;&#8195;') | replace(',', ' ') }}

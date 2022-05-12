@@ -221,7 +221,7 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
             result[_schedule["Date"]] = re.sub(
                 r'(<code>   <\/code>)(.*)', '\\1<i>\\2</i>',
                 templates.schedule_markdown.render(
-                    Day=DAYS_RU[weekday_name],
+                    Day=DAYS_RU[weekday_name][1],
                     Date=_schedule["Date"],
                     Lessons=enumerate(_schedule["Lessons"].values(), 1),
                     Comments=_schedule["Comments"],
@@ -234,7 +234,7 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
 
         elif text:
             result[_schedule["Date"]] = templates.schedule.render(
-                Day=DAYS_RU[weekday_name],
+                Day=DAYS_RU[weekday_name][1],
                 Date=_schedule["Date"],
                 Lessons=enumerate(_schedule["Lessons"].values(), 1),
                 Comments=_schedule["Comments"],
