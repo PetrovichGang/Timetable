@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from asyncio import Lock, get_event_loop
 import re
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -11,6 +12,8 @@ from ..utils import logger
 scheduler = AsyncIOScheduler(timezone=TIMEZONE)
 jobstore = MongoDBJobStore(host=MONGODB_URL)
 scheduler.add_jobstore(jobstore)
+morning_lock = Lock()
+last_runs = {"send_morning_changes": None}
 
 
 @scheduler.scheduled_job('cron', day_of_week='mon-sat', hour="10-13", minute=0, second=0, id="start_check_changes")
@@ -26,11 +29,21 @@ async def start_check_changes():
 @scheduler.scheduled_job('cron', day_of_week='mon-sat', hour="7", minute=0, second=0, id="send_morning_changes",
                          max_instances=1)
 async def start_send_morning_changes():
-    start_date = datetime.now(TIMEZONE).strftime("%Y-%m-%d")
-    async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
-        await client.get(f"{API_URL}/producer/start_send_changes"
-                         f"?start_date={start_date}"
-                         f"&end_date={start_date}&force=true")
+    global last_runs
+    async with morning_lock:
+        if last_runs["send_morning_changes"] is None:
+            last_runs["send_morning_changes"] = datetime.now(TIMEZONE)
+        elif last_runs["send_morning_changes"] > datetime.now(TIMEZONE) - timedelta(seconds=60):
+            logger.info("Skipping sending")
+            return
+        else:
+            last_runs["send_morning_changes"] = datetime.now(TIMEZONE)
+
+        start_date = datetime.now(TIMEZONE).strftime("%Y-%m-%d")
+        async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
+            await client.get(f"{API_URL}/producer/start_send_changes"
+                             f"?start_date={start_date}"
+                             f"&end_date={start_date}&force=true")
 
 
 async def check_changes(url: str = Schedule_URL):
