@@ -73,14 +73,14 @@ def parse_lessons(tables: TableList) -> dict:
 
     for table in tables:
         rows_count = table.df.shape[0]
-        for index in range(1, rows_count):
+        for row_index in range(1, rows_count):
             template = {
                     "ChangeLessons": {},
                     "DefaultLessons": [],
                     "SkipLessons": [],
                     "Comments": []
                 }
-            data = table.df.iloc[index]
+            data = table.df.iloc[row_index]
             group = data[0]
 
             # Проверка, не соединилась ли группа с парой
@@ -99,7 +99,20 @@ def parse_lessons(tables: TableList) -> dict:
                     template["SkipLessons"].append(index)
                 else:
                     template["ChangeLessons"][index] = lesson
-            result[group] = template
+
+            if group:
+                result[group] = template
+            else:
+                group = table.df.iloc[row_index - 1][0]
+                previous_lessons = result[group]["ChangeLessons"]
+                new_lessons = dict(
+                    map(
+                        lambda previous_lesson, lesson: (previous_lesson[0], f"{previous_lesson[1]}\n{lesson[1]}"),
+                        previous_lessons.items(), template["ChangeLessons"].items()
+                    )
+                )
+                pprint(new_lessons)
+                result[group]["ChangeLessons"].update(new_lessons)
 
     return result
 
@@ -130,6 +143,7 @@ if __name__ == '__main__':
     for pdf in filter(lambda data: datetime.strptime(data.name.rsplit(".", 1)[0], "%d.%m.%Y") > today,
                       Path(CWD, "schedule").glob("*.pdf")):
         data_frame = extract_table_from_pdf(pdf)
+        data_frame.export("data.csv")
         data = parse_lessons(data_frame)
         print(len(data), pdf.name)
-        pprint(data)
+        # pprint(data)
