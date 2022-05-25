@@ -111,7 +111,6 @@ def parse_lessons(tables: TableList) -> dict:
                         previous_lessons.items(), template["ChangeLessons"].items()
                     )
                 )
-                pprint(new_lessons)
                 result[group]["ChangeLessons"].update(new_lessons)
 
     return result
@@ -143,7 +142,6 @@ if __name__ == '__main__':
     for pdf in filter(lambda data: datetime.strptime(data.name.rsplit(".", 1)[0], "%d.%m.%Y") > today,
                       Path(CWD, "schedule").glob("*.pdf")):
         data_frame = extract_table_from_pdf(pdf)
-        data_frame.export("data.csv")
         data = parse_lessons(data_frame)
         print(len(data), pdf.name)
-        # pprint(data)
+        pprint(data)
