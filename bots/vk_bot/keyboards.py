@@ -1,14 +1,16 @@
-from vkbottle.tools.dev_tools.keyboard.action import Callback
-from vkbottle import Keyboard, KeyboardButtonColor
+from vkbottle import Keyboard, KeyboardButtonColor, Callback
+
+from bots.schemes import VKUser
 from databases.models import GroupNames
 from bots.utils.strings import strings
-from config import API_URL, VK_ADMINS_ID
+from config import API_URL
 import httpx
 
 specialities = Keyboard(one_time=False, inline=False)
 groups = {}
 
-def new_keyboard(notify: bool, admin: bool = False):
+
+def new_keyboard(user: VKUser, admin: bool = False):
     main_keyboard = Keyboard(one_time=False, inline=False)
     main_keyboard.add(Callback(strings.button.changes, {"cmd": "changes"}),
                       color=KeyboardButtonColor.SECONDARY)
@@ -16,11 +18,11 @@ def new_keyboard(notify: bool, admin: bool = False):
     main_keyboard.add(Callback(strings.button.timetable, {"cmd": "timetable"}),
                       color=KeyboardButtonColor.SECONDARY)
     main_keyboard.row()
-    main_keyboard.add(Callback(strings.button.vk_group, {"cmd": "spec"}),
+    main_keyboard.add(Callback(strings.button.group.format(user.group), {"cmd": "spec"}),
                       color=KeyboardButtonColor.PRIMARY)
 
-    main_keyboard.add(Callback(strings.button.notify_texted.format("вкл" if notify else "выкл"), {"cmd": "notify"}),
-                      color=KeyboardButtonColor.POSITIVE if notify else KeyboardButtonColor.NEGATIVE)
+    main_keyboard.add(Callback(strings.button.notify_texted.format("вкл" if user.notify else "выкл"), {"cmd": "notify"}),
+                      color=KeyboardButtonColor.POSITIVE if user.notify else KeyboardButtonColor.NEGATIVE)
 
     if admin:
         main_keyboard.row()
@@ -40,7 +42,7 @@ for index, spec in enumerate(GroupNames):
     groups_keyboard = Keyboard(one_time=False, inline=False)
     last_year = ""
 
-    for group in res.json()["Groups"]:
+    for group in res.json():
         if not (group[0] != 'Н' or last_year == group[2:4]):
             groups_keyboard.row()
 

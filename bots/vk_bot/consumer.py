@@ -1,9 +1,11 @@
-from databases.rabbitmq import Consumer, RoutingKey, Message
-from aio_pika import IncomingMessage
 from functools import partial
+from math import ceil
+
+from aio_pika import IncomingMessage
 from loguru import logger
 from vkbottle import Bot
-from math import ceil
+
+from databases.rabbitmq import Consumer, RoutingKey, Message
 
 
 @logger.catch

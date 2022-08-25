@@ -1,8 +1,10 @@
+from datetime import timedelta
+import time
+
 from vkbottle_types.events import GroupEventType
 from vkbottle import BaseMiddleware, CtxStorage
 from vkbottle.bot import Message
 from loguru import logger
-import time
 
 LAST_CALL = 'called_at'
 RATE_LIMIT = 'rate_limit'
@@ -12,40 +14,61 @@ DELTA = 'delta'
 dummy_db = CtxStorage()
 
 
-class AntiFloodMiddleware(BaseMiddleware):
-    def __init__(self):
-        logger.debug("Middleware 'AntiFlood' loaded")
+class BlockList:
+    @staticmethod
+    def check(chat_id) -> bool:
+        if user := dummy_db.get(chat_id):
+            if user["blocked_until"] > time.time():
+                return True
+            dummy_db.delete(chat_id)
+        return False
 
-    async def pre(self, message: Message):
+    @staticmethod
+    def add(chat_id):
+        dummy_db.set(
+            chat_id,
+            {"blocked_until": time.time() + timedelta(seconds=3).total_seconds()}
+        )
+
+
+class AntiFloodMiddleware(BaseMiddleware[Message]):
+    def __init__(self, *args, **kwargs):
+        logger.debug("Middleware 'AntiFlood' loaded")
+        super().__init__(*args, **kwargs)
+
+    async def pre(self):
+        if BlockList.check(self.event.peer_id):
+            self.stop(f"@id{self.event.peer_id} временно заблокирован")
         try:
-            await throttle("antiflood", user_id=message.from_id, chat_id=message.chat_id)
+            await throttle("antiflood", user_id=self.event.from_id, chat_id=self.event.chat_id)
 
         except Throttled as t:
             if t.exceeded_count <= 2:
                 logger.debug(t)
-                await message.answer(f"@id{message.peer_id} Перестань спамить")
-            return False
+                await self.event.answer(f"@id{self.event.peer_id} Перестань спамить")
+                BlockList.add(self.event.peer_id)
+            self.stop(f"@id{self.event.peer_id} решил спамить")
 
-        return True
 
-
-class RawMessageAntiFloodMiddleware(BaseMiddleware):
-    def __init__(self):
+class RawMessageAntiFloodMiddleware(BaseMiddleware[GroupEventType.MESSAGE_EVENT]):
+    def __init__(self, *args, **kwargs):
         logger.debug("Middleware 'RawMessageAntiFlood' loaded")
+        super().__init__(*args, **kwargs)
 
-    async def pre(self, event: GroupEventType):
-        if event.type == "message_event":
-            user_id, chat_id = event.object.user_id, event.object.peer_id - 2_000_000_000
+    async def pre(self):
+        if self.event["type"] == "message_event":
+            user_id, chat_id = self.event["object"]["user_id"], self.event["object"]["peer_id"] - 2_000_000_000
+            if BlockList.check(chat_id):
+                self.stop(f"@id{user_id} временно заблокирован")
+
             try:
                 await throttle("antiflood", user_id=user_id, chat_id=chat_id)
 
             except Throttled as t:
                 if t.exceeded_count <= 2:
-                    logger.debug(t)
-                return False
-
-            return True
-        return True
+                    logger.critical(t)
+                    BlockList.add(chat_id)
+                self.stop(f"@id{user_id} решил спамить")
 
 
 async def throttle(key, *, rate=.3, user_id=None, chat_id=None) -> bool:
