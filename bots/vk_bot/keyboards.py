@@ -40,14 +40,11 @@ for index, spec in enumerate(GroupNames):
         raise SystemExit
 
     groups_keyboard = Keyboard(one_time=False, inline=False)
-    last_year = ""
 
-    for group in res.json():
-        if not (group[0] != 'Н' or last_year == group[2:4]):
+    for index, group in enumerate(res.json(), 0):
+        if index % 4 == 0:
             groups_keyboard.row()
-
         groups_keyboard.add(Callback(group, {"cmd": "set_group", "group": group}))
-        last_year = group[2:4]
     groups_keyboard.row()
     groups_keyboard.add(Callback("Назад", {"cmd": "spec"}), color=KeyboardButtonColor.NEGATIVE)
 
