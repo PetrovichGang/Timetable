@@ -95,7 +95,7 @@ async def delete_timetable():
 @caching(expire=60 * 30)
 async def get_groups():
     content = await TimeTableDB.async_find(db.DLCollection, {}, {"_id": 0, "Group": 1})
-    content = {"Groups": [group.get("Group") for group in content]}
+    content = [group.get("Group") for group in content]
 
     if content:
         return content
@@ -111,10 +111,4 @@ async def get_groups():
 async def get_spec_groups(spec: GroupNames = Query(..., description="Специальность")):
     content = await TimeTableDB.async_find(db.DLCollection, {"Group": {"$regex": f"{spec[0]}.*"}},
                                            {"_id": 0, "Group": 1})
-    content = {"Groups": [group.get("Group") for group in content]}
-
-    if content:
-        return content
-
-    else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return [group.get("Group") for group in content]

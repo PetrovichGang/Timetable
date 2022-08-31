@@ -27,6 +27,9 @@ class BaseRepositoryProtocol(Protocol[M]):
     async def delete(self, data: M) -> None:
         ...  # pragma: no cover
 
+    async def all(self) -> List[M]:
+        ...  # pragma: no cover
+
 
 class BaseRepository(BaseRepositoryProtocol, Generic[M]):
     async def get_or_none(self, **statement) -> Optional[M]:

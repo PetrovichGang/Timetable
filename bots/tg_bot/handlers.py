@@ -1,15 +1,12 @@
-from aiogram.utils.executor import start_webhook, start_polling
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from dependency_injector.wiring import Provide, inject
 from aiogram import Bot, types, Dispatcher
 
-from config import TG_TOKEN, TG_DOMAIN, TG_PATH, TG_WEBHOOK
-from bots.tg_bot.consumer import start as start_consumer
 from bots.services import TGUserService, LessonsService
 from bots.tg_bot.containers import Container
 from bots.utils.strings import strings
 import bots.tg_bot.keyboards as kb
-from bots.db import init_databases
+from config import TG_TOKEN
 
 bot = Bot(token=TG_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
