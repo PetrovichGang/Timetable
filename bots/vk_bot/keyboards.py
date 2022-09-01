@@ -1,8 +1,8 @@
 from vkbottle import Keyboard, KeyboardButtonColor, Callback
-
-from bots.schemes import VKUser
 from databases.models import GroupNames
 from bots.utils.strings import strings
+from collections import defaultdict
+from bots.schemes import VKUser
 from config import API_URL
 import httpx
 
@@ -39,13 +39,31 @@ for index, spec in enumerate(GroupNames):
         print(f"При загрузке групп произошла ошибка: {res.text}")
         raise SystemExit
 
-    groups_keyboard = Keyboard(one_time=False, inline=False)
+    kb = Keyboard(one_time=False, inline=False)
+    grouped_groups = defaultdict(list)
+    request_row = False
+    column = 0
 
-    for index, group in enumerate(res.json(), 0):
-        if index % 4 == 0:
-            groups_keyboard.row()
-        groups_keyboard.add(Callback(group, {"cmd": "set_group", "group": group}))
-    groups_keyboard.row()
-    groups_keyboard.add(Callback("Назад", {"cmd": "spec"}), color=KeyboardButtonColor.NEGATIVE)
+    for g in res.json():
+        grouped_groups[g[2:4]].append(g)
 
-    groups[spec] = groups_keyboard
+    for k, v in sorted(grouped_groups.items(), reverse=True):
+        column += 1
+        if len(v) == 1:
+            if request_row or column == 5:
+                request_row = False
+                column = 0
+                kb.row()
+            kb.add(Callback(v[0], {"cmd": "set_group", "group": v[0]}))
+        else:
+            request_row = True
+            column = 0
+            for i, s in enumerate(sorted(v, key=lambda x: x[2:4])):
+                if i % 4 == 0:
+                    kb.row()
+                kb.add(Callback(s, {"cmd": "set_group", "group": s}))
+
+    kb.row()
+    kb.add(Callback("Назад", {"cmd": "spec"}), KeyboardButtonColor.NEGATIVE)
+
+    groups[spec] = kb
