@@ -36,7 +36,7 @@ async def c_help(message: Message):
     await message.answer(strings.help)
 
 
-@bp.on.message(regex=[re.compile(".*/начать"), re.compile(".*/start")])
+@bp.on.message(regex=[re.compile(".*ачать"), re.compile(".*/start")])
 @inject
 async def start(
         message: Message,
