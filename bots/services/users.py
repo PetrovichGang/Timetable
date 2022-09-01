@@ -41,12 +41,13 @@ class VKUserServices:
     async def get_all_users(self) -> List[VKUser]:
         return await self._repository.all()
 
-    async def get_user_or_create(self, chat_id: int) -> VKUser:
+    async def get_user_or_create(self, chat_id: int, **kwargs) -> VKUser:
         user = await self._repository.get_or_none(chat_id=chat_id)
         if user is None:
             user = await self._repository.create(
                 VKUser(
-                    chat_id=chat_id
+                    chat_id=chat_id,
+                    **kwargs
                 )
             )
         return user

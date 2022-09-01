@@ -16,9 +16,6 @@ class TGUser(BaseUser):
     pass
 
 
-class TGUserUpdate(TGUser):
-    pass
-
-
 class VKUser(BaseUser):
-    pass
+    first_name: Optional[str]
+    last_name: Optional[str]

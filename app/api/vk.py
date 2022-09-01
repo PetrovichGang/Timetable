@@ -26,7 +26,7 @@ async def get_statistics():
     response += "📈 Статистика по группам\n"
     response += "\n".join([f"{s['_id']}: {s['users']}" for s in stat])
     response += "\n\n➕ Последние вступившие пользователи\n"
-    response += "\n".join([f"{i+1}. @id{u['chat_id']}\n"
+    response += "\n".join([f"{i+1}. [id{u['chat_id']}|{u['last_name']} {u['first_name']}]\n"
                            f" {unix_to_date(u['join'])}, {u['group']}"
                            for i, u in enumerate(last_10)])
     return Response(response, status_code=status.HTTP_200_OK)

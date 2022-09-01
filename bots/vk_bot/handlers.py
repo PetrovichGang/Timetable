@@ -36,13 +36,20 @@ async def c_help(message: Message):
     await message.answer(strings.help)
 
 
-@bp.on.message(text=["/start", "start", "начать"])
+@bp.on.message(regex=[re.compile(".*/начать"), re.compile(".*/start")])
 @inject
 async def start(
         message: Message,
         vk_user_service: VKUserServices = Provide[Container.vk_user_service]
 ):
-    await vk_user_service.get_user_or_create(message.peer_id)
+    if message.peer_id > 2_000_000_000:  # в ВК peer_id чатов начинается от 2_000_000_000
+        data = await bp.api.messages.get_conversations_by_id(message.peer_id)
+        first_name, last_name = data.items[0].chat_settings.title if data.count else "Чат", str(message.peer_id)
+    else:
+        user_data = (await bp.api.users.get(message.peer_id))[0]
+        first_name, last_name = user_data.first_name, user_data.last_name
+
+    await vk_user_service.get_user_or_create(message.peer_id, first_name=first_name, last_name=last_name)
     await message.answer(strings.vk_manual)
     await message.answer(strings.input.spec, keyboard=keyboards.specialities)
 
@@ -127,7 +134,7 @@ async def c_changes(
         await message.answer(lessons)
 
 
-@bp.on.message(text=["/notify", "/n"])
+@bp.on.message(text=["/notify", "/n", "/у"])
 @inject
 async def c_notify(
         message: Message,
