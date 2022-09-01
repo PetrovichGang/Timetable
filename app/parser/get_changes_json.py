@@ -13,6 +13,8 @@ from config import API_URL, Schedule_URL, AUTH_HEADER, CWD
 
 URL = Schedule_URL
 
+cleanup_regex = re.compile(r"^(ОУД|ОП|ОГСЭ|ЕН)(\.| )[0-9]{1,3}(\.[0-9]{1,3}|) ", re.MULTILINE)
+
 
 def get_schedule_links(url: str = URL) -> list:
     links = []
@@ -98,7 +100,7 @@ def parse_lessons(tables: TableList) -> dict:
                 elif not lesson.strip():
                     template["SkipLessons"].append(index)
                 else:
-                    template["ChangeLessons"][index] = lesson
+                    template["ChangeLessons"][index] = cleanup_regex.sub("", lesson).strip()
 
             if group:
                 result[group] = template
