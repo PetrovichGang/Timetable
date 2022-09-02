@@ -6,6 +6,8 @@ from vkbottle import BaseMiddleware, CtxStorage
 from vkbottle.bot import Message
 from loguru import logger
 
+from config import VK_ANTIFLOOD_BAN_TIME
+
 LAST_CALL = 'called_at'
 RATE_LIMIT = 'rate_limit'
 RESULT = 'result'
@@ -27,7 +29,7 @@ class BlockList:
     def add(chat_id):
         dummy_db.set(
             chat_id,
-            {"blocked_until": time.time() + timedelta(seconds=3).total_seconds()}
+            {"blocked_until": time.time() + timedelta(seconds=VK_ANTIFLOOD_BAN_TIME).total_seconds()}
         )
 
 

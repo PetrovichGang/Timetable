@@ -89,8 +89,7 @@ async def c_set_group(
         lessons_service: LessonsService = Provide[Container.lessons_service],
         vk_user_service: VKUserServices = Provide[Container.vk_user_service]
 ):
-    group = group[0].upper() + group[1:].lower()
-    if not await lessons_service.study_groups_exists(group.title()):
+    if not await lessons_service.study_groups_exists(group):
         await event.answer(strings.error.no_group.format(group))
         return
 

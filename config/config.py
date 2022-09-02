@@ -33,6 +33,7 @@ Schedule_URL = env.str("Schedule_URL")
 
 MANUAL_LINK = env.str("MANUAL_LINK")
 VK_TOKEN = env.str("VK_TOKEN")
+VK_ANTIFLOOD_BAN_TIME = env.int("VK_ANTIFLOOD_BAN_TIME", 30)
 VK_ADMINS_ID = [int(admin_id) for admin_id in env.list("VK_ADMINS_ID")]
 VK_ID_UNHANDLED = [int(admin_id) for admin_id in env.list("VK_ID_UNHANDLED")]
 
