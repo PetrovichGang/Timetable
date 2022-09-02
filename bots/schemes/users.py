@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 class BaseUser(BaseModel):
     chat_id: int
     group: Optional[str] = None
-    join: float = Field(time())
+    join: int = Field(default_factory=lambda: int(time()))
     notify: bool = Field(False)
     blacklist: bool = Field(False)
 
