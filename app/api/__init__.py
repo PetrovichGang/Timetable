@@ -6,6 +6,7 @@ from .producer import producer, routerPublicProducer
 from .auth import routerPublicAuth
 from .scheduler import scheduler
 from .vk import routerPrivateVK, routerTokenVK
+from .tg import routerPrivateTG
 
 __all__ = ["routerPrivate", "routerPublic"]
 
@@ -17,6 +18,7 @@ routerPublic.include_router(routerPublicAuth)
 routerPublic.include_router(routerTokenVK)
 
 routerPrivate = APIRouter()
+routerPrivate.include_router(routerPrivateTG)
 routerPrivate.include_router(routerPrivateVK)
 routerPrivate.include_router(routerPrivateTT)
 routerPrivate.include_router(routerPrivateChanges)
