@@ -24,10 +24,9 @@ class TimeTableDB:
         self.AdminDB = self._connection["AdminPanel"]
 
         self.SocialDB = self._connection["Social"]
-        self.VKGroupsCollection = self.SocialDB["VKGroups"]
         self.VKUsersCollection = self.SocialDB["VKUsers"]
 
-        self.TGChatsCollection = self.SocialDB["TGChats"]
+        self.TGChatsCollection = self.SocialDB["TGUsers"]
 
         self.AdminUsersCollection = self.AdminDB["Users"]
 
@@ -63,10 +62,9 @@ class TimeTableDB:
         self.CallsCollection = self.LessonsDB["Calls"]
 
         self.SocialDB = self._connection["Social"]
-        self.VKGroupsCollection = self.SocialDB["VKGroups"]
         self.VKUsersCollection = self.SocialDB["VKUsers"]
 
-        self.TGChatsCollection = self.SocialDB["TGChats"]
+        self.TGChatsCollection = self.SocialDB["TGUsers"]
 
         self.AdminDB = self._connection["AdminPanel"]
         self.AdminUsersCollection = self.AdminDB["Users"]

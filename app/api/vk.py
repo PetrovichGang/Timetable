@@ -17,7 +17,7 @@ routerTokenVK = APIRouter(prefix="/api/vk")
                      summary="Получение всех бесед VK с определенной учебной группой из базы данных",
                      tags=["VK"])
 async def get_chats_with_group(lesson_group: str = None):
-    chats = await db.async_find(db.VKUsersCollection, {"lesson_group": lesson_group}, {"_id": 0})
+    chats = await db.async_find(db.VKUsersCollection, {"group": lesson_group}, {"_id": 0})
     if chats:
         return JSONResponse(chats, status_code=status.HTTP_200_OK)
 
