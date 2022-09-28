@@ -5,12 +5,23 @@ from starlette.responses import JSONResponse, Response
 from fastapi import APIRouter, Depends, status
 from fastapi_jwt_auth import AuthJWT
 
-from databases import TimeTableDB
 from ..utils.etc import unix_to_date
+from databases import TimeTableDB
 from ..utils import db
 
 routerPrivateVK = APIRouter(prefix="/api/vk")
 routerTokenVK = APIRouter(prefix="/api/vk")
+
+
+@routerPrivateVK.get("/chats/{lesson_group}",
+                     summary="Получение всех бесед VK с определенной учебной группой из базы данных",
+                     tags=["VK"])
+async def get_chats_with_group(lesson_group: str = None):
+    chats = await db.async_find(db.VKUsersCollection, {"group": lesson_group}, {"_id": 0})
+    if chats:
+        return JSONResponse(chats, status_code=status.HTTP_200_OK)
+
+    return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
 @routerPrivateVK.get("/statistics",
@@ -38,7 +49,7 @@ async def get_statistics():
 async def get_statistics(authorize: AuthJWT = Depends()):
     authorize.jwt_required()
     users = await TimeTableDB.async_iteration(db.VKUsersCollection.find({}, {
-        "lesson_group": 1, "join": 1, "first_name": 1, "last_name": 1, "peer_id": 1, "_id": 0
+        "group": 1, "join": 1, "first_name": 1, "last_name": 1, "chat_id": 1, "_id": 0
     }).sort('join', 1))
     
     user_graphic = {}
@@ -47,19 +58,19 @@ async def get_statistics(authorize: AuthJWT = Depends()):
     user_count = 0
 
     for row in users:
-        less_grp = row['lesson_group'] if not row['lesson_group'] is None else 'Не задано'
+        less_grp = row['group'] if not row['group'] is None else 'Не задано'
         letter = less_grp[0]
-        if row['lesson_group'] == None:
+        if row['group'] == None:
             letter = 'Не задано'
         if letter in groups:
             groups[letter] += 1
         else:
             groups[letter] = 1
             
-        if row['lesson_group'] in groups_full:
-            groups_full[row['lesson_group']] += 1
+        if row['group'] in groups_full:
+            groups_full[row['group']] += 1
         else:
-            groups_full[row['lesson_group']] = 1
+            groups_full[row['group']] = 1
         
         user_count += 1
         day = datetime.utcfromtimestamp(int(row['join'])).strftime('%Y-%m-%d')

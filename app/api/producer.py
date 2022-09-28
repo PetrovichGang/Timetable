@@ -88,15 +88,11 @@ async def send_changes(start_date: date, end_date: date, groups: Optional[List[s
 async def get_social_ids(lesson_group: str) -> dict:
     social = {"VK": [], "TG": []}
     async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
-        vk_users = await client.get(f"{API_URL}/vk/users/{lesson_group}")
         vk_chats = await client.get(f"{API_URL}/vk/chats/{lesson_group}")
         tg_chats = await client.get(f"{API_URL}/tg/chats/{lesson_group}")
 
-        if vk_users.status_code == 200:
-            social["VK"].extend([user["peer_id"] for user in vk_users.json() if user["notify"]])
-
         if vk_chats.status_code == 200:
-            social["VK"].extend([chat["peer_id"] for chat in vk_chats.json()])
+            social["VK"].extend([chat["chat_id"] for chat in vk_chats.json() if chat["notify"]])
 
         if tg_chats.status_code == 200:
             social["TG"].extend([chat["chat_id"] for chat in tg_chats.json() if chat["notify"]])

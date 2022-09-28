@@ -24,10 +24,9 @@ class TimeTableDB:
         self.AdminDB = self._connection["AdminPanel"]
 
         self.SocialDB = self._connection["Social"]
-        self.VKGroupsCollection = self.SocialDB["VKGroups"]
         self.VKUsersCollection = self.SocialDB["VKUsers"]
 
-        self.TGChatsCollection = self.SocialDB["TGChats"]
+        self.TGChatsCollection = self.SocialDB["TGUsers"]
 
         self.AdminUsersCollection = self.AdminDB["Users"]
 
@@ -63,10 +62,9 @@ class TimeTableDB:
         self.CallsCollection = self.LessonsDB["Calls"]
 
         self.SocialDB = self._connection["Social"]
-        self.VKGroupsCollection = self.SocialDB["VKGroups"]
         self.VKUsersCollection = self.SocialDB["VKUsers"]
 
-        self.TGChatsCollection = self.SocialDB["TGChats"]
+        self.TGChatsCollection = self.SocialDB["TGUsers"]
 
         self.AdminDB = self._connection["AdminPanel"]
         self.AdminUsersCollection = self.AdminDB["Users"]
@@ -87,7 +85,7 @@ class TimeTableDB:
         return await TimeTableDB.async_iteration(cursor)
 
     @staticmethod
-    async def aggregate(collection: AsyncIOMotorCollection, *args, **kwargs) :
+    async def aggregate(collection: AsyncIOMotorCollection, *args, **kwargs):
         if not isinstance(collection, AsyncIOMotorCollection):
             raise
 
@@ -100,10 +98,31 @@ class TimeTableDB:
 
 
 if __name__ == '__main__':
+    from datetime import datetime
     from config import MONGODB_URL
 
     db = TimeTableDB(MONGODB_URL)
-    cursor = TimeTableDB.async_find(db.DLCollection, {})
+    cursor = TimeTableDB.async_find(db.CLCollection,
+                                    {
+                                        "$expr": {
+                                            "$and": [
+                                                {
+                                                    "$gte": [
+                                                        {"$dateFromString": {"dateString": "$Date",
+                                                                             "format": "%d.%m.%Y"}},
+                                                        datetime.strptime("28.08.2022", "%d.%m.%Y")
+                                                    ],
+                                                },
+                                                {
+                                                    "$lte": [
+                                                        {"$dateFromString": {"dateString": "$Date",
+                                                                             "format": "%d.%m.%Y"}},
+                                                        datetime.strptime("29.08.2022", "%d.%m.%Y")
+                                                    ],
+                                                },
+                                            ],
+                                        }
+                                    })
 
     loop = asyncio.get_event_loop()
     result = loop.run_until_complete(cursor)

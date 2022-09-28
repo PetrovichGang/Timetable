@@ -1,8 +1,7 @@
 from fastapi.security import HTTPBasicCredentials, HTTPBearer
-from fastapi import HTTPException, FastAPI, Depends
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from starlette.middleware.cors import CORSMiddleware
-from starlette.requests import Request
+from fastapi import HTTPException, FastAPI, Depends
 from starlette.responses import JSONResponse
 
 from .api import routerPublic, routerPrivate
@@ -34,6 +33,7 @@ def authjwt_exception_handler(_, exc: AuthJWTException):
         content={"detail": exc.message}
     )
 
+
 async def has_access(credentials: HTTPBasicCredentials = Depends(security)):
     token = credentials.credentials
     if token != API_TOKEN:
@@ -53,3 +53,4 @@ else:
         routerPrivate,
         dependencies=PROTECTED
     )
+
