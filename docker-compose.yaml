@@ -1,0 +1,67 @@
+version: "3.1"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    restart: always
+    env_file:
+      - .env
+    environment:
+      MONGODB_IP: mongodb
+      RABBITMQ_IP: rabbitmq
+      REDIS_HOST: redis
+    ports:
+      - 127.0.0.1:3000:3000
+    volumes:
+      - ./app/schedule:/api/app/schedule
+      - ./logs:/api/logs
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - redis
+  tg_bot:
+    build:
+      context: .
+      dockerfile: bots/tg.Dockerfile
+    restart: always
+    env_file:
+      - .env
+    environment:
+      MONGODB_IP: mongodb
+      RABBITMQ_IP: rabbitmq
+      TimeTable_API_IP: api
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - api
+  vk_bot:
+    build:
+      context: .
+      dockerfile: bots/vk.Dockerfile
+    restart: always
+    env_file:
+      - .env
+    environment:
+      MONGODB_IP: mongodb
+      RABBITMQ_IP: rabbitmq
+      TimeTable_API_IP: api
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - api
+  mongodb:
+    image: mongo:6.0.1
+    restart: always
+    volumes:
+      - ./data/mongo:/data/db
+    ports:
+      - 27017:27017
+  rabbitmq:
+    image: rabbitmq:3.11.0-alpine
+    restart: always
+  redis:
+    image: redis:alpine3.16
+    restart: always
+

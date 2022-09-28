@@ -1,0 +1,9 @@
+environs==9.5.0
+httpx==0.23.0
+loguru~=0.5.3
+aiogram==2.22.1
+vkbottle==4.3.9
+pytz==2021.1
+aio-pika==6.8.0
+beanie==1.11.9
+dependency-injector==4.40.0
