@@ -124,23 +124,25 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     lesson_days = await TimeTableDB.async_find(
-        db.CLCollection, {
-            "$expr": {"$and": [
-                {
-                    "$gte": [
-                        {"$dateFromString": {"dateString": "$Date",
-                                             "format": "%d.%m.%Y"}},
-                        datetime.fromisocalendar(*start_date.isocalendar())
-                    ],
-                },
-                {
-                    "$lte": [
-                        {"$dateFromString": {"dateString": "$Date",
-                                             "format": "%d.%m.%Y"}},
-                        datetime.fromisocalendar(*end_date.isocalendar())
-                    ],
-                },
-            ],
+        db.CLCollection,
+        {
+            "$expr": {
+                "$and": [
+                    {
+                        "$gte": [
+                            {"$dateFromString": {"dateString": "$Date",
+                                                 "format": "%d.%m.%Y"}},
+                            datetime.fromisocalendar(*start_date.isocalendar())
+                        ],
+                    },
+                    {
+                        "$lte": [
+                            {"$dateFromString": {"dateString": "$Date",
+                                                 "format": "%d.%m.%Y"}},
+                            datetime.fromisocalendar(*end_date.isocalendar())
+                        ],
+                    },
+                ],
             }
         },
         {"_id": 0, "Date": 1, "Lessons": f"$Groups.{group}"})
