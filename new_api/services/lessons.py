@@ -88,10 +88,10 @@ class DefaultLessonsService:
         exclude_lessons_number = [
             lesson.number for lesson in _default_lessons if lesson.week_type == WeekdayType.ODD
         ]
-        for lesson in _default_lessons:
-            if lesson.week_type in (WeekdayType.EVEN, None) and lesson.number in exclude_lessons_number:
-                del lesson
-        return _default_lessons
+        return [
+            lesson for lesson in _default_lessons
+            if lesson.number not in exclude_lessons_number or lesson.week_type is WeekdayType.ODD
+        ]
 
 
 class ChangeLessonsService:

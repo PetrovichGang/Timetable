@@ -72,5 +72,5 @@ class BaseRepository(BaseRepositoryProtocol, Generic[M, S]):
         if specification is None:
             result = await self.model.find_all().to_list()
         else:
-            result = await self.model.find_all(specification.expression()).to_list()
+            result = await self.model.find(specification.expression()).to_list()
         return parse_obj_as(List[S], result)

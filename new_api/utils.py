@@ -10,7 +10,7 @@ class Weekday:
         self.date = date
         self.name: DayOfWeek = DayOfWeek(date.strftime("%A"))
         _, self.number, self._day_of_week = date.isocalendar()
-        self.type: WeekdayType = WeekdayType(self._day_of_week % 2)
+        self.type: WeekdayType = WeekdayType(self.number % 2)
 
     def __repr__(self):
         return f"Date: {self.date}, {self.name.value.title()}, {self.number}, {self.type}"
