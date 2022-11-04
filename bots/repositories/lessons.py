@@ -1,13 +1,9 @@
 from datetime import datetime, timedelta
 from typing import List, Optional
-from loguru import logger
 
-from vkbottle import CtxStorage
 import httpx
 
 from config import TIMEZONE, API_URL, AUTH_HEADER
-
-dummy_db = CtxStorage()
 
 
 class LessonRepository:
@@ -15,12 +11,9 @@ class LessonRepository:
         try:
             async with httpx.AsyncClient(headers=AUTH_HEADER) as client:
                 response = await client.request(method, url, **kwargs)
-                dummy_db.set((url, method), response)
                 return response
         except:
-            logger.error(f"Backend api down. Trying use cache for {url}")
-            response = dummy_db.get((url, method))
-            return response or httpx.Response(status_code=500)
+            return httpx.Response(status_code=500)
 
     async def get_study_groups(self) -> Optional[List[str]]:
         request = await self._request(f"{API_URL}/groups")
