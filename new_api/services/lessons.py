@@ -132,13 +132,16 @@ class ChangeLessonsService:
     @staticmethod
     def _processing_skip_lessons(lessons: List[Lesson], changes_list: ChangesList) -> List[Lesson]:
         result = []
+        exists_number = set()
         for lesson in lessons:
             if lesson.number in changes_list.skip:
-                result.append(
-                    Lesson(number=lesson.number)
-                )
+                if lesson.number not in exists_number:
+                    result.append(
+                        Lesson(number=lesson.number)
+                    )
             else:
                 result.append(lesson)
+            exists_number.add(lesson.number)
         return result
 
     @staticmethod
@@ -176,7 +179,7 @@ class CompleteLessonsService:
             changes = change_lessons.get(date, None)
             result.append(
                 {
-                    "date": date,
+                    "date": date.to_pydatetime(),
                     "lessons": self._changes_service.processing_change_lessons_with_default(
                         default, changes
                     ) if changes else default

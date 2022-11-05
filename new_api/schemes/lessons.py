@@ -12,7 +12,7 @@ class Lesson(BaseModel):
     number: conint(ge=0)
     teacher: Optional[str]
     cabinet: Optional[str]
-    week_type: Optional[WeekdayType] = Field(None, alias="weekType")
+    week_type: Optional[WeekdayType] = Field(WeekdayType.EVEN, alias="weekType")
 
     class Config:
         allow_population_by_field_name = True
