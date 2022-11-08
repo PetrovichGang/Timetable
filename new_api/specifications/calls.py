@@ -3,7 +3,7 @@ from typing import Optional
 
 from new_api.specifications.base import SpecificationProtocol, OR
 from new_api.schemes.enums import PeriodicityType
-from new_api.schemes.call import CallsScheme
+from new_api.schemes.calls import CallsScheme
 from new_api.utils import Weekday
 
 
