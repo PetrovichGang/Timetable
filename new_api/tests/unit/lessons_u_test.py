@@ -89,26 +89,27 @@ def test_get_default_lessons_by_week_type(container, weekday, default_lessons, e
 ])
 async def test_get_complete_lessons_for_group(container, default_lessons, changes_lessons, expected):
     """Unit-Тестирование CompleteLessonsService.get_complete_lessons_for_group"""
-    default_service = mock.AsyncMock()
-    default_service.get_lessons_for_group.return_value = default_lessons
-    default_service.get_lessons_for_day = mock.Mock(
+    default_service_mock = mock.AsyncMock()
+    default_service_mock.get_lessons_for_group.return_value = default_lessons
+    default_service_mock.get_lessons_for_day = mock.Mock(
         side_effect=DefaultLessonsService.get_lessons_for_day
     )
 
-    changes_service = mock.AsyncMock()
-    changes_service.get_changes_for_group.return_value = changes_lessons
-    changes_service.processing_change_lessons_with_default = mock.Mock(
+    changes_service_mock = mock.AsyncMock()
+    changes_service_mock.get_changes_for_group.return_value = changes_lessons
+    changes_service_mock.processing_change_lessons_with_default = mock.Mock(
         side_effect=ChangeLessonsService.processing_change_lessons_with_default
     )
 
-    with container.default_lessons_service.override(default_service), \
-            container.change_lessons_service.override(changes_service):
+    with container.default_lessons_service.override(default_service_mock), \
+            container.change_lessons_service.override(changes_service_mock):
         start_at = datetime(2022, 10, 29)
         finish_at = datetime(2022, 11, 2)
         data = await container.complete_lessons_service().get_complete_lessons_for_group(
             "Бедные первокурсники", start_at, finish_at
         )
 
+    assert len(data) == len(expected)
     for actually, expect in zip(data, expected):
         actually.lessons.sort(key=attrgetter("number"))
         assert actually == expect, f"""
@@ -117,3 +118,5 @@ async def test_get_complete_lessons_for_group(container, default_lessons, change
         Expected lessons count: {len(expect.lessons)}
         Actually lessons count: {len(actually.lessons)}
         """
+
+

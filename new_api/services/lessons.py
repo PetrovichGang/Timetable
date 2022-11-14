@@ -43,7 +43,7 @@ class DefaultLessonsService:
         """Получение учебных групп по специальности"""
         return await self._repository.get_groups_by_spec(spec)
 
-    async def get_lessons_for_group(self, group: str) -> DefaultLessonsScheme:
+    async def get_lessons_for_group(self, group: str) -> Optional[DefaultLessonsScheme]:
         """Получение стандартного расписания"""
         return await self._repository.get_lessons_for_group(group)
 

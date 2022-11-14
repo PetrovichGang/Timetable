@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta, time, date
-from operator import itemgetter
+from datetime import datetime, timedelta, time
+from operator import attrgetter
 from itertools import groupby
 from typing import Optional
 
@@ -27,7 +27,7 @@ class CallsService:
             )
         )
         calls_by_periodicity = {
-            key: list(value)[0] for key, value in groupby(calls, itemgetter("periodicity"))
+            key: list(value)[0] for key, value in groupby(calls, attrgetter("periodicity"))
         }
         if value := calls_by_periodicity.get(PeriodicityType.ONCE):
             result = value
@@ -35,15 +35,15 @@ class CallsService:
             result = value
         else:
             result = await self._repository.get_or_none(CallsForEverydaySpecification())
-        return self._process_calls(result) if result else None
+        return self._process_calls(result, weekday) if result else None
 
     @staticmethod
     def _timedelta_to_time(delta: timedelta) -> time:
         return (datetime.fromtimestamp(delta.total_seconds()) - timedelta(hours=3)).time()
 
-    def _process_calls(self, data: CallsScheme) -> Calls:
+    def _process_calls(self, data: CallsScheme, weekday: Weekday) -> Calls:
         result = Calls(
-            weekday=DayOfWeek(data.weekday if data.weekday else date.today().strftime("%A")),
+            weekday=DayOfWeek(weekday.name),
             calls=[]
         )
         start_at = data.start_at
