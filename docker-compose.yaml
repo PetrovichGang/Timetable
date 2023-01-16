@@ -21,6 +21,11 @@ services:
       - mongodb
       - rabbitmq
       - redis
+    deploy:
+      resources:
+        limits:
+          memory: 150M
+
   tg_bot:
     build:
       context: .
@@ -36,6 +41,11 @@ services:
       - ./logs:/app/logs
     depends_on:
       - api
+    deploy:
+      resources:
+        limits:
+          memory: 150M
+
   vk_bot:
     build:
       context: .
@@ -51,6 +61,11 @@ services:
       - ./logs:/app/logs
     depends_on:
       - api
+    deploy:
+      resources:
+        limits:
+          memory: 150M
+
   mongodb:
     image: mongo:6.0.1
     restart: always

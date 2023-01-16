@@ -8,10 +8,10 @@ from pydantic import ValidationError
 from starlette import status
 
 from databases.models import ChangeModel, DAYS_MONGA_SELECTOR, DAYS_RU
+from config import TIMEZONE, API_REVERSE_WEEK
 from ..utils import caching, db, TimeTableDB
 from app.parser import start_parse_changes
 from app.api.producer import send_changes
-from config import TIMEZONE
 from app import templates
 
 routerPublicChanges = APIRouter(prefix="/api/changes")
@@ -165,8 +165,8 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
         lessons = dict()
         if default_lessons[0]:
             lessons = default_lessons[0]["Lessons"]["a"]
-
-            if week_number % 2 == 1 and "b" in default_lessons[0]["Lessons"].keys():
+            is_week_odd = not (week_number % 2 == 1) if API_REVERSE_WEEK else week_number % 2 == 1
+            if is_week_odd and "b" in default_lessons[0]["Lessons"].keys():
                 lessons.update(default_lessons[0]["Lessons"]["b"])
 
         if len(lesson_day) > 1:
@@ -195,7 +195,7 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
 
         # переопределение звонков
         custom_calls = await TimeTableDB.async_find(db.CallsCollection, {"Date": lesson_day.get("Date")}, {"_id": 0})
-        has_class_hour = custom_calls[0]["ClassHour"] if custom_calls else weekday == 2
+        has_class_hour = custom_calls[0]["ClassHour"] if custom_calls else weekday in (1, 2)
 
         calls = None
         calls_edited_indicator = ""
@@ -214,10 +214,10 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
                 "p3": "13:05 - 14:35",
                 "p4": "14:45 - 16:15"
             }.items()
-            if weekday != 2:
+            if weekday not in (1, 2):
                 calls_edited_indicator = " (✏️)"
 
-        ch_edited_indicator = " (✏️)" if custom_calls and weekday != 2 else ""
+        ch_edited_indicator = " (✏️)" if custom_calls and weekday not in (1, 2) else ""
 
         if html:
             result[_schedule["Date"]] = re.sub(
@@ -231,7 +231,7 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
                     Calls=calls,
                     CallsEditedIndicator=calls_edited_indicator,
                     CHEditedIndicator=ch_edited_indicator,
-                    NoClassHour=weekday == 2 and not has_class_hour
+                    NoClassHour=weekday in (1, 2) and not has_class_hour
                 ))
 
         elif text:
@@ -244,7 +244,7 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
                 Calls=calls,
                 CallsEditedIndicator=calls_edited_indicator,
                 CHEditedIndicator=ch_edited_indicator,
-                NoClassHour=weekday == 2 and not has_class_hour
+                NoClassHour=weekday in (1, 2) and not has_class_hour
             )
 
     lesson_days = []
