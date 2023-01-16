@@ -1,4 +1,5 @@
 camelot-py[cv]==0.10.1
+PyPDF2==1.28.4
 xlrd==2.0.1
 environs==9.5.0
 httpx==0.23.0
