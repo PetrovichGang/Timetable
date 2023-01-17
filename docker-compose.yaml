@@ -24,7 +24,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 150M
+          memory: 250M
 
   tg_bot:
     build:
