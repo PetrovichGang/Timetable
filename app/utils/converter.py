@@ -19,7 +19,7 @@ converter_instructions = {
         'pages': {"start": 0, "end": -1},
         'type': 'image',
         'format': 'jpg',
-        'dpi': 144
+        'dpi': 300
     }
 }
 
