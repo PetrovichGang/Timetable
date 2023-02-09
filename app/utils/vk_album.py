@@ -52,7 +52,7 @@ def upload_images(images_path: Iterable[Path], group_id: int = VK_GROUP_ID, albu
     """Загружает максимум 5 фотографий в альбом и возвращает ссылки на них"""
     upload_url = _get_upload_server(group_id, album_id)
     if upload_url is None:
-        return None
+        return []
 
     files = {}
     for i, file_source in enumerate(images_path):
@@ -74,7 +74,7 @@ def upload_images(images_path: Iterable[Path], group_id: int = VK_GROUP_ID, albu
     data = res.json()
     if data.get("error"):
         logger.error(f"VK image uploader: {res} {data}")
-        return None
+        return []
 
     photos = data["response"]
 
