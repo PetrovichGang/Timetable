@@ -116,7 +116,8 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
     template = lambda: {
         "Date": "",
         "Lessons": {f"p{num}": "Нет" for num in range(1, 4)},
-        "Comments": []
+        "Comments": [],
+        "Images": []
     }
 
     groups = await db.get_groups()
@@ -145,7 +146,7 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
                 ],
             }
         },
-        {"_id": 0, "Date": 1, "Lessons": f"$Groups.{group}"})
+        {"_id": 0, "Date": 1, "Lessons": f"$Groups.{group}", "Images": 1})
 
     for lesson_day in lesson_days:
         day = datetime.strptime(lesson_day.get("Date"), "%d.%m.%Y")
@@ -169,7 +170,7 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
             if is_week_odd and "b" in default_lessons[0]["Lessons"].keys():
                 lessons.update(default_lessons[0]["Lessons"]["b"])
 
-        if len(lesson_day) > 1:
+        if changes:
             if changes["ChangeLessons"]:
                 for p in changes["ChangeLessons"]:  # перемещает препода на вторую строку
                     changes["ChangeLessons"][p] = re.sub(' (([А-Я][а-я]+)(?!.*[А-Я][а-я]+) [А-Я](.|. )[А-Я](.|))',
@@ -220,9 +221,26 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
         ch_edited_indicator = " (✏️)" if custom_calls and weekday not in (1, 2) else ""
 
         if html:
-            result[_schedule["Date"]] = re.sub(
-                r'(<code>   <\/code>)(.*)', '\\1<i>\\2</i>',
-                templates.schedule_markdown.render(
+            result[_schedule["Date"]] = {
+                "text": re.sub(
+                    r'(<code>   <\/code>)(.*)', '\\1<i>\\2</i>',
+                    templates.schedule_markdown.render(
+                        Day=DAYS_RU[weekday_name][1],
+                        Date=_schedule["Date"],
+                        Lessons=enumerate(_schedule["Lessons"].values(), 1),
+                        Comments=_schedule["Comments"],
+                        ClassHour=has_class_hour,
+                        Calls=calls,
+                        CallsEditedIndicator=calls_edited_indicator,
+                        CHEditedIndicator=ch_edited_indicator,
+                        NoClassHour=weekday in (1, 2) and not has_class_hour
+                    )),
+                "images": lesson_day.get("Images", [])
+            }
+
+        elif text:
+            result[_schedule["Date"]] = {
+                "text": templates.schedule.render(
                     Day=DAYS_RU[weekday_name][1],
                     Date=_schedule["Date"],
                     Lessons=enumerate(_schedule["Lessons"].values(), 1),
@@ -232,20 +250,9 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
                     CallsEditedIndicator=calls_edited_indicator,
                     CHEditedIndicator=ch_edited_indicator,
                     NoClassHour=weekday in (1, 2) and not has_class_hour
-                ))
-
-        elif text:
-            result[_schedule["Date"]] = templates.schedule.render(
-                Day=DAYS_RU[weekday_name][1],
-                Date=_schedule["Date"],
-                Lessons=enumerate(_schedule["Lessons"].values(), 1),
-                Comments=_schedule["Comments"],
-                ClassHour=has_class_hour,
-                Calls=calls,
-                CallsEditedIndicator=calls_edited_indicator,
-                CHEditedIndicator=ch_edited_indicator,
-                NoClassHour=weekday in (1, 2) and not has_class_hour
-            )
+                ),
+                "images": lesson_day.get("Images", [])
+            }
 
     lesson_days = []
     for key in sorted(result, key=lambda x: datetime.strptime(x, "%d.%m.%Y")):

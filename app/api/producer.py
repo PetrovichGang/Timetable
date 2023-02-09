@@ -2,6 +2,7 @@ from datetime import date, datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, Query, HTTPException
+from pydantic import AnyHttpUrl
 from starlette import status
 import httpx
 
@@ -23,9 +24,10 @@ producer = Producer("Bots message")
 async def send_message(
         routing_key: SocialsEnum = Query(SocialsEnum.vk, description="VK или TG"),
         recipient_ids: List[int] = Query(..., description="Id получателей"),
-        text: List[str] = Query(..., description="Сообщения")
+        text: str = Query(..., description="Сообщение"),
+        images: List[AnyHttpUrl] = Query(default=[], description="Сообщение")
 ):
-    message = Message(routing_key=routing_key.value, recipient_ids=recipient_ids, text=text)
+    message = Message(routing_key=routing_key.value, recipient_ids=recipient_ids, lessons=[{"text": text, "images": images}])
     await producer.send_message(message.json(), routing_key.value)
 
 
@@ -79,9 +81,13 @@ async def send_changes(start_date: date, end_date: date, groups: Optional[List[s
                         f"&end_date={end_date}")
 
                     if lessons.status_code == 200:
+                        data = lessons.json()
                         message = Message.parse_obj(
-                            {"routing_key": social_name, "recipient_ids": social_ids[social_name],
-                             "text": lessons.json()})
+                            {
+                                "routing_key": social_name,
+                                "recipient_ids": social_ids[social_name],
+                                "lessons": data
+                            })
                         await client.post(f"{API_URL}/producer/send_message", json=message.dict())
 
 

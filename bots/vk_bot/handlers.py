@@ -2,9 +2,9 @@ from typing import Union
 
 from vkbottle_types.events.enums.group_events import GroupEventType
 from vkbottle_types.events.bot_events import MessageEvent
-import bots.vk_bot.keyboards as keyboards
 from dependency_injector.wiring import Provide, inject
 from vkbottle.bot import Blueprint, Message
+import bots.vk_bot.keyboards as keyboards
 
 from config import API_URL, AUTH_HEADER, VK_ADMINS_ID, VK_ID_UNHANDLED
 from bots.services import LessonsService, VKUserServices
@@ -23,8 +23,8 @@ class MessageEventX(MessageEvent):  # MessageEvent, совместимый с Me
     @property
     def peer_id(self): return self.object.peer_id
 
-    async def answer(self, message: str, keyboard: str = None):
-        await bp.api.messages.send(random_id=0, message=message, peer_id=self.object.peer_id, keyboard=keyboard)
+    async def answer(self, message: str, keyboard: str = None, **kwargs):
+        await bp.api.messages.send(random_id=0, message=message, peer_id=self.object.peer_id, keyboard=keyboard, **kwargs)
 
 
 MessageEvent = MessageEventX
@@ -129,8 +129,9 @@ async def c_changes(
         return
 
     changes = await lessons_service.get_changes_timetable(user.group)
-    for lessons in changes:
-        await message.answer(lessons)
+    for change_block in changes:
+        images = [image.replace("https://vk.com/", "") for image in change_block.images]
+        await message.answer(change_block.text, attachment=",".join(images))
 
 
 @bp.on.message(text=["/notify", "/n", "/у"])

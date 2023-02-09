@@ -6,6 +6,7 @@ from loguru import logger
 from vkbottle import Bot
 
 from databases.rabbitmq import Consumer, RoutingKey, Message
+from bots.schemes.lessons import ChangeBlock
 
 
 @logger.catch
@@ -13,12 +14,15 @@ async def on_vk_message(message: IncomingMessage, bot: Bot):
     message_body: Message = Message.parse_raw(message.body)
 
     if message.routing_key == "VK":
-        for text in message_body.text:
+        for change_block in message_body.lessons:
+            change_block = ChangeBlock.parse_obj(change_block)
+            images = [image.replace("https://vk.com/", "") for image in change_block.images]
             if len(message_body.recipient_ids) < 100:
                 try:
                     await bot.api.messages.send(
-                        message=text,
+                        message=change_block.text,
                         peer_ids=message_body.recipient_ids,
+                        attachment=",".join(images),
                         random_id=0
                     )
                 except Exception as ex:
@@ -29,8 +33,9 @@ async def on_vk_message(message: IncomingMessage, bot: Bot):
                     step *= 100
                     try:
                         await bot.api.messages.send(
-                            message=text,
+                            message=change_block.text,
                             peer_ids=message_body.recipient_ids[step:step + 100],
+                            attachment=",".join(images),
                             random_id=0
                         )
                     except Exception as ex:

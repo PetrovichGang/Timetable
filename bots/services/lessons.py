@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from bots.repositories import LessonRepository
+from bots.schemes.lessons import ChangeBlock
 from bots.utils.strings import strings
 
 
@@ -23,9 +24,9 @@ class LessonsService:
             return [strings.error.ise]
         return timetable
 
-    async def get_changes_timetable(self, group: str, html=False) -> List[str]:
+    async def get_changes_timetable(self, group: str, html=False) -> List[ChangeBlock]:
         changes = await self.repository.get_changes_timetable(group, html)
         if not changes:
-            return [strings.error.ise]
+            return [ChangeBlock(text=strings.error.ise)]
         return changes
 

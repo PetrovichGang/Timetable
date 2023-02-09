@@ -4,7 +4,7 @@ from datetime import datetime
 from time import time
 from enum import Enum
 
-from pydantic import BaseModel, validator, Field
+from pydantic import BaseModel, validator, Field, AnyHttpUrl
 
 DAYS_MONGA_SELECTOR = {
     "MON": "$Days.MON",
@@ -51,6 +51,7 @@ class ChangeList(BaseModel):
 class ChangeModel(BaseModel):
     date: datetime = Field(alias="Date")
     groups: Dict[str, ChangeList] = Field(alias="Groups")
+    images: Optional[List[AnyHttpUrl]] = Field(default=list, alias="Images")
 
     @validator('date', pre=True)
     def parse_date(cls, v):

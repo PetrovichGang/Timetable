@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
 from typing import List, Optional
 
+from pydantic import parse_obj_as
 import httpx
 
 from config import TIMEZONE, API_URL, AUTH_HEADER
+from bots.schemes.lessons import ChangeBlock
 
 
 class LessonRepository:
@@ -28,7 +30,7 @@ class LessonRepository:
             return result.json()
         return []
 
-    async def get_changes_timetable(self, group: str, html=False) -> Optional[List[str]]:
+    async def get_changes_timetable(self, group: str, html=False) -> Optional[List[ChangeBlock]]:
         start_date = datetime.now(TIMEZONE).strftime("%Y-%m-%d")
         end_date = (datetime.now(TIMEZONE) + timedelta(days=7)).strftime("%Y-%m-%d")
         result = await self._request(
@@ -37,5 +39,5 @@ class LessonRepository:
             f"&start_date={start_date}&end_date={end_date}"
         )
         if result.status_code == 200:
-            return result.json()
+            return parse_obj_as(List[ChangeBlock], result.json())
         return []

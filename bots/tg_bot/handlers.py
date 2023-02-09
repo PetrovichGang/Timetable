@@ -86,9 +86,19 @@ async def changes(
         lessons_service: LessonsService = Provide[Container.lessons_service]
 ):
     user = await tg_user_service.get_user_or_create(message.chat.id)
-    timetable = await lessons_service.get_changes_timetable(user.group, html=True)
-    for lessons in timetable:
-        await message.answer(lessons, parse_mode=types.ParseMode.HTML)
+    changes = await lessons_service.get_changes_timetable(user.group, html=True)
+    for change_block in changes:
+        if len(change_block.images) >= 2:
+            media = types.MediaGroup()
+            media.attach_photo(change_block.images[0], change_block.text, parse_mode=types.ParseMode.HTML)
+            [media.attach_photo(image) for image in change_block.images[1:]]
+            await message.answer_media_group(media)
+
+        elif len(change_block.images) == 1:
+            await message.answer_photo(change_block.images[0], change_block.text, parse_mode=types.ParseMode.HTML)
+
+        else:
+            await message.answer(change_block.text, parse_mode=types.ParseMode.HTML)
 
 
 @dp.message_handler(regexp=f"^{strings.button.timetable}$")

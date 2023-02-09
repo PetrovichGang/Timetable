@@ -1,6 +1,7 @@
+from typing import Union, Optional, Iterable
 from datetime import datetime
+from zipfile import ZipFile
 from pathlib import Path
-from typing import Union
 import json
 import re
 
@@ -10,9 +11,12 @@ import camelot
 import httpx
 
 from config import API_URL, Schedule_URL, AUTH_HEADER, CWD
+from app.utils.converter import convert_pdf_to_jpg
+from app.utils.etc import create_dir_if_not_exists
+from app.utils.vk_album import upload_images
 
 URL = Schedule_URL
-
+SCHEDULE_PATH = Path(CWD, "schedule")
 cleanup_regex = re.compile(r"^(ОУД|ОП|ОГСЭ|ЕН)(\.| )[0-9]{1,3}(\.[0-9]{1,3}|) ", re.MULTILINE)
 
 
@@ -38,12 +42,8 @@ def get_schedule_links(url: str = URL) -> list:
 def download_schedule(download_info: dict) -> None:
     file_name = download_info["filename"]
     url = download_info["url"]
-    path = Path(CWD, "schedule")
-    if not path.exists():
-        path.mkdir()
-        path.chmod(777)
-
-    final_file_path = Path(path, file_name)
+    create_dir_if_not_exists(SCHEDULE_PATH)
+    final_file_path = Path(SCHEDULE_PATH, file_name)
 
     if not final_file_path.exists():
         logger.info(f"Downloading: {url}")
@@ -55,8 +55,7 @@ def download_schedule(download_info: dict) -> None:
 
 
 def clear_schedule_dir():
-    path = Path(CWD, "schedule")
-    for file in path.glob("*.*"):
+    for file in SCHEDULE_PATH.glob("*.*"):
         file.unlink()
 
 
@@ -77,11 +76,11 @@ def parse_lessons(tables: TableList) -> dict:
         rows_count = table.df.shape[0]
         for row_index in range(1, rows_count):
             template = {
-                    "ChangeLessons": {},
-                    "DefaultLessons": [],
-                    "SkipLessons": [],
-                    "Comments": []
-                }
+                "ChangeLessons": {},
+                "DefaultLessons": [],
+                "SkipLessons": [],
+                "Comments": []
+            }
             data = table.df.iloc[row_index]
             group = data[0]
 
@@ -92,7 +91,7 @@ def parse_lessons(tables: TableList) -> dict:
                 data[1] = concat_group_and_lesson[1]
 
             lessons = {f"p{index}": lesson for index,
-                lesson in enumerate(data[1:], 1)}
+                                               lesson in enumerate(data[1:], 1)}
 
             for index, lesson in lessons.items():
                 if "расписани" in lesson.lower():
@@ -124,10 +123,24 @@ def start(clear_dir: bool = False):
         download_schedule(link)
 
     httpx.delete(f"{API_URL}/changes", headers=AUTH_HEADER)
-    for pdf in filter(lambda data: datetime.strptime(data.name.rsplit(".", 1)[0], "%d.%m.%Y") >= today,
-                      Path(CWD, "schedule").glob("*.pdf")):
+    for pdf in filter(
+            lambda data: datetime.strptime(data.name.rsplit(".", 1)[0], "%d.%m.%Y") >= today,
+            SCHEDULE_PATH.glob("*.pdf")
+    ):
         data_frame = extract_table_from_pdf(pdf)
-        data = json.dumps({"Date": pdf.name.rsplit(".", 1)[0], "Groups": parse_lessons(data_frame)}, ensure_ascii=False)
+        images_path = convert_pdf_to_jpg(pdf, output_dir=SCHEDULE_PATH, is_multipage=data_frame.n > 1)
+
+        try:
+            lessons = parse_lessons(data_frame)
+        except Exception as ex:
+            logger.error(f"Changes parser: {ex}")
+            lessons = []
+        
+        data = json.dumps({
+            "Date": pdf.name.rsplit(".", 1)[0],
+            "Groups": lessons,
+            "Images": upload_images(images_path) if images_path else []
+        }, ensure_ascii=False)
         httpx.post(f"{API_URL}/changes", json=data, headers=AUTH_HEADER)
 
     if clear_dir:
@@ -135,15 +148,16 @@ def start(clear_dir: bool = False):
 
 
 if __name__ == '__main__':
-    # start()
-    from pprint import pprint
-    today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
-    for link in get_schedule_links():
-        download_schedule(link)
-
-    for pdf in filter(lambda data: datetime.strptime(data.name.rsplit(".", 1)[0], "%d.%m.%Y") > today,
-                      Path(CWD, "schedule").glob("*.pdf")):
-        data_frame = extract_table_from_pdf(pdf)
-        data = parse_lessons(data_frame)
-        print(len(data), pdf.name)
-        pprint(data)
+    start()
+    # from pprint import pprint
+    # for link in get_schedule_links():
+    #     download_schedule(link)
+    #
+    # today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
+    # for pdf in filter(lambda data: datetime.strptime(data.name.rsplit(".", 1)[0], "%d.%m.%Y") > today, SCHEDULE_PATH.glob("*.pdf")):
+    #     data_frame = extract_table_from_pdf(pdf)
+    #     data = json.dumps({"Date": pdf.name.rsplit(".", 1)[0], "Groups": parse_lessons(data_frame)}, ensure_ascii=False)
+    #     httpx.post(f"{API_URL}/changes", json=data, headers=AUTH_HEADER)
+    #     # data = parse_lessons(data_frame)
+    #     # print(len(data), pdf.name)
+    #     # pprint(data)

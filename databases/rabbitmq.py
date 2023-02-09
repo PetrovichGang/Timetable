@@ -1,6 +1,6 @@
 from config import RABBITMQ_ENABLE, RABBITMQ_URL, RABBITMQ_PORT
 from typing import List, Callable, Union, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, AnyHttpUrl
 from aio_pika import IncomingMessage
 import aio_pika
 import asyncio
@@ -18,8 +18,7 @@ class Message(BaseModel):
     routing_key: str = Field(alias="routing_key")
     recipient_ids: List[int] = Field(alias="recipient_ids")
 
-    text: List[str] = Field(alias="text")
-    images_url: Optional[List[str]] = Field(alias="images_url")
+    lessons: List[dict]
 
 
 class RabbitModel:
