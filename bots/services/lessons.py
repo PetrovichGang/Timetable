@@ -27,6 +27,6 @@ class LessonsService:
     async def get_changes_timetable(self, group: str, html=False) -> List[ChangeBlock]:
         changes = await self.repository.get_changes_timetable(group, html)
         if not changes:
-            return [ChangeBlock(text=strings.error.ise)]
+            return [ChangeBlock(text=strings.error.ise, images=[])]
         return changes
 
