@@ -51,7 +51,7 @@ class ChangeList(BaseModel):
 class ChangeModel(BaseModel):
     date: datetime = Field(alias="Date")
     groups: Dict[str, ChangeList] = Field(alias="Groups")
-    images: Optional[List[AnyHttpUrl]] = Field(default=list, alias="Images")
+    images: List[AnyHttpUrl] = Field(default=[], alias="Images")
 
     @validator('date', pre=True)
     def parse_date(cls, v):
