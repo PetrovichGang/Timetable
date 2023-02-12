@@ -1,6 +1,6 @@
+from datetime import datetime, date as date_
 from typing import Dict, List, Optional
 from typing_extensions import TypedDict
-from datetime import datetime
 from time import time
 from enum import Enum
 
@@ -49,15 +49,21 @@ class ChangeList(BaseModel):
 
 
 class ChangeModel(BaseModel):
-    date: datetime = Field(alias="Date")
+    date: date_ = Field(alias="Date")
     groups: Dict[str, ChangeList] = Field(alias="Groups")
     images: List[AnyHttpUrl] = Field(default=[], alias="Images")
+    md5: str = Field(..., alias="MD5")
 
     @validator('date', pre=True)
     def parse_date(cls, v):
         if isinstance(v, str):
-            return datetime.strptime(v, "%d.%m.%Y")
+            return datetime.strptime(v, "%d.%m.%Y").date()
         return v
+
+    class Config:
+        json_encoders = {
+            date_: lambda value: value.strftime('%d.%m.%Y')
+        }
 
 
 class GroupNames(str, Enum):

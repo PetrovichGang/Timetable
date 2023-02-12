@@ -21,8 +21,16 @@ routerPrivateChanges = APIRouter(prefix="/api/changes")
 @routerPublicChanges.get("",
                          summary="Получение всех изменений в расписании",
                          tags=["Изменения в расписание"])
-async def get_changes():
-    content = await TimeTableDB.async_find(db.CLCollection, {}, {"_id": 0})
+async def get_changes(
+        date_: str = Query(None, description="Принимается дата в формате %d.%m.%Y (11.11.2011)", alias="date"),
+        md5: str = Query(None, description="hash файла расписания")
+):
+    if date_:
+        content = await TimeTableDB.async_find(db.CLCollection, {"Date": date_}, {"_id": 0})
+    elif md5:
+        content = await TimeTableDB.async_find(db.CLCollection, {"MD5": md5}, {"_id": 0})
+    else:
+        content = await TimeTableDB.async_find(db.CLCollection, {}, {"_id": 0})
 
     if content:
         return JSONResponse(content, status_code=status.HTTP_200_OK)
@@ -69,33 +77,28 @@ async def change_group(group: str = Query(..., description="Любая учеб�
 @routerPrivateChanges.post("",
                            summary="Загрузка в базу данных новых изменений в расписании",
                            tags=["Изменения в расписание"])
-async def upload_new_changes(request: Request):
-    data = await request.json()
+async def upload_new_changes(change: ChangeModel):
+    try:
+        data = json.loads(change.json(by_alias=True))
 
-    if data:
-        data = json.loads(data)
-        try:
-            data = ChangeModel.parse_obj(data)
-            data.date = data.date.strftime("%d.%m.%Y")
-            data = json.loads(data.json(by_alias=True))
+        await db.CLCollection.insert_one(data)
 
-            await db.CLCollection.insert_one(data)
+    except ValidationError as e:
+        return Response(e.json(), status_code=status.HTTP_400_BAD_REQUEST)
 
-        except ValidationError as e:
-            return Response(e.json(), status_code=status.HTTP_400_BAD_REQUEST)
-
-        return Response("Запись добавлена", status_code=status.HTTP_200_OK)
-    return Response(status_code=status.HTTP_400_BAD_REQUEST)
+    return Response("Запись добавлена", status_code=status.HTTP_200_OK)
 
 
 @routerPrivateChanges.delete("",
                              summary="Удаление всех или определенного изменения в расписании",
                              tags=["Изменения в расписание"])
-async def delete_changes(date: str = Query(None, description="Принимается дата в формате %d.%m.%Y (11.11.2011)")):
-    if date is None:
+async def delete_changes(
+        date_: str = Query(None, description="Принимается дата в формате %d.%m.%Y (11.11.2011)", alias="date")
+):
+    if date_ is None:
         content = await db.CLCollection.delete_many({})
     else:
-        content = await db.CLCollection.delete_one({"Date": {"$eq": date}})
+        content = await db.CLCollection.delete_one({"Date": {"$eq": date_}})
 
     if content.deleted_count > 0:
         return Response(f"Удаленно записей: {content.deleted_count}", status_code=status.HTTP_200_OK)

@@ -1,18 +1,18 @@
-from typing import Union, Optional, Iterable
+from dataclasses import dataclass
+from typing import Union, List
 from datetime import datetime
-from zipfile import ZipFile
 from pathlib import Path
-import json
 import re
 
 from camelot.core import TableList
+from pydantic import AnyHttpUrl
 from loguru import logger
 import camelot
 import httpx
 
 from config import API_URL, Schedule_URL, AUTH_HEADER, CWD
 from app.utils.converter import convert_pdf_to_jpg
-from app.utils.etc import create_dir_if_not_exists
+from app.utils.etc import create_dir_if_not_exists, get_md5_hash
 from app.utils.vk_album import upload_images
 
 URL = Schedule_URL
@@ -20,43 +20,59 @@ SCHEDULE_PATH = Path(CWD, "schedule")
 cleanup_regex = re.compile(r"^(ОУД|ОП|ОГСЭ|ЕН)(\.| )[0-9]{1,3}(\.[0-9]{1,3}|) ", re.MULTILINE)
 
 
-def get_schedule_links(url: str = URL) -> list:
+@dataclass(frozen=True)
+class DownloadInfo:
+    url: AnyHttpUrl
+    filename: str
+
+
+def get_schedule_links(url: str = URL) -> List[DownloadInfo]:
     links = []
     res = httpx.get(url)
 
-    if res.status_code == 200:
-        data = res.content.decode("utf-8")
-        raw_links = re.findall('<a href=".*\.pdf">.*\d\d.\d\d.\d\d\d\d.*</a>', data)
-        for link in raw_links:
-            date = re.search("\d\d.\d\d.\d\d\d\d", link)
-            if date is not None:
-                download_link = link.replace('<a href="', "").split('"')[0]
-                links.append({"filename": date.group(0) + ".pdf", "url": download_link})
-
-        return links
-
-    else:
+    if res.status_code != 200:
         return []
 
+    data = res.content.decode("utf-8")
+    raw_links = re.findall('<a href=".*\.pdf">.*\d\d.\d\d.\d\d\d\d.*</a>', data)
+    for link in raw_links:
+        date = re.search("\d\d.\d\d.\d\d\d\d", link)
+        if date is not None:
+            download_link = link.replace('<a href="', "").split('"')[0]
+            filename = date.group(0) + ".pdf"
+            links.append(
+                DownloadInfo(
+                    url=download_link,
+                    filename=filename
+                )
+            )
 
-def download_schedule(download_info: dict) -> None:
-    file_name = download_info["filename"]
-    url = download_info["url"]
+    return links
+
+
+def download_schedule(info: DownloadInfo) -> None:
     create_dir_if_not_exists(SCHEDULE_PATH)
-    final_file_path = Path(SCHEDULE_PATH, file_name)
+    final_file_path = Path(SCHEDULE_PATH, info.filename)
 
-    if not final_file_path.exists():
-        logger.info(f"Downloading: {url}")
-        res = httpx.get(url)
-        if res.status_code == 200:
-            with open(final_file_path, "wb") as file:
-                file.write(res.content)
-            final_file_path.chmod(666)
+    logger.info(f"Downloading schedule: {info.url}")
+    res = httpx.get(info.url)
 
+    if res.status_code != 200:
+        logger.error(f"Downloading schedule: {res.status_code}; {res.text}")
+        return
 
-def clear_schedule_dir():
-    for file in SCHEDULE_PATH.glob("*.*"):
-        file.unlink()
+    content_hash = get_md5_hash(res.content)
+    if final_file_path.exists():
+        with open(final_file_path, "rb") as file:
+            exists_file_hash = get_md5_hash(file.read())
+
+        if content_hash == exists_file_hash:
+            logger.info(f"Downloading schedule: file->{final_file_path} exists")
+            return
+
+    with open(final_file_path, "wb") as file:
+        file.write(res.content)
+    final_file_path.chmod(666)
 
 
 def extract_table_from_pdf(path: Union[str, Path]) -> TableList:
@@ -117,16 +133,43 @@ def parse_lessons(tables: TableList) -> dict:
     return result
 
 
-def start(clear_dir: bool = False):
-    today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
-    for link in get_schedule_links():
-        download_schedule(link)
+def change_on_date_exists(date_: str) -> bool:
+    res = httpx.get(f"{API_URL}/changes?date={date_}")
+    if res.status_code == 200:
+        return True
+    return False
 
-    httpx.delete(f"{API_URL}/changes", headers=AUTH_HEADER)
+
+def change_with_md5_exists(file_md5_sum: str) -> bool:
+    res = httpx.get(f"{API_URL}/changes?md5={file_md5_sum}", headers=AUTH_HEADER)
+    if res.status_code == 200:
+        return True
+    return False
+
+
+def delete_exists_change(date_):
+    httpx.delete(f"{API_URL}/changes?date={date_}", headers=AUTH_HEADER)
+
+
+def start():
+    today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
+    for download_info in get_schedule_links():
+        download_schedule(download_info)
+
     for pdf in filter(
             lambda data: datetime.strptime(data.name.rsplit(".", 1)[0], "%d.%m.%Y") >= today,
             SCHEDULE_PATH.glob("*.pdf")
     ):
+        change_date = pdf.name.rsplit(".", 1)[0]
+        with open(pdf, "rb") as file:
+            file_md5_sum = get_md5_hash(file.read())
+
+        if change_on_date_exists(change_date):
+            if change_with_md5_exists(file_md5_sum):
+                logger.info(f"Changes parser: {pdf} uploaded earlier")
+                continue
+            delete_exists_change(change_date)
+
         data_frame = extract_table_from_pdf(pdf)
         images_path = convert_pdf_to_jpg(pdf, output_dir=SCHEDULE_PATH, is_multipage=data_frame.n > 1)
 
@@ -134,30 +177,20 @@ def start(clear_dir: bool = False):
             lessons = parse_lessons(data_frame)
         except Exception as ex:
             logger.error(f"Changes parser: {ex}")
-            lessons = []
+            lessons = {}
         
-        data = json.dumps({
-            "Date": pdf.name.rsplit(".", 1)[0],
+        data = {
+            "Date": change_date,
             "Groups": lessons,
-            "Images": upload_images(images_path) if images_path else []
-        }, ensure_ascii=False)
-        httpx.post(f"{API_URL}/changes", json=data, headers=AUTH_HEADER)
-
-    if clear_dir:
-        clear_schedule_dir()
+            "Images": upload_images(images_path) if images_path else [],
+            "MD5": file_md5_sum
+        }
+        res = httpx.post(f"{API_URL}/changes", json=data, headers=AUTH_HEADER)
+        if res.status_code == 200:
+            logger.info(f"Change {change_date} uploaded")
+        else:
+            logger.error(f"Change {change_date} failed; response: {res.json()}")
 
 
 if __name__ == '__main__':
     start()
-    # from pprint import pprint
-    # for link in get_schedule_links():
-    #     download_schedule(link)
-    #
-    # today = datetime.strptime(datetime.today().strftime("%d.%m.%Y"), "%d.%m.%Y")
-    # for pdf in filter(lambda data: datetime.strptime(data.name.rsplit(".", 1)[0], "%d.%m.%Y") > today, SCHEDULE_PATH.glob("*.pdf")):
-    #     data_frame = extract_table_from_pdf(pdf)
-    #     data = json.dumps({"Date": pdf.name.rsplit(".", 1)[0], "Groups": parse_lessons(data_frame)}, ensure_ascii=False)
-    #     httpx.post(f"{API_URL}/changes", json=data, headers=AUTH_HEADER)
-    #     # data = parse_lessons(data_frame)
-    #     # print(len(data), pdf.name)
-    #     # pprint(data)
