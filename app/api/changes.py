@@ -220,6 +220,13 @@ async def get_finalize_schedule(group: str = Query(..., description="Любая 
             }.items()
             if weekday not in (1, 2):
                 calls_edited_indicator = " (✏️)"
+        else:
+            calls = {
+                "p1": "8:30 - 10:00",
+                "p2": "10:10 - 11:40",
+                "p3": "12:10 - 13:40",
+                "p4": "13:50 - 15:20"
+            }.items()
 
         ch_edited_indicator = " (✏️)" if custom_calls and weekday not in (1, 2) else ""
 
