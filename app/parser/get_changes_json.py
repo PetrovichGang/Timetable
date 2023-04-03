@@ -82,7 +82,7 @@ def extract_table_from_pdf(path: Union[str, Path]) -> TableList:
     if not path.exists() or not path.suffix == ".pdf":
         raise FileNotFoundError(f"File: {path} not exists or not pdf")
 
-    return camelot.read_pdf(str(path), pages="all")
+    return camelot.read_pdf(str(path), pages="all", line_scale=25)
 
 
 def parse_lessons(tables: TableList) -> dict:
@@ -178,7 +178,7 @@ def start():
         except Exception as ex:
             logger.error(f"Changes parser: {ex}")
             lessons = {}
-        
+
         data = {
             "Date": change_date,
             "Groups": lessons,
