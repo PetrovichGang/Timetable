@@ -1,0 +1,179 @@
+[{
+  "_id": {
+    "$oid": "63e0617a981aa976a0df5edd"
+  },
+  "Date": "06.02.2023",
+  "Groups": {
+    "Н-22-3к": {
+      "ChangeLessons": {
+        "p4": "нет урока"
+      },
+      "DefaultLessons": [
+        "p1",
+        "p2",
+        "p3"
+      ],
+      "SkipLessons": [],
+      "Comments": []
+    },
+    "Н-21-1": {
+      "ChangeLessons": {
+        "p4": "Органическая \nхимия\n- 1 п/гр\nШивкова Н.М., 151"
+      },
+      "DefaultLessons": [
+        "p1",
+        "p2",
+        "p3"
+      ],
+      "SkipLessons": [],
+      "Comments": []
+    },
+    "Н-21-3к": {
+      "ChangeLessons": {
+        "p1": "МДК.01.01 \nТехнологическое \nоборудование\nДубик Д.В., 155",
+        "p2": "МДК.01.01 \nТехнологическое \nоборудование\nДубик Д.В., 155"
+      },
+      "DefaultLessons": [
+        "p3"
+      ],
+      "SkipLessons": [
+        "p4"
+      ],
+      "Comments": []
+    },
+    "Н-19-3к": {
+      "ChangeLessons": {
+        "p4": "Основы \nфилософии\nКо нсу л ьтация, 30 5"
+      },
+      "DefaultLessons": [
+        "p1",
+        "p2",
+        "p3"
+      ],
+      "SkipLessons": [],
+      "Comments": []
+    }
+  }
+},{
+  "_id": {
+    "$oid": "63e0617c981aa976a0df5ede"
+  },
+  "Date": "07.02.2023",
+  "Groups": {
+    "Н-22-1": {
+      "ChangeLessons": {
+        "p2": "ОБЖ\nКонусенко А.А., 313"
+      },
+      "DefaultLessons": [
+        "p1",
+        "p3"
+      ],
+      "SkipLessons": [
+        "p4"
+      ],
+      "Comments": []
+    },
+    "Н-22-2": {
+      "ChangeLessons": {
+        "p3": "Основы \nисследовательской и \nпроектной деятельности\nТихоньких Н.В., 153"
+      },
+      "DefaultLessons": [
+        "p1",
+        "p2"
+      ],
+      "SkipLessons": [
+        "p4"
+      ],
+      "Comments": []
+    },
+    "Н-22-3к": {
+      "ChangeLessons": {
+        "p1": "Физическая \nкультура\nХаджибаев М.Т., с/зал",
+        "p3": "Физика\nБирюкова Е.В., 154"
+      },
+      "DefaultLessons": [
+        "p2"
+      ],
+      "SkipLessons": [
+        "p4"
+      ],
+      "Comments": []
+    },
+    "Н-21-1": {
+      "ChangeLessons": {
+        "p2": "Органическая химия\n-2п/гр\nШивкова Н.М., 151",
+        "p4": "Аналитическая \nхимия\n- 2 п/гр\nШивкова Н.М., 151"
+      },
+      "DefaultLessons": [
+        "p1",
+        "p3"
+      ],
+      "SkipLessons": [],
+      "Comments": []
+    },
+    "Н-21-2": {
+      "ChangeLessons": {
+        "p1": "Органическая химия\n-2п/гр\nШивкова Н.М., 151"
+      },
+      "DefaultLessons": [
+        "p2",
+        "p3"
+      ],
+      "SkipLessons": [
+        "p4"
+      ],
+      "Comments": []
+    },
+    "Н-21-3к": {
+      "ChangeLessons": {
+        "p3": "Органическая химия\n-2п/гр\nШивкова Н.М., 151"
+      },
+      "DefaultLessons": [
+        "p1",
+        "p2"
+      ],
+      "SkipLessons": [
+        "p4"
+      ],
+      "Comments": []
+    },
+    "Н-20-1": {
+      "ChangeLessons": {
+        "p1": "МДК 02.01 Управление \nтехнологическим процессом \n(6 раздел)\nНепомнящих И.Н., 145"
+      },
+      "DefaultLessons": [
+        "p2",
+        "p3"
+      ],
+      "SkipLessons": [
+        "p4"
+      ],
+      "Comments": []
+    },
+    "Н-20-2": {
+      "ChangeLessons": {
+        "p2": "Физическая \nкультура\nХаджибаев М.Т., с/зал",
+        "p3": "нет урока"
+      },
+      "DefaultLessons": [
+        "p1"
+      ],
+      "SkipLessons": [
+        "p4"
+      ],
+      "Comments": []
+    },
+    "Н-19-2": {
+      "ChangeLessons": {
+        "p1": "Основы \nфилософии\nКо нсул ьтация, 3 05"
+      },
+      "DefaultLessons": [
+        "p2",
+        "p3",
+        "p4"
+      ],
+      "SkipLessons": [],
+      "Comments": []
+    }
+  }
+}]
