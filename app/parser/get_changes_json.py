@@ -34,12 +34,12 @@ def get_schedule_links(url: str = URL) -> List[DownloadInfo]:
         return []
 
     data = res.content.decode("utf-8")
-    raw_links = re.findall('<a href=".*\d\d.\d\d\.pdf">.*</a>', data)
+    raw_links = re.findall('<a href=".*\.pdf">.*\d\d.\d\d.\d\d\d\d.*</a>', data)
     for link in raw_links:
         date = re.search("\d\d.\d\d.\d\d\d\d", link)
         if date is not None:
             download_link = link.replace('<a href="', "").split('"')[0]
-            filename = download_link.split('/')[-1]
+            filename = date.group(0) + ".pdf"
             links.append(
                 DownloadInfo(
                     url=download_link,
