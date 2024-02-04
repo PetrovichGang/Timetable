@@ -39,7 +39,7 @@ def get_schedule_links(url: str = URL) -> List[DownloadInfo]:
         date = re.search("\d\d.\d\d.\d\d\d\d", link)
         if date is not None:
             download_link = link.replace('<a href="', "").split('"')[0]
-            filename = date.group(0) + ".pdf"
+            filename = download_link.split('/')[-1]
             links.append(
                 DownloadInfo(
                     url=download_link,
